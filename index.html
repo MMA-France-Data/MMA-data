@@ -269,6 +269,7 @@ function checkPwd(){
 <div class="tabs">
   <button class="tab active" onclick="switchMainTab('fights')">COMBATS</button>
   <button class="tab" onclick="switchMainTab('base')">BASE DE DONNÉES</button>
+  <button class="tab" onclick="switchMainTab('rapport')">RAPPORT COACH</button>
 </div>
 
 <div class="main">
@@ -688,6 +689,38 @@ function checkPwd(){
       <div id="db-content"><div class="empty-state"><div class="big">EMPTY</div><p>Aucun combat</p></div></div>
     </div>
 
+    <!-- RAPPORT VIEW -->
+    <div class="db-view" id="view-rapport" style="padding:18px 22px 80px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;">RAPPORT COACH</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;" id="rapport-cat-label">—</div>
+      </div>
+
+      <!-- Rapport tabs -->
+      <div style="display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border);">
+        <button class="etab active" id="rtab-fighter-btn" onclick="switchRapportTab('fighter')">PAR COMBATTANT</button>
+        <button class="etab" id="rtab-category-btn" onclick="switchRapportTab('category')">PAR CATÉGORIE</button>
+        <button class="etab" id="rtab-round-btn" onclick="switchRapportTab('round')">PAR ROUND</button>
+      </div>
+
+      <!-- Fighter selector -->
+      <div id="rtab-fighter">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="fighter-selector"></div>
+        <div id="rapport-fighter-content"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Sélectionne un combattant</div></div>
+      </div>
+
+      <!-- Category rapport -->
+      <div id="rtab-category" style="display:none;">
+        <div id="rapport-category-content"></div>
+      </div>
+
+      <!-- Round rapport -->
+      <div id="rtab-round" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="round-fighter-selector"></div>
+        <div id="rapport-round-content"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -835,7 +868,7 @@ function addCat() {
 
 // ── VIEWS ──
 function showView(id) {
-  ['view-empty','view-fights','view-editor','view-db'].forEach(v=>{
+  ['view-empty','view-fights','view-editor','view-db','view-rapport'].forEach(v=>{
     const el = document.getElementById(v);
     if(el) el.style.display = v===id?'block':'none';
   });
@@ -843,8 +876,9 @@ function showView(id) {
 
 function switchMainTab(tab) {
   mainTab = tab;
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='fights')||(i===1&&tab==='base')));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='fights')||(i===1&&tab==='base')||(i===2&&tab==='rapport')));
   if(tab==='base'){showView('view-db');renderDB();}
+  else if(tab==='rapport'){showView('view-rapport');renderRapport();}
   else if(currentCat) showFightList();
   else showView('view-empty');
 }
@@ -1404,12 +1438,20 @@ function renderAutoStats() {
     </div>`;
   });
 
-  // SÉQUENCES FRÉQUENTES
+  // SÉQUENCES FRÉQUENTES — actions consécutives dans les 3 secondes
   const seqs = {};
-  const roundActions = currentActions.filter(a=>a.category==='STRIKE'||a.category==='TD_OFF');
+  const roundActions = currentActions
+    .filter(a=>a.category==='STRIKE'||a.category==='TD_OFF'||a.category==='FEINTE')
+    .sort((a,b)=>{ if(a.round!==b.round) return a.round-b.round; return timeToSec(a.time)-timeToSec(b.time); });
+
   for(let i=0;i<roundActions.length-1;i++){
-    const seq = roundActions[i].action.split(' - ').pop() + ' → ' + roundActions[i+1].action.split(' - ').pop();
-    seqs[seq] = (seqs[seq]||0)+1;
+    const curr = roundActions[i];
+    const next = roundActions[i+1];
+    // Même round et moins de 3 secondes d'écart
+    if(curr.round === next.round && (timeToSec(next.time) - timeToSec(curr.time)) <= 3){
+      const seq = curr.action.split(' - ').pop() + ' → ' + next.action.split(' - ').pop();
+      seqs[seq] = (seqs[seq]||0)+1;
+    }
   }
   const topSeqs = Object.entries(seqs).sort((a,b)=>b[1]-a[1]).slice(0,5);
   if(topSeqs.length){
@@ -1514,7 +1556,467 @@ function renderDB() {
     </table></div>`;
 }
 
-// ── AUTOSAVE ──
+// ── RAPPORT ENGINE ──
+
+let currentRapportTab = 'fighter';
+let selectedRapportFighter = null;
+
+function renderRapport() {
+  if (!currentCat) {
+    document.getElementById('rapport-cat-label').textContent = 'Sélectionne une catégorie';
+    return;
+  }
+  const p = currentCat.name.split('—');
+  document.getElementById('rapport-cat-label').textContent = p[0].trim();
+  switchRapportTab(currentRapportTab);
+}
+
+function switchRapportTab(tab) {
+  currentRapportTab = tab;
+  ['fighter','category','round'].forEach(t=>{
+    document.getElementById('rtab-'+t).style.display = t===tab?'block':'none';
+    const btn = document.getElementById('rtab-'+t+'-btn');
+    if(btn) btn.classList.toggle('active', t===tab);
+  });
+  if(tab==='fighter') renderFighterSelector();
+  if(tab==='category') renderCategoryRapport();
+  if(tab==='round') renderRoundFighterSelector();
+}
+
+// ── FIGHTER SELECTOR ──
+function renderFighterSelector() {
+  if(!currentCat) return;
+  const fights = db.fights.filter(x=>x.catId===currentCat.id);
+  const fighters = [...new Set(fights.map(f=>f.fighter).filter(f=>f&&f!=='—'))].sort();
+  const sel = document.getElementById('fighter-selector');
+  sel.innerHTML = fighters.map(f=>`
+    <button onclick="selectRapportFighter('${f.replace(/'/g,"\\'")}',this)"
+      style="background:${selectedRapportFighter===f?'var(--gold)':'var(--surface2)'};border:1px solid ${selectedRapportFighter===f?'var(--gold)':'var(--border)'};color:${selectedRapportFighter===f?'#000':'var(--text)'};padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer;">
+      ${f}
+    </button>`).join('');
+  if(!fighters.length) sel.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted);">Aucun combattant — commence par tagger des combats</div>';
+}
+
+function selectRapportFighter(name, btn) {
+  selectedRapportFighter = name;
+  renderFighterSelector();
+  renderFighterRapport(name);
+}
+
+function renderFighterRapport(name) {
+  const fights = db.fights.filter(x=>x.catId===currentCat.id && x.fighter===name);
+  if(!fights.length) { document.getElementById('rapport-fighter-content').innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted);">Aucun combat pour ce combattant</div>'; return; }
+
+  const allActs = fights.flatMap(f=>f.actions||[]);
+  let html = '';
+
+  // Header
+  html += `<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;">${name}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:2px;">${fights.length} COMBATS ANALYSÉS — ${allActs.length} ACTIONS TAGUÉES</div>
+    </div>
+    <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">
+      ${fights[0]?.profile?.stance||'—'} | ${fights[0]?.profile?.style||'—'}
+    </div>
+  </div>`;
+
+  // STRIKING GLOBAL
+  html += rapportSection('STRIKING', buildStrikingStats(allActs));
+
+  // STRIKING PAR SETUP (kick jambe → high kick etc)
+  html += rapportSection('PATTERNS STRIKING', buildStrikingPatterns(allActs));
+
+  // FATIGUE — stats par round agrégées
+  html += rapportSection('IMPACT FATIGUE', buildFatigueStats(allActs));
+
+  // TAKEDOWNS
+  html += rapportSection('TAKEDOWNS', buildTDStats(allActs));
+
+  // CLINCH
+  html += rapportSection('CLINCH', buildClinchStats(allActs));
+
+  // SOUMISSIONS
+  html += rapportSection('SOUMISSIONS', buildSubStats(allActs));
+
+  // DÉFENSE
+  html += rapportSection('DÉFENSE', buildDefStats(allActs));
+
+  // SÉQUENCES
+  html += buildSequenceSection(allActs, 'SÉQUENCES FRÉQUENTES (≤3s)');
+
+  // DÉTAIL PAR COMBAT
+  html += `<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;margin-bottom:12px;">DÉTAIL PAR COMBAT</div>`;
+  fights.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).forEach(f=>{
+    const acts = f.actions||[];
+    const strikes = acts.filter(a=>a.category==='STRIKE');
+    const touched = strikes.filter(a=>a.result==='TOUCHÉ').length;
+    const tds = acts.filter(a=>a.category==='TD_OFF');
+    const tdOk = tds.filter(a=>a.success==='RÉUSSI').length;
+    const rc = f.result?.includes('KO')?'var(--red)':f.result?.includes('SOUM')?'var(--gold)':'var(--muted)';
+    html += `<div style="background:var(--surface);border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;">vs ${f.opponent||'—'}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);margin-left:10px;">${f.rank||'—'}</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">${f.date||'—'} | ${f.event||'—'}</div>
+      </div>
+      <div style="display:flex;gap:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);flex-wrap:wrap;">
+        <span>ISSUE : <span style="color:${rc};">${f.result||'—'} ${f.round||''}</span></span>
+        <span>FRAPPES : <span style="color:var(--text);">${touched}/${strikes.length}${strikes.length>0?' ('+Math.round(touched/strikes.length*100)+'%)':''}</span></span>
+        <span>TD : <span style="color:var(--text);">${tdOk}/${tds.length}${tds.length>0?' ('+Math.round(tdOk/tds.length*100)+'%)':''}</span></span>
+        <span>ACTIONS : <span style="color:var(--blue);">${acts.length}</span></span>
+        <span>CARDIO : <span style="color:var(--text);">${f.cardio||'—'}</span></span>
+      </div>
+      ${f.notes?`<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">${f.notes}</div>`:''}
+    </div>`;
+  });
+  html += '</div>';
+
+  document.getElementById('rapport-fighter-content').innerHTML = html;
+}
+
+// ── CATEGORY RAPPORT ──
+function renderCategoryRapport() {
+  if(!currentCat) return;
+  const fights = db.fights.filter(x=>x.catId===currentCat.id);
+  if(!fights.length) { document.getElementById('rapport-category-content').innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted);">Aucun combat dans cette catégorie</div>'; return; }
+
+  const allActs = fights.flatMap(f=>f.actions||[]);
+  let html = `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:2px;margin-bottom:14px;">${fights.length} COMBATS — ${allActs.length} ACTIONS — TOP 15 ${currentCat.name.split('—')[0].trim().toUpperCase()}</div>`;
+
+  html += rapportSection('STRIKING DIVISION', buildStrikingStats(allActs));
+  html += rapportSection('PATTERNS DIVISION', buildStrikingPatterns(allActs));
+  html += rapportSection('FATIGUE DIVISION', buildFatigueStats(allActs));
+  html += rapportSection('TAKEDOWNS DIVISION', buildTDStats(allActs));
+  html += rapportSection('CLINCH DIVISION', buildClinchStats(allActs));
+  html += rapportSection('SOUMISSIONS DIVISION', buildSubStats(allActs));
+  html += buildSequenceSection(allActs, 'SÉQUENCES FRÉQUENTES DIVISION');
+
+  // Top combattants
+  const fighters = [...new Set(fights.map(f=>f.fighter).filter(f=>f&&f!=='—'))];
+  html += `<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;margin-bottom:12px;">CLASSEMENT PAR PRÉCISION STRIKING</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;">`;
+  const fighterStats = fighters.map(name=>{
+    const fActs = fights.filter(f=>f.fighter===name).flatMap(f=>f.actions||[]);
+    const strikes = fActs.filter(a=>a.category==='STRIKE');
+    const touched = strikes.filter(a=>a.result==='TOUCHÉ').length;
+    return { name, prec: strikes.length>0?Math.round(touched/strikes.length*100):0, total: strikes.length };
+  }).filter(f=>f.total>0).sort((a,b)=>b.prec-a.prec);
+
+  fighterStats.forEach((f,i)=>{
+    html += `<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:4px;">
+      <span style="color:var(--gold);">#${i+1}</span>
+      <span style="flex:1;margin-left:12px;">${f.name}</span>
+      <span style="color:var(--text);">${f.prec}% (${f.total} frappes)</span>
+    </div>`;
+  });
+  html += '</div></div>';
+
+  document.getElementById('rapport-category-content').innerHTML = html;
+}
+
+// ── ROUND RAPPORT ──
+function renderRoundFighterSelector() {
+  if(!currentCat) return;
+  const fights = db.fights.filter(x=>x.catId===currentCat.id);
+  const fighters = [...new Set(fights.map(f=>f.fighter).filter(f=>f&&f!=='—'))].sort();
+  const sel = document.getElementById('round-fighter-selector');
+  sel.innerHTML = `<button onclick="selectRoundFighter('ALL',this)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;">TOUS</button>` +
+    fighters.map(f=>`<button onclick="selectRoundFighter('${f.replace(/'/g,"\\'")}',this)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;">${f}</button>`).join('');
+}
+
+function selectRoundFighter(name, btn) {
+  document.querySelectorAll('#round-fighter-selector button').forEach(b=>{ b.style.background='var(--surface2)'; b.style.borderColor='var(--border)'; b.style.color='var(--text)'; });
+  btn.style.background='var(--gold)'; btn.style.borderColor='var(--gold)'; btn.style.color='#000';
+
+  const fights = db.fights.filter(x=>x.catId===currentCat.id && (name==='ALL'||x.fighter===name));
+  const allActs = fights.flatMap(f=>f.actions||[]);
+
+  let html = `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:2px;margin-bottom:14px;">
+    ${name==='ALL'?'TOUTE LA DIVISION':name} — ANALYSE PAR ROUND
+  </div>`;
+
+  const rounds = [1,2,3,4,5];
+  const roundData = rounds.map(r=>({
+    round: r,
+    acts: allActs.filter(a=>a.round===r),
+    strikes: allActs.filter(a=>a.round===r&&a.category==='STRIKE'),
+    tds: allActs.filter(a=>a.round===r&&a.category==='TD_OFF'),
+  })).filter(r=>r.acts.length>0);
+
+  if(!roundData.length){ document.getElementById('rapport-round-content').innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted);">Pas assez de données</div>'; return; }
+
+  // Comparaison rounds
+  html += `<div style="display:grid;grid-template-columns:repeat(${roundData.length},1fr);gap:8px;margin-bottom:18px;">`;
+  roundData.forEach(r=>{
+    const prec = r.strikes.length>0?Math.round(r.strikes.filter(a=>a.result==='TOUCHÉ').length/r.strikes.length*100):0;
+    const tdPct = r.tds.length>0?Math.round(r.tds.filter(a=>a.success==='RÉUSSI').length/r.tds.length*100):0;
+    const avgFatigue = r.acts.filter(a=>a.fatigue_level).reduce((s,a)=>s+({'LOW':1,'MID':2,'HIGH':3}[a.fatigue_level]||1),0)/Math.max(r.acts.filter(a=>a.fatigue_level).length,1);
+    html += `<div style="background:var(--surface);border:1px solid var(--border);padding:12px;text-align:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--gold);">R${r.round}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;">
+        <div>FRAPPES <span style="color:var(--text);">${r.strikes.filter(a=>a.result==='TOUCHÉ').length}/${r.strikes.length}</span></div>
+        <div>PRÉC <span style="color:${prec>=50?'var(--green)':'var(--red)'};">${prec}%</span></div>
+        <div>TD <span style="color:var(--text);">${r.tds.filter(a=>a.success==='RÉUSSI').length}/${r.tds.length}</span></div>
+        <div>TD% <span style="color:${tdPct>=50?'var(--green)':'var(--red)'};">${tdPct}%</span></div>
+        <div>ACTIONS <span style="color:var(--blue);">${r.acts.length}</span></div>
+        <div>FATIGUE <span style="color:${avgFatigue>2?'var(--red)':avgFatigue>1.5?'var(--gold)':'var(--green)'};">${avgFatigue<=1.5?'LOW':avgFatigue<=2?'MID':'HIGH'}</span></div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Précision par round (graphique textuel)
+  html += `<div style="background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:12px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;margin-bottom:10px;color:var(--gold);">ÉVOLUTION PRÉCISION STRIKING</div>`;
+  roundData.forEach(r=>{
+    const prec = r.strikes.length>0?Math.round(r.strikes.filter(a=>a.result==='TOUCHÉ').length/r.strikes.length*100):0;
+    const bar = Math.round(prec/2);
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;">
+      <span style="color:var(--gold);min-width:20px;">R${r.round}</span>
+      <div style="flex:1;height:12px;background:var(--surface2);border:1px solid var(--border);">
+        <div style="width:${prec}%;height:100%;background:${prec>=50?'var(--green)':'var(--red)'};"></div>
+      </div>
+      <span style="color:var(--text);min-width:35px;">${prec}%</span>
+      <span style="color:var(--muted);">(${r.strikes.filter(a=>a.result==='TOUCHÉ').length}/${r.strikes.length})</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  // TD par round
+  html += `<div style="background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:12px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;margin-bottom:10px;color:var(--blue);">ÉVOLUTION TAKEDOWNS</div>`;
+  roundData.forEach(r=>{
+    const tdPct = r.tds.length>0?Math.round(r.tds.filter(a=>a.success==='RÉUSSI').length/r.tds.length*100):0;
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;">
+      <span style="color:var(--gold);min-width:20px;">R${r.round}</span>
+      <div style="flex:1;height:12px;background:var(--surface2);border:1px solid var(--border);">
+        <div style="width:${tdPct}%;height:100%;background:var(--blue);"></div>
+      </div>
+      <span style="color:var(--text);min-width:35px;">${tdPct}%</span>
+      <span style="color:var(--muted);">(${r.tds.filter(a=>a.success==='RÉUSSI').length}/${r.tds.length})</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  document.getElementById('rapport-round-content').innerHTML = html;
+}
+
+// ── STAT BUILDERS ──
+function buildStrikingStats(acts) {
+  const strikes = acts.filter(a=>a.category==='STRIKE');
+  const touched = strikes.filter(a=>a.result==='TOUCHÉ').length;
+  const byType={}, byTarget={}, byDist={};
+  strikes.forEach(s=>{
+    if(s.action){if(!byType[s.action])byType[s.action]={att:0,land:0};byType[s.action].att++;if(s.result==='TOUCHÉ')byType[s.action].land++;}
+    if(s.target){if(!byTarget[s.target])byTarget[s.target]={att:0,land:0};byTarget[s.target].att++;if(s.result==='TOUCHÉ')byTarget[s.target].land++;}
+    if(s.distance){if(!byDist[s.distance])byDist[s.distance]={att:0,land:0};byDist[s.distance].att++;if(s.result==='TOUCHÉ')byDist[s.distance].land++;}
+  });
+  if(!strikes.length) return null;
+  let boxes = [
+    statBox('TOTAL',`${touched}/${strikes.length}`,strikes.length>0?Math.round(touched/strikes.length*100)+'% PRÉC':'—'),
+  ];
+  Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].land}/${byType[t].att}`,byType[t].att>0?Math.round(byType[t].land/byType[t].att*100)+'%':'—')));
+  Object.keys(byTarget).forEach(t=>boxes.push(statBox('→'+t,`${byTarget[t].land}/${byTarget[t].att}`,byTarget[t].att>0?Math.round(byTarget[t].land/byTarget[t].att*100)+'%':'—')));
+  Object.keys(byDist).forEach(d=>boxes.push(statBox(d,`${byDist[d].land}/${byDist[d].att}`,byDist[d].att>0?Math.round(byDist[d].land/byDist[d].att*100)+'%':'—')));
+  return boxes;
+}
+
+function buildStrikingPatterns(acts) {
+  if(!acts.length) return null;
+  const sorted = [...acts].sort((a,b)=>{if(a.round!==b.round)return a.round-b.round;return timeToSec(a.time)-timeToSec(b.time);});
+  const patterns = {};
+
+  // Kick jambe count → high kick pattern
+  let legKickCount = 0;
+  sorted.forEach((a,i)=>{
+    if(a.action==='KICK JAMBE') legKickCount++;
+    if(a.action==='KICK TÊTE' && legKickCount>=2){
+      const key = `${legKickCount}x KICK JAMBE → KICK TÊTE`;
+      if(!patterns[key]) patterns[key]={att:0,land:0};
+      patterns[key].att++;
+      if(a.result==='TOUCHÉ') patterns[key].land++;
+      legKickCount=0;
+    }
+    if(a.category==='STRIKE'&&a.action!=='KICK JAMBE'&&a.action!=='KICK TÊTE') legKickCount=0;
+  });
+
+  // Kick corps accumulation
+  let bodyKickCount = 0;
+  sorted.forEach(a=>{
+    if(a.action==='KICK CORPS') bodyKickCount++;
+    if(bodyKickCount>=3){
+      const key = '3+ KICK CORPS (fatigue adverse)';
+      if(!patterns[key]) patterns[key]={att:0,land:0};
+      patterns[key].att++;
+      patterns[key].land++;
+      bodyKickCount=0;
+    }
+    if(a.category==='STRIKE'&&a.action!=='KICK CORPS') bodyKickCount=0;
+  });
+
+  // Feinte → réaction → exploit
+  sorted.forEach((a,i)=>{
+    if(a.category==='FEINTE'&&a.reaction==='OUVERTURE CRÉÉE'&&i<sorted.length-1){
+      const next=sorted[i+1];
+      if(next&&next.round===a.round&&timeToSec(next.time)-timeToSec(a.time)<=3){
+        const key=`FEINTE → ${next.action}`;
+        if(!patterns[key]) patterns[key]={att:0,land:0};
+        patterns[key].att++;
+        if(next.result==='TOUCHÉ') patterns[key].land++;
+      }
+    }
+  });
+
+  if(!Object.keys(patterns).length) return null;
+  return Object.keys(patterns).map(p=>statBox(p,`${patterns[p].land}/${patterns[p].att}`,patterns[p].att>0?Math.round(patterns[p].land/patterns[p].att*100)+'%':'—'));
+}
+
+function buildFatigueStats(acts) {
+  if(!acts.length) return null;
+  const rounds=[1,2,3,4,5];
+  const boxes=[];
+  rounds.forEach(r=>{
+    const rStrikes=acts.filter(a=>a.round===r&&a.category==='STRIKE');
+    if(!rStrikes.length) return;
+    const prec=Math.round(rStrikes.filter(a=>a.result==='TOUCHÉ').length/rStrikes.length*100);
+    boxes.push(statBox(`PRÉC R${r}`,prec+'%',rStrikes.length+' frappes'));
+  });
+  // Chute de précision R1→R3
+  const r1=acts.filter(a=>a.round===1&&a.category==='STRIKE');
+  const r3=acts.filter(a=>a.round===3&&a.category==='STRIKE');
+  if(r1.length&&r3.length){
+    const p1=Math.round(r1.filter(a=>a.result==='TOUCHÉ').length/r1.length*100);
+    const p3=Math.round(r3.filter(a=>a.result==='TOUCHÉ').length/r3.length*100);
+    const diff=p1-p3;
+    boxes.push(statBox('CHUTE R1→R3',diff>0?'-'+diff+'%':'+'+Math.abs(diff)+'%',diff>10?'⚠ CARDIO':diff>5?'LÉGÈRE':'STABLE'));
+  }
+  // Volume par round
+  rounds.forEach(r=>{
+    const rActs=acts.filter(a=>a.round===r);
+    if(rActs.length) boxes.push(statBox(`VOL R${r}`,rActs.length,'ACTIONS'));
+  });
+  return boxes.length?boxes:null;
+}
+
+function buildTDStats(acts) {
+  const tds=acts.filter(a=>a.category==='TD_OFF');
+  if(!tds.length) return null;
+  const tdOk=tds.filter(a=>a.success==='RÉUSSI').length;
+  const boxes=[statBox('TD TOTAL',`${tdOk}/${tds.length}`,tds.length>0?Math.round(tdOk/tds.length*100)+'%':'—')];
+
+  // Par setup
+  const bySetup={};
+  tds.forEach(t=>{const s=t.action.split(' - ').pop();if(!bySetup[s])bySetup[s]={att:0,ok:0};bySetup[s].att++;if(t.success==='RÉUSSI')bySetup[s].ok++;});
+  Object.keys(bySetup).forEach(s=>boxes.push(statBox(s,`${bySetup[s].ok}/${bySetup[s].att}`,Math.round(bySetup[s].ok/bySetup[s].att*100)+'%')));
+
+  // Cage vs ouvert
+  const cage=tds.filter(a=>a.against_cage==='OUI');
+  const open=tds.filter(a=>a.against_cage==='NON');
+  if(cage.length) boxes.push(statBox('TD CAGE',`${cage.filter(a=>a.success==='RÉUSSI').length}/${cage.length}`,Math.round(cage.filter(a=>a.success==='RÉUSSI').length/cage.length*100)+'%'));
+  if(open.length) boxes.push(statBox('TD OUVERT',`${open.filter(a=>a.success==='RÉUSSI').length}/${open.length}`,Math.round(open.filter(a=>a.success==='RÉUSSI').length/open.length*100)+'%'));
+
+  // Chain wrestling
+  const chain=tds.filter(a=>a.chain==='OUI');
+  if(chain.length) boxes.push(statBox('CHAIN WREST.',`${chain.filter(a=>a.success==='RÉUSSI').length}/${chain.length}`,Math.round(chain.filter(a=>a.success==='RÉUSSI').length/chain.length*100)+'%'));
+
+  // Par round
+  [1,2,3,4,5].forEach(r=>{
+    const rTds=tds.filter(a=>a.round===r);
+    if(rTds.length) boxes.push(statBox(`TD R${r}`,`${rTds.filter(a=>a.success==='RÉUSSI').length}/${rTds.length}`,Math.round(rTds.filter(a=>a.success==='RÉUSSI').length/rTds.length*100)+'%'));
+  });
+
+  return boxes;
+}
+
+function buildClinchStats(acts) {
+  const entries=acts.filter(a=>a.category==='CLINCH');
+  const work=acts.filter(a=>a.category==='CLINCH_WORK');
+  if(!entries.length&&!work.length) return null;
+  const boxes=[];
+  if(entries.length){
+    const ok=entries.filter(a=>a.success==='RÉUSSIE').length;
+    boxes.push(statBox('ENTRÉES',`${ok}/${entries.length}`,Math.round(ok/entries.length*100)+'%'));
+    const byType={};
+    entries.forEach(e=>{const t=e.action.split(' - ').pop();if(!byType[t])byType[t]={att:0,ok:0};byType[t].att++;if(e.success==='RÉUSSIE')byType[t].ok++;});
+    Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,Math.round(byType[t].ok/byType[t].att*100)+'%')));
+  }
+  if(work.length) boxes.push(statBox('TRAVAIL',work.length,'ACTIONS'));
+  return boxes;
+}
+
+function buildSubStats(acts) {
+  const subs=acts.filter(a=>a.category==='SUBMISSION');
+  if(!subs.length) return null;
+  const ok=subs.filter(a=>a.success==='SOUMISSION').length;
+  const boxes=[statBox('TOTAL',`${ok}/${subs.length}`,subs.length>0?Math.round(ok/subs.length*100)+'%':'—')];
+  const byType={};
+  subs.forEach(s=>{if(!byType[s.action])byType[s.action]={att:0,ok:0};byType[s.action].att++;if(s.success==='SOUMISSION')byType[s.action].ok++;});
+  Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,'DEPUIS '+((subs.find(s=>s.action===t)?.position)||'—'))));
+  const byPos={};
+  subs.forEach(s=>{if(s.position){if(!byPos[s.position])byPos[s.position]={att:0,ok:0};byPos[s.position].att++;if(s.success==='SOUMISSION')byPos[s.position].ok++;}});
+  Object.keys(byPos).forEach(p=>boxes.push(statBox('DEPUIS '+p,`${byPos[p].ok}/${byPos[p].att}`,Math.round(byPos[p].ok/byPos[p].att*100)+'%')));
+  return boxes;
+}
+
+function buildDefStats(acts) {
+  const def=acts.filter(a=>a.category==='DEF_STRIKE');
+  const tdDef=acts.filter(a=>a.category==='TD_DEF');
+  if(!def.length&&!tdDef.length) return null;
+  const boxes=[];
+  if(def.length){
+    const ok=def.filter(a=>a.success==='RÉUSSI').length;
+    boxes.push(statBox('DEF STRIKE',`${ok}/${def.length}`,Math.round(ok/def.length*100)+'%'));
+    const byType={};
+    def.forEach(d=>{if(!byType[d.action])byType[d.action]={att:0,ok:0};byType[d.action].att++;if(d.success==='RÉUSSI')byType[d.action].ok++;});
+    Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,Math.round(byType[t].ok/byType[t].att*100)+'%')));
+    const counter=def.filter(a=>a.counter==='OUI');
+    if(counter.length) boxes.push(statBox('CONTRE APR. DEF',counter.length,Math.round(counter.length/def.length*100)+'%'));
+  }
+  if(tdDef.length){
+    const ok=tdDef.filter(a=>a.success==='RÉUSSIE').length;
+    boxes.push(statBox('DEF TD',`${ok}/${tdDef.length}`,Math.round(ok/tdDef.length*100)+'%'));
+  }
+  return boxes;
+}
+
+function buildSequenceSection(acts, title) {
+  const sorted=[...acts].sort((a,b)=>{if(a.round!==b.round)return a.round-b.round;return timeToSec(a.time)-timeToSec(b.time);});
+  const seqs={};
+  const relevant=sorted.filter(a=>['STRIKE','TD_OFF','FEINTE'].includes(a.category));
+  for(let i=0;i<relevant.length-1;i++){
+    const curr=relevant[i],next=relevant[i+1];
+    if(curr.round===next.round&&timeToSec(next.time)-timeToSec(curr.time)<=3){
+      const seq=curr.action.split(' - ').pop()+' → '+next.action.split(' - ').pop();
+      seqs[seq]=(seqs[seq]||0)+1;
+    }
+  }
+  const top=Object.entries(seqs).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(!top.length) return '';
+  let html=`<div style="margin-bottom:16px;padding-top:14px;border-top:1px solid var(--border);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;margin-bottom:10px;">${title}</div>`;
+  top.forEach(([seq,count])=>{
+    html+=`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+      <span>${seq}</span><span style="color:var(--gold);">×${count}</span>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+function rapportSection(title, boxes) {
+  if(!boxes||!boxes.length) return '';
+  return `<div style="margin-bottom:16px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">${title}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;">
+      ${boxes.join('')}
+    </div>
+  </div>`;
+}
 setInterval(()=>{
   if(currentFightId && currentActions.length>0){
     const idx=db.fights.findIndex(x=>x.id===currentFightId);
