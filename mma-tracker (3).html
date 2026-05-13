@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMA DATA TRACKER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E8281A; --gold: #C9A84C; --bg: #0A0A0A; --surface: #111111;
+    --surface2: #1A1A1A; --border: #2A2A2A; --text: #F0F0F0; --muted: #666; --green: #2ECC71;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; }
+
+  header { border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 100; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 4px; }
+  .logo span { color: var(--red); }
+  .header-right { display: flex; gap: 12px; align-items: center; }
+  .stats-pill { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); padding: 5px 12px; border-radius: 2px; letter-spacing: 1px; }
+  .stats-pill span { color: var(--gold); font-weight: 600; }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 32px; }
+  .tab { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; padding: 13px 22px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab.active { color: var(--text); border-bottom-color: var(--red); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .main { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 108px); }
+
+  .sidebar { border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+  .sidebar-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+
+  .cat-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid transparent; padding: 12px 14px; cursor: pointer; transition: all 0.15s; margin-bottom: 6px; }
+  .cat-card:hover, .cat-card.active { border-left-color: var(--red); background: var(--surface2); }
+  .cat-name { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; margin-bottom: 2px; }
+  .cat-eng { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); margin-bottom: 6px; }
+  .cat-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--green); }
+  .progress-bar { height: 2px; background: var(--border); margin-top: 7px; border-radius: 1px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--red); transition: width 0.3s; }
+
+  .add-btn { width: 100%; background: none; border: 1px dashed var(--border); color: var(--muted); padding: 10px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; margin-top: 6px; transition: all 0.2s; }
+  .add-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .content { padding: 28px 32px; overflow-y: auto; }
+  .empty-state { text-align: center; padding: 80px 32px; color: var(--muted); }
+  .empty-state .big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--border); margin-bottom: 12px; }
+  .empty-state p { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1px; }
+
+  .cat-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .cat-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 4px; line-height: 1; }
+  .cat-title small { display: block; font-size: 12px; letter-spacing: 3px; color: var(--gold); font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; }
+  .count-display { text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+  .count-display .num { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--text); display: block; line-height: 1; }
+
+  .warning-banner { background: rgba(232,40,26,0.1); border: 1px solid var(--red); padding: 9px 13px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--red); letter-spacing: 1px; margin-bottom: 18px; }
+
+  .section { margin-bottom: 26px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .section-label { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; }
+  .section-badge { font-family: 'IBM Plex Mono', monospace; font-size: 10px; background: var(--surface2); border: 1px solid var(--border); padding: 3px 8px; color: var(--muted); letter-spacing: 1px; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 13px; }
+  .form-grid.wide { grid-template-columns: repeat(auto-fill, minmax(225px, 1fr)); }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .field input, .field select, .field textarea { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 9px 11px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.15s; border-radius: 2px; width: 100%; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--red); }
+  .field select option { background: var(--surface); }
+  .field textarea { resize: vertical; min-height: 72px; font-size: 12px; }
+
+  .double-field { display: flex; flex-direction: column; gap: 5px; }
+  .double-field label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .double-input { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .double-input input { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 9px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.15s; border-radius: 2px; text-align: center; }
+  .double-input input:focus { border-color: var(--red); }
+  .double-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .double-sub span { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-align: center; letter-spacing: 1px; }
+  .precision-display { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--gold); text-align: center; margin-top: 3px; height: 13px; }
+
+  .toggle-group { display: flex; flex-direction: column; gap: 5px; }
+  .toggle-group label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .toggles { display: flex; gap: 4px; flex-wrap: wrap; }
+  .toggle-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 7px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.15s; letter-spacing: 1px; }
+  .toggle-btn.selected { background: var(--red); border-color: var(--red); color: white; }
+
+  .rounds-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .round-block { background: var(--surface); border: 1px solid var(--border); padding: 10px 6px; text-align: center; }
+  .round-num { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px; color: var(--muted); margin-bottom: 6px; }
+  .round-block select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 5px 3px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; outline: none; width: 100%; }
+
+  .submit-bar { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 13px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .submit-info { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+  .submit-info span { color: var(--gold); }
+  .btn-submit { background: var(--red); border: none; color: white; padding: 11px 28px; font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 3px; cursor: pointer; transition: background 0.15s; }
+  .btn-submit:hover { background: #c41f13; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  th { text-align: left; padding: 9px 10px; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tr:hover td { background: var(--surface); }
+  .result-ko { color: var(--red); font-weight: 600; }
+  .result-sub { color: var(--gold); font-weight: 600; }
+  .result-dec { color: var(--muted); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 300; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); padding: 28px; width: 380px; }
+  .modal h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; margin-bottom: 20px; }
+  .modal .field { margin-bottom: 14px; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 20px; }
+  .btn-cancel { flex: 1; background: none; border: 1px solid var(--border); color: var(--muted); padding: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; cursor: pointer; }
+  .btn-confirm { flex: 2; background: var(--red); border: none; color: white; padding: 9px; font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px; cursor: pointer; }
+
+  .notif { position: fixed; bottom: 72px; right: 28px; background: var(--green); color: #000; padding: 10px 17px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 1px; opacity: 0; transform: translateY(10px); transition: all 0.3s; z-index: 200; }
+  .notif.show { opacity: 1; transform: translateY(0); }
+
+  .db-view { display: none; }
+  .db-view.active { display: block; }
+  .form-view.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MMA<span>.</span>DATA</div>
+  <div class="header-right">
+    <div class="stats-pill">CATÉGORIES : <span id="total-cats">0</span></div>
+    <div class="stats-pill">COMBATS TOTAL : <span id="total-fights">0</span></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('saisie')">SAISIE COMBAT</button>
+  <button class="tab" onclick="switchTab('base')">BASE DE DONNÉES</button>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-title">Catégories de poids</div>
+    <div id="cat-list"></div>
+    <button class="add-btn" onclick="showAddCat()">+ AJOUTER CATÉGORIE</button>
+  </div>
+
+  <div class="content">
+    <div class="form-view" id="form-view">
+      <div id="no-selection" class="empty-state">
+        <div class="big">SELECT</div>
+        <p>Sélectionne une catégorie ou ajoutes-en une</p>
+      </div>
+
+      <div id="fight-form" style="display:none;">
+        <div class="cat-header">
+          <div class="cat-title">
+            <small id="form-cat-sub">—</small>
+            <span id="form-cat-name">—</span>
+          </div>
+          <div class="count-display">
+            <span class="num" id="form-fight-count">0</span>
+            COMBATS / 20
+          </div>
+        </div>
+
+        <div id="rolling-warning" class="warning-banner" style="display:none;">
+          ⚠ 20 combats atteints — le plus ancien sera supprimé automatiquement
+        </div>
+
+        <div class="section">
+          <div class="section-header"><div class="section-label">Combat</div><div class="section-badge">INFOS</div></div>
+          <div class="form-grid wide">
+            <div class="field"><label>Combattant (top 15)</label><input type="text" id="f-fighter" placeholder="Carlos Prates, Makhachev..."></div>
+            <div class="field"><label>Classement</label><input type="text" id="f-rank" placeholder="#3, Champion, NR..."></div>
+            <div class="field"><label>Adversaire</label><input type="text" id="f-opponent" placeholder="Nom adversaire"></div>
+            <div class="field"><label>Événement</label><input type="text" id="f-event" placeholder="UFC 300, Bellator..."></div>
+            <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+            <div class="field"><label>Issue</label>
+              <select id="f-result">
+                <option value="">— Sélectionner —</option>
+                <option value="KO/TKO">KO / TKO</option>
+                <option value="SOUMISSION">Soumission</option>
+                <option value="DÉCISION U">Décision unanime</option>
+                <option value="DÉCISION P">Décision partagée</option>
+                <option value="DÉCISION M">Décision majoritaire</option>
+                <option value="NC">No Contest</option>
+              </select>
+            </div>
+            <div class="field"><label>Ronde</label>
+              <select id="f-round"><option value="">—</option><option>R1</option><option>R2</option><option>R3</option><option>R4</option><option>R5</option></select>
+            </div>
+            <div class="field"><label>Temps</label><input type="text" id="f-time" placeholder="ex: 3:42"></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><div class="section-label">Striking</div><div class="section-badge">DEBOUT</div></div>
+          <div class="form-grid">
+            <div class="double-field"><label>Frappes significatives</label><div class="double-input"><input type="number" id="s-sig-att" placeholder="0" oninput="calcPrec('s-sig-att','s-sig-land','prec-sig')"><input type="number" id="s-sig-land" placeholder="0" oninput="calcPrec('s-sig-att','s-sig-land','prec-sig')"></div><div class="double-sub"><span>TENTÉES</span><span>RÉUSSIES</span></div><div class="precision-display" id="prec-sig"></div></div>
+            <div class="double-field"><label>Frappes tête</label><div class="double-input"><input type="number" id="s-head-att" placeholder="0" oninput="calcPrec('s-head-att','s-head-land','prec-head')"><input type="number" id="s-head-land" placeholder="0" oninput="calcPrec('s-head-att','s-head-land','prec-head')"></div><div class="double-sub"><span>TENTÉES</span><span>RÉUSSIES</span></div><div class="precision-display" id="prec-head"></div></div>
+            <div class="double-field"><label>Frappes corps</label><div class="double-input"><input type="number" id="s-body-att" placeholder="0" oninput="calcPrec('s-body-att','s-body-land','prec-body')"><input type="number" id="s-body-land" placeholder="0" oninput="calcPrec('s-body-att','s-body-land','prec-body')"></div><div class="double-sub"><span>TENTÉES</span><span>RÉUSSIES</span></div><div class="precision-display" id="prec-body"></div></div>
+            <div class="double-field"><label>Frappes jambes</label><div class="double-input"><input type="number" id="s-leg-att" placeholder="0" oninput="calcPrec('s-leg-att','s-leg-land','prec-leg')"><input type="number" id="s-leg-land" placeholder="0" oninput="calcPrec('s-leg-att','s-leg-land','prec-leg')"></div><div class="double-sub"><span>TENTÉES</span><span>RÉUSSIES</span></div><div class="precision-display" id="prec-leg"></div></div>
+            <div class="field"><label>Knockdowns infligés</label><input type="number" id="s-kd" placeholder="0" min="0"></div>
+            <div class="toggle-group"><label>Distance préférée</label><div class="toggles"><button class="toggle-btn" onclick="toggle(this,'dist')">LONGUE</button><button class="toggle-btn" onclick="toggle(this,'dist')">MI-DIST</button><button class="toggle-btn" onclick="toggle(this,'dist')">CLINCH</button></div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><div class="section-label">Lutte</div><div class="section-badge">GRAPPLING</div></div>
+          <div class="form-grid">
+            <div class="double-field"><label>Takedowns</label><div class="double-input"><input type="number" id="td-att" placeholder="0" oninput="calcPrec('td-att','td-land','prec-td')"><input type="number" id="td-land" placeholder="0" oninput="calcPrec('td-att','td-land','prec-td')"></div><div class="double-sub"><span>TENTÉS</span><span>RÉUSSIS</span></div><div class="precision-display" id="prec-td"></div></div>
+            <div class="field"><label>Takedowns défendus</label><input type="number" id="td-def" placeholder="0" min="0"></div>
+            <div class="toggle-group"><label>Zone de shoot</label><div class="toggles"><button class="toggle-btn" onclick="toggle(this,'shoot')">OUVERT</button><button class="toggle-btn" onclick="toggle(this,'shoot')">CAGE</button><button class="toggle-btn" onclick="toggle(this,'shoot')">MIXTE</button></div></div>
+            <div class="field"><label>Temps au sol (min)</label><input type="number" id="td-time" placeholder="0" step="0.5" min="0"></div>
+            <div class="toggle-group"><label>Positions dominantes</label><div class="toggles" id="positions"><button class="toggle-btn" onclick="multiToggle(this)">MOUNT</button><button class="toggle-btn" onclick="multiToggle(this)">BACK</button><button class="toggle-btn" onclick="multiToggle(this)">SIDE CTRL</button><button class="toggle-btn" onclick="multiToggle(this)">HALF GUARD</button><button class="toggle-btn" onclick="multiToggle(this)">CRUCIFIX</button></div></div>
+            <div class="toggle-group"><label>Transitions réussies</label><div class="toggles" id="transitions"><button class="toggle-btn" onclick="multiToggle(this)">TD → MOUNT</button><button class="toggle-btn" onclick="multiToggle(this)">TD → BACK</button><button class="toggle-btn" onclick="multiToggle(this)">SWEEP</button><button class="toggle-btn" onclick="multiToggle(this)">REVERSAL</button></div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><div class="section-label">Soumissions</div><div class="section-badge">GROUND GAME</div></div>
+          <div class="form-grid">
+            <div class="field"><label>Tentatives</label><input type="number" id="sub-att" placeholder="0" min="0"></div>
+            <div class="toggle-group"><label>Type tenté</label><div class="toggles" id="sub-types"><button class="toggle-btn" onclick="multiToggle(this)">RNC</button><button class="toggle-btn" onclick="multiToggle(this)">GUILLOTINE</button><button class="toggle-btn" onclick="multiToggle(this)">TRIANGLE</button><button class="toggle-btn" onclick="multiToggle(this)">ARMBAR</button><button class="toggle-btn" onclick="multiToggle(this)">HEEL HOOK</button><button class="toggle-btn" onclick="multiToggle(this)">KIMURA</button><button class="toggle-btn" onclick="multiToggle(this)">AUTRE</button></div></div>
+            <div class="toggle-group"><label>Position de départ</label><div class="toggles" id="sub-pos"><button class="toggle-btn" onclick="toggle(this,'sub-pos-g')">BACK</button><button class="toggle-btn" onclick="toggle(this,'sub-pos-g')">MOUNT</button><button class="toggle-btn" onclick="toggle(this,'sub-pos-g')">GUARD</button><button class="toggle-btn" onclick="toggle(this,'sub-pos-g')">DEBOUT</button></div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><div class="section-label">Rythme par ronde</div><div class="section-badge">ANALYSE</div></div>
+          <div class="rounds-grid">
+            <div class="round-block"><div class="round-num">R1</div><select id="r1"><option value="">—</option><option value="DOM">DOM</option><option value="EQ">ÉGAL</option><option value="PERD">PERD</option></select></div>
+            <div class="round-block"><div class="round-num">R2</div><select id="r2"><option value="">—</option><option value="DOM">DOM</option><option value="EQ">ÉGAL</option><option value="PERD">PERD</option></select></div>
+            <div class="round-block"><div class="round-num">R3</div><select id="r3"><option value="">—</option><option value="DOM">DOM</option><option value="EQ">ÉGAL</option><option value="PERD">PERD</option></select></div>
+            <div class="round-block"><div class="round-num">R4</div><select id="r4"><option value="">—</option><option value="DOM">DOM</option><option value="EQ">ÉGAL</option><option value="PERD">PERD</option></select></div>
+            <div class="round-block"><div class="round-num">R5</div><select id="r5"><option value="">—</option><option value="DOM">DOM</option><option value="EQ">ÉGAL</option><option value="PERD">PERD</option></select></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><div class="section-label">Observations</div><div class="section-badge">NOTES</div></div>
+          <div class="form-grid wide">
+            <div class="toggle-group"><label>Baisse cardio visible</label><div class="toggles"><button class="toggle-btn" onclick="toggle(this,'cardio')">OUI</button><button class="toggle-btn" onclick="toggle(this,'cardio')">NON</button><button class="toggle-btn" onclick="toggle(this,'cardio')">LÉGÈRE</button></div></div>
+            <div class="field" style="grid-column: span 2;"><label>Notes libres</label><textarea id="f-notes" placeholder="Observations tactiques, patterns remarqués..."></textarea></div>
+          </div>
+        </div>
+
+        <div style="height: 72px;"></div>
+      </div>
+    </div>
+
+    <div class="db-view" id="db-view">
+      <div id="db-content"><div class="empty-state"><div class="big">EMPTY</div><p>Aucun combat enregistré</p></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="submit-bar" id="submit-bar" style="display:none;">
+  <div class="submit-info">Catégorie : <span id="bar-cat">—</span> &nbsp;|&nbsp; <span id="bar-fighter-opp">—</span></div>
+  <button class="btn-submit" onclick="saveFight()">ENREGISTRER LE COMBAT</button>
+</div>
+
+<div class="notif" id="notif">✓ COMBAT ENREGISTRÉ</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>NOUVELLE CATÉGORIE</h3>
+    <div class="field">
+      <label>Catégorie de poids</label>
+      <select id="new-cat">
+        <option value="">— Sélectionner —</option>
+        <optgroup label="FEMMES">
+          <option>Poids paille F — Strawweight (52 kg)</option>
+          <option>Poids mouche F — Flyweight (56,7 kg)</option>
+          <option>Poids coq F — Bantamweight (61,2 kg)</option>
+          <option>Poids plume F — Featherweight (65,8 kg)</option>
+        </optgroup>
+        <optgroup label="HOMMES">
+          <option>Poids paille — Strawweight (52 kg)</option>
+          <option>Poids mouche — Flyweight (56,7 kg)</option>
+          <option>Poids coq — Bantamweight (61,2 kg)</option>
+          <option>Poids plume — Featherweight (65,8 kg)</option>
+          <option>Poids léger — Lightweight (70,3 kg)</option>
+          <option>Poids mi-moyen — Welterweight (77,1 kg)</option>
+          <option>Poids moyen — Middleweight (83,9 kg)</option>
+          <option>Poids mi-lourd — Light Heavyweight (93 kg)</option>
+          <option>Poids lourd — Heavyweight (120,2 kg)</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-confirm" onclick="addCat()">AJOUTER</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let db = JSON.parse(localStorage.getItem('mma-db-v2') || '{"categories":[],"fights":[]}');
+  let currentCat = null;
+  let currentTab = 'saisie';
+
+  function save() { localStorage.setItem('mma-db-v2', JSON.stringify(db)); updateStats(); }
+  function updateStats() {
+    document.getElementById('total-cats').textContent = db.categories.length;
+    document.getElementById('total-fights').textContent = db.fights.length;
+  }
+
+  function renderCats() {
+    const list = document.getElementById('cat-list');
+    list.innerHTML = '';
+    db.categories.forEach(c => {
+      const count = db.fights.filter(x => x.catId === c.id).length;
+      const pct = Math.round((count / 20) * 100);
+      const parts = c.name.split('—');
+      const shortName = parts[0].trim();
+      const engName = parts[1] ? parts[1].trim() : '';
+      const card = document.createElement('div');
+      card.className = 'cat-card' + (currentCat?.id === c.id ? ' active' : '');
+      card.innerHTML = `
+        <div class="cat-name">${shortName}</div>
+        <div class="cat-eng">${engName}</div>
+        <div class="cat-count">${count} / 20 combats</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+      card.onclick = () => selectCat(c);
+      list.appendChild(card);
+    });
+  }
+
+  function selectCat(c) {
+    currentCat = c;
+    renderCats();
+    document.getElementById('no-selection').style.display = 'none';
+    document.getElementById('fight-form').style.display = 'block';
+    document.getElementById('submit-bar').style.display = currentTab === 'saisie' ? 'flex' : 'none';
+    const parts = c.name.split('—');
+    document.getElementById('form-cat-name').textContent = parts[0].trim();
+    document.getElementById('form-cat-sub').textContent = parts[1] ? parts[1].trim() : '';
+    const count = db.fights.filter(x => x.catId === c.id).length;
+    document.getElementById('form-fight-count').textContent = count;
+    document.getElementById('bar-cat').textContent = parts[0].trim();
+    document.getElementById('rolling-warning').style.display = count >= 20 ? 'block' : 'none';
+    resetForm();
+    if (currentTab === 'base') renderDB();
+  }
+
+  function resetForm() {
+    ['f-fighter','f-rank','f-opponent','f-event','f-date','f-time','f-notes',
+     's-sig-att','s-sig-land','s-head-att','s-head-land','s-body-att','s-body-land',
+     's-leg-att','s-leg-land','s-kd','td-att','td-land','td-def','td-time','sub-att',
+     'r1','r2','r3','r4','r5','f-result','f-round']
+      .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    document.querySelectorAll('.toggle-btn.selected').forEach(b => b.classList.remove('selected'));
+    ['prec-sig','prec-head','prec-body','prec-leg','prec-td']
+      .forEach(id => { const el = document.getElementById(id); if(el) el.textContent = ''; });
+    document.getElementById('bar-fighter-opp').textContent = '—';
+  }
+
+  function calcPrec(attId, landId, dispId) {
+    const att = parseFloat(document.getElementById(attId).value) || 0;
+    const land = parseFloat(document.getElementById(landId).value) || 0;
+    document.getElementById(dispId).textContent = att > 0 ? Math.round((land/att)*100)+'% PRÉCISION' : '';
+    updateBar();
+  }
+
+  function updateBar() {
+    const f = document.getElementById('f-fighter').value || '—';
+    const o = document.getElementById('f-opponent').value || '—';
+    document.getElementById('bar-fighter-opp').textContent = f + ' vs ' + o;
+  }
+
+  document.addEventListener('input', e => { if (['f-fighter','f-opponent'].includes(e.target.id)) updateBar(); });
+
+  function toggle(btn, group) {
+    document.querySelectorAll(`[onclick="toggle(this,'${group}')"]`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+  function multiToggle(btn) { btn.classList.toggle('selected'); }
+  function getSelected(group) { return Array.from(document.querySelectorAll(`[onclick="toggle(this,'${group}')"].selected`)).map(b => b.textContent.trim()); }
+  function getMultiSelected(id) { return Array.from(document.querySelectorAll(`#${id} .toggle-btn.selected`)).map(b => b.textContent.trim()); }
+
+  function saveFight() {
+    if (!currentCat) return;
+    const fight = {
+      id: Date.now(), catId: currentCat.id,
+      fighter: document.getElementById('f-fighter').value || '—',
+      rank: document.getElementById('f-rank').value || '—',
+      opponent: document.getElementById('f-opponent').value || '—',
+      event: document.getElementById('f-event').value,
+      date: document.getElementById('f-date').value,
+      result: document.getElementById('f-result').value,
+      round: document.getElementById('f-round').value,
+      time: document.getElementById('f-time').value,
+      striking: {
+        sigAtt: +document.getElementById('s-sig-att').value||0, sigLand: +document.getElementById('s-sig-land').value||0,
+        headAtt: +document.getElementById('s-head-att').value||0, headLand: +document.getElementById('s-head-land').value||0,
+        bodyAtt: +document.getElementById('s-body-att').value||0, bodyLand: +document.getElementById('s-body-land').value||0,
+        legAtt: +document.getElementById('s-leg-att').value||0, legLand: +document.getElementById('s-leg-land').value||0,
+        knockdowns: +document.getElementById('s-kd').value||0, distance: getSelected('dist')[0]||'—',
+      },
+      grappling: {
+        tdAtt: +document.getElementById('td-att').value||0, tdLand: +document.getElementById('td-land').value||0,
+        tdDef: +document.getElementById('td-def').value||0, groundTime: +document.getElementById('td-time').value||0,
+        shootZone: getSelected('shoot')[0]||'—', positions: getMultiSelected('positions'), transitions: getMultiSelected('transitions'),
+      },
+      submissions: { attempts: +document.getElementById('sub-att').value||0, types: getMultiSelected('sub-types'), startPos: getSelected('sub-pos-g')[0]||'—' },
+      rounds: { r1: document.getElementById('r1').value, r2: document.getElementById('r2').value, r3: document.getElementById('r3').value, r4: document.getElementById('r4').value, r5: document.getElementById('r5').value },
+      cardio: getSelected('cardio')[0]||'—',
+      notes: document.getElementById('f-notes').value,
+    };
+
+    db.fights.push(fight);
+
+    // Rolling 20
+    const catFights = db.fights.filter(x => x.catId === currentCat.id).sort((a,b) => a.id - b.id);
+    if (catFights.length > 20) db.fights = db.fights.filter(x => x.id !== catFights[0].id);
+
+    save();
+    renderCats();
+    const newCount = db.fights.filter(x => x.catId === currentCat.id).length;
+    document.getElementById('form-fight-count').textContent = newCount;
+    document.getElementById('rolling-warning').style.display = newCount >= 20 ? 'block' : 'none';
+    resetForm();
+
+    const notif = document.getElementById('notif');
+    notif.classList.add('show');
+    setTimeout(() => notif.classList.remove('show'), 2500);
+    if (currentTab === 'base') renderDB();
+  }
+
+  function showAddCat() { document.getElementById('modal').classList.add('show'); }
+  function closeModal() { document.getElementById('modal').classList.remove('show'); }
+  function addCat() {
+    const name = document.getElementById('new-cat').value;
+    if (!name) return;
+    if (db.categories.find(c => c.name === name)) { closeModal(); return; }
+    db.categories.push({ id: Date.now(), name });
+    save(); renderCats(); closeModal();
+    document.getElementById('new-cat').value = '';
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='saisie')||(i===1&&tab==='base')));
+    document.getElementById('form-view').classList.toggle('hidden', tab === 'base');
+    document.getElementById('db-view').classList.toggle('active', tab === 'base');
+    document.getElementById('submit-bar').style.display = (tab === 'saisie' && currentCat) ? 'flex' : 'none';
+    if (tab === 'base') renderDB();
+  }
+
+  function renderDB() {
+    const container = document.getElementById('db-content');
+    const fights = currentCat ? db.fights.filter(x => x.catId === currentCat.id) : db.fights;
+    if (fights.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="big">EMPTY</div><p>Aucun combat enregistré${currentCat ? ' pour cette catégorie' : ''}</p></div>`;
+      return;
+    }
+    const sorted = [...fights].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+    container.innerHTML = `
+      <div style="margin-bottom:14px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">
+        ${currentCat ? `<span style="color:var(--gold);">${currentCat.name.split('—')[0].trim()}</span> — ` : ''}${sorted.length} combat(s)
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>DATE</th><th>COMBATTANT</th><th>RANG</th><th>ADVERSAIRE</th><th>ÉVÉNEMENT</th>
+          <th>ISSUE</th><th>RD</th><th>SIG. FRP</th><th>PRÉC.</th><th>TD</th><th>TD%</th>
+          <th>KD</th><th>SUB</th><th>SHOOT</th><th>CARDIO</th>
+        </tr></thead>
+        <tbody>
+          ${sorted.map(f => {
+            const sigPrec = f.striking.sigAtt > 0 ? Math.round(f.striking.sigLand/f.striking.sigAtt*100)+'%' : '—';
+            const tdPrec = f.grappling.tdAtt > 0 ? Math.round(f.grappling.tdLand/f.grappling.tdAtt*100)+'%' : '—';
+            const rc = f.result?.includes('KO') ? 'result-ko' : f.result?.includes('SOUM') ? 'result-sub' : 'result-dec';
+            return `<tr>
+              <td>${f.date||'—'}</td>
+              <td style="font-weight:600;">${f.fighter}</td>
+              <td style="color:var(--gold);">${f.rank}</td>
+              <td style="color:var(--muted);">${f.opponent}</td>
+              <td style="color:var(--muted);font-size:11px;">${f.event||'—'}</td>
+              <td class="${rc}">${f.result||'—'}</td>
+              <td>${f.round||'—'}${f.time?' ('+f.time+')':''}</td>
+              <td>${f.striking.sigLand}/${f.striking.sigAtt}</td>
+              <td style="color:var(--gold);">${sigPrec}</td>
+              <td>${f.grappling.tdLand}/${f.grappling.tdAtt}</td>
+              <td style="color:var(--gold);">${tdPrec}</td>
+              <td style="color:var(--red);">${f.striking.knockdowns||'—'}</td>
+              <td>${f.submissions.attempts||'—'}</td>
+              <td style="color:var(--muted);">${f.grappling.shootZone}</td>
+              <td style="color:var(--muted);">${f.cardio}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>`;
+  }
+
+  updateStats();
+  renderCats();
+</script>
+</body>
+</html>
