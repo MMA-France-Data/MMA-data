@@ -1225,7 +1225,7 @@ function renderLog() {
       <span class="le-round" style="color:${color};">R${a.round}</span>
       <span class="le-time">${a.time}</span>
       <span class="le-cat" style="color:${color};font-size:9px;">${a.category}</span>
-      <span class="le-action">${a.action}</span>
+      <span class="le-action" style="cursor:pointer;text-decoration:underline dotted;" onclick="editAction(${origIdx})" title="Modifier">${a.action}</span>
       <span class="le-detail">${detail}</span>
       <button class="le-del" onclick="deleteAction(${origIdx})">✕</button>
     </div>`;
@@ -1238,6 +1238,55 @@ function deleteAction(idx) {
   renderLog();
   updateSaveBar();
   updateSequenceDisplay();
+}
+
+let editingActionIdx = null;
+
+function editAction(idx) {
+  const a = currentActions[idx];
+  if (!a) return;
+  editingActionIdx = idx;
+
+  // Open context panel with existing values pre-selected
+  const fields = CTX_FIELDS[a.category] || [];
+  document.getElementById('ctx-title').textContent = '✎ ' + a.action;
+
+  const precEl = document.getElementById('ctx-preceded');
+  if (a.preceded_by) {
+    precEl.style.display = 'block';
+    document.getElementById('ctx-preceded-text').textContent = a.preceded_by;
+  } else {
+    precEl.style.display = 'none';
+  }
+
+  const fieldsEl = document.getElementById('ctx-fields');
+  fieldsEl.innerHTML = fields.map(f => `
+    <div class="ctx-section">
+      <div class="ctx-section-title">${f.label}</div>
+      <div class="ctx-btns">
+        ${f.opts.map(o => `<button class="ctx-btn${a[f.id]===o?' on':''}" data-field="${f.id}" data-val="${o}" onclick="ctxSelect(this,'${f.id}')">${o}</button>`).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('ctx-panel').classList.add('open');
+  // Override confirm to update instead of add
+  document.querySelector('.ctx-confirm').onclick = confirmEditAction;
+}
+
+function confirmEditAction() {
+  if (editingActionIdx === null) return;
+  const a = currentActions[editingActionIdx];
+  document.querySelectorAll('.ctx-btn.on').forEach(btn => {
+    a[btn.dataset.field] = btn.dataset.val;
+  });
+  currentActions[editingActionIdx] = {...a};
+  editingActionIdx = null;
+  document.getElementById('ctx-panel').classList.remove('open');
+  document.querySelector('.ctx-confirm').onclick = confirmAction; // restore
+  renderLog();
+  updateSaveBar();
+  showNotif('✎ ACTION MODIFIÉE');
 }
 
 function timeToSec(t) {
