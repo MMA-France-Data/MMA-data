@@ -6,6 +6,19 @@
 <title>MMA DATA TRACKER</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
+  #lock-screen {
+    position: fixed; inset: 0; background: #0A0A0A; z-index: 9999;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px;
+  }
+  #lock-screen .lock-logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 6px; color: #F0F0F0; }
+  #lock-screen .lock-logo span { color: #E8281A; }
+  #lock-screen .lock-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: #666; }
+  #lock-screen input { background: #111; border: 1px solid #2A2A2A; color: #F0F0F0; padding: 12px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 16px; outline: none; text-align: center; width: 260px; letter-spacing: 3px; transition: border-color 0.2s; }
+  #lock-screen input:focus { border-color: #E8281A; }
+  #lock-screen .lock-btn { background: #E8281A; border: none; color: white; padding: 12px 40px; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; cursor: pointer; }
+  #lock-screen .lock-error { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #E8281A; letter-spacing: 2px; height: 16px; }
+</style>
+<style>
   :root {
     --red: #E8281A; --gold: #C9A84C; --bg: #0A0A0A; --surface: #111111;
     --surface2: #1A1A1A; --border: #2A2A2A; --text: #F0F0F0; --muted: #666; --green: #2ECC71;
@@ -122,6 +135,33 @@
 </style>
 </head>
 <body>
+
+<div id="lock-screen">
+  <div class="lock-logo">MMA<span>.</span>DATA</div>
+  <div class="lock-sub">ACCÈS RESTREINT</div>
+  <input type="password" id="pwd-input" placeholder="••••••••••" onkeydown="if(event.key==='Enter') checkPwd()">
+  <button class="lock-btn" onclick="checkPwd()">ENTRER</button>
+  <div class="lock-error" id="pwd-error"></div>
+</div>
+
+<script>
+  (function() {
+    if (sessionStorage.getItem('mma-auth') === 'ok') {
+      document.getElementById('lock-screen').style.display = 'none';
+    }
+  })();
+  function checkPwd() {
+    const val = document.getElementById('pwd-input').value;
+    if (val === 'K7#mX2$pL9') {
+      sessionStorage.setItem('mma-auth', 'ok');
+      document.getElementById('lock-screen').style.display = 'none';
+    } else {
+      document.getElementById('pwd-error').textContent = '✗ MOT DE PASSE INCORRECT';
+      document.getElementById('pwd-input').value = '';
+      setTimeout(() => document.getElementById('pwd-error').textContent = '', 2000);
+    }
+  }
+</script>
 
 <header>
   <div class="logo">MMA<span>.</span>DATA</div>
