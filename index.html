@@ -1604,7 +1604,7 @@ function renderAutoStats() {
         DEBOUT : <span style="color:var(--text);">${rs.filter(a=>a.result==='TOUCHÉ').length}/${rs.length}</span>
         &nbsp;|&nbsp; GNP : <span style="color:var(--text);">${gnpTotal}</span>
         &nbsp;|&nbsp; TD : <span style="color:var(--text);">${rtd.filter(a=>a.success==='RÉUSSI').length}/${rtd.length}</span>
-        &nbsp;|&nbsp; TOTAL : <span style="color:var(--blue);">${ra.length}</span>
+        &nbsp;|&nbsp; TOTAL FRAPPES : <span style="color:var(--blue);">${rs.filter(a=>a.result==='TOUCHÉ').length+gnpTotal}/${rs.length+gnpTotal}</span>
       </span>
     </div>`;
   });
