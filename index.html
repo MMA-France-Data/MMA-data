@@ -430,13 +430,17 @@ function checkPwd(){
 
           <!-- Chrono -->
           <div class="chrono-bar">
-            <div class="chrono-display" id="chrono-display">5:00</div>
+            <input type="text" id="chrono-display" value="5:00" 
+              style="font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:4px;color:var(--gold);min-width:85px;background:none;border:none;outline:none;border-bottom:1px solid var(--border);width:90px;text-align:center;cursor:text;"
+              onchange="setChronoFromInput(this.value)"
+              onkeydown="if(event.key==='Enter')setChronoFromInput(this.value)"
+              title="Clique pour modifier le temps manuellement">
             <div style="display:flex;gap:5px;">
               <button class="cbtn start" onclick="chronoStart()">▶ START</button>
               <button class="cbtn pause" onclick="chronoPause()">⏸ PAUSE</button>
               <button class="cbtn reset" onclick="chronoReset()">↺ RESET</button>
             </div>
-            <div class="chrono-info">ESPACE = start/pause &nbsp;|&nbsp; R = reset</div>
+            <div class="chrono-info">ESPACE = start/pause &nbsp;|&nbsp; R = reset &nbsp;|&nbsp; Clique sur le timer pour modifier</div>
           </div>
 
           <!-- Sequence -->
@@ -519,6 +523,8 @@ function checkPwd(){
                 <button class="ab" onclick="startAction('CLINCH_WORK','DIRTY BOX')">DIRTY BOX</button>
                 <button class="ab" onclick="startAction('CLINCH_WORK','TRIP')">TRIP</button>
                 <button class="ab" onclick="startAction('CLINCH_WORK','ROTATION CAGE')">ROTATION</button>
+                <button class="ab" onclick="startAction('CLINCH_WORK','PUSH TO CAGE')">PUSH CAGE</button>
+                <button class="ab" onclick="startAction('CLINCH_WORK','CONTRÔLE CAGE')">CTRL CAGE</button>
               </div>
               <div class="act-row-label">SORTIE</div>
               <div class="act-row">
@@ -1041,9 +1047,32 @@ function updateChronoDisplay() {
   const rem = ROUND_MAX - chronoSec;
   const m = Math.floor(rem/60);
   const s = rem%60;
-  document.getElementById('chrono-display').textContent = m+':'+(s<10?'0':'')+s;
-  if(rem<=60) document.getElementById('chrono-display').style.color='var(--red)';
-  else document.getElementById('chrono-display').style.color='var(--gold)';
+  const el = document.getElementById('chrono-display');
+  if(document.activeElement !== el) {
+    el.value = m+':'+(s<10?'0':'')+s;
+  }
+  if(rem<=60) el.style.color='var(--red)';
+  else el.style.color='var(--gold)';
+}
+
+function setChronoFromInput(val) {
+  // Accepte formats: 2:34, 234, 2.34, 154
+  val = val.trim();
+  let totalSec = 0;
+  if(val.includes(':')) {
+    const parts = val.split(':');
+    totalSec = parseInt(parts[0]||0)*60 + parseInt(parts[1]||0);
+  } else if(val.includes('.')) {
+    const parts = val.split('.');
+    totalSec = parseInt(parts[0]||0)*60 + parseInt(parts[1]||0);
+  } else {
+    totalSec = parseInt(val)||0;
+  }
+  // Le timer est un compte à rebours depuis 5:00
+  // si l'utilisateur tape 2:34, ça veut dire qu'il reste 2:34 → chronoSec = 300 - 154 = 146
+  chronoSec = Math.max(0, Math.min(ROUND_MAX, ROUND_MAX - totalSec));
+  updateChronoDisplay();
+  showNotif('⏱ ' + val);
 }
 
 function setRound(n,btn) {
@@ -1103,6 +1132,7 @@ const CTX_FIELDS = {
     {id:'control', label:'CONTRÔLE', opts:['DOMINANT','ÉGAL','DOMINÉ']},
   ],
   'CLINCH_WORK': [
+    {id:'position', label:'POSITION', opts:['CENTRE','CAGE ADV. ACCULÉ','CAGE MOI ACCULÉ']},
     {id:'result', label:'RÉSULTAT', opts:['TOUCHÉ','MANQUÉ','DAMAGE FAIT']},
     {id:'control', label:'CONTRÔLE', opts:['MAINTENU','PERDU']},
   ],
@@ -1642,7 +1672,14 @@ function renderFighterRapport(name) {
   // DÉFENSE
   html += rapportSection('DÉFENSE', buildDefStats(allActs));
 
-  // SÉQUENCES
+  // PROFIL GLOBAL
+  html += rapportSection('PROFIL GLOBAL', buildProfileGlobal(allActs, fights));
+
+  // SÉQUENCES GAGNANTES
+  const winSeqs = buildWinningSequences(allActs);
+  if(winSeqs) html += winSeqs;
+
+  // SÉQUENCES FRÉQUENTES
   html += buildSequenceSection(allActs, 'SÉQUENCES FRÉQUENTES (≤3s)');
 
   // DÉTAIL PAR COMBAT
@@ -1809,6 +1846,7 @@ function selectRoundFighter(name, btn) {
 // ── STAT BUILDERS ──
 function buildStrikingStats(acts) {
   const strikes = acts.filter(a=>a.category==='STRIKE');
+  if(!strikes.length) return null;
   const touched = strikes.filter(a=>a.result==='TOUCHÉ').length;
   const byType={}, byTarget={}, byDist={};
   strikes.forEach(s=>{
@@ -1816,13 +1854,15 @@ function buildStrikingStats(acts) {
     if(s.target){if(!byTarget[s.target])byTarget[s.target]={att:0,land:0};byTarget[s.target].att++;if(s.result==='TOUCHÉ')byTarget[s.target].land++;}
     if(s.distance){if(!byDist[s.distance])byDist[s.distance]={att:0,land:0};byDist[s.distance].att++;if(s.result==='TOUCHÉ')byDist[s.distance].land++;}
   });
-  if(!strikes.length) return null;
-  let boxes = [
-    statBox('TOTAL',`${touched}/${strikes.length}`,strikes.length>0?Math.round(touched/strikes.length*100)+'% PRÉC':'—'),
-  ];
+  let boxes = [statBox('TOTAL',`${touched}/${strikes.length}`,strikes.length>0?Math.round(touched/strikes.length*100)+'% PRÉC':'—')];
   Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].land}/${byType[t].att}`,byType[t].att>0?Math.round(byType[t].land/byType[t].att*100)+'%':'—')));
   Object.keys(byTarget).forEach(t=>boxes.push(statBox('→'+t,`${byTarget[t].land}/${byTarget[t].att}`,byTarget[t].att>0?Math.round(byTarget[t].land/byTarget[t].att*100)+'%':'—')));
   Object.keys(byDist).forEach(d=>boxes.push(statBox(d,`${byDist[d].land}/${byDist[d].att}`,byDist[d].att>0?Math.round(byDist[d].land/byDist[d].att*100)+'%':'—')));
+  // Strikes début vs fin de round (première vs dernière minute)
+  const early = strikes.filter(a=>timeToSec(a.time)<=60);
+  const late = strikes.filter(a=>timeToSec(a.time)>=240);
+  if(early.length) boxes.push(statBox('PRÉC DÉB.ROUND',early.length>0?Math.round(early.filter(a=>a.result==='TOUCHÉ').length/early.length*100)+'%':'—',early.length+' frappes'));
+  if(late.length) boxes.push(statBox('PRÉC FIN ROUND',late.length>0?Math.round(late.filter(a=>a.result==='TOUCHÉ').length/late.length*100)+'%':'—',late.length+' frappes'));
   return boxes;
 }
 
@@ -1831,44 +1871,79 @@ function buildStrikingPatterns(acts) {
   const sorted = [...acts].sort((a,b)=>{if(a.round!==b.round)return a.round-b.round;return timeToSec(a.time)-timeToSec(b.time);});
   const patterns = {};
 
-  // Kick jambe count → high kick pattern
+  // Kick jambe → High kick (après 1, 2, 3+ kicks jambe)
   let legKickCount = 0;
-  sorted.forEach((a,i)=>{
-    if(a.action==='KICK JAMBE') legKickCount++;
-    if(a.action==='KICK TÊTE' && legKickCount>=2){
-      const key = `${legKickCount}x KICK JAMBE → KICK TÊTE`;
+  sorted.forEach(a=>{
+    if(a.category==='STRIKE'&&a.action==='KICK JAMBE') legKickCount++;
+    else if(a.category==='STRIKE'&&(a.action==='KICK TÊTE'||a.action==='KICK CORPS')&&legKickCount>0){
+      const key = `${legKickCount}x LEG KICK → ${a.action}`;
       if(!patterns[key]) patterns[key]={att:0,land:0};
       patterns[key].att++;
       if(a.result==='TOUCHÉ') patterns[key].land++;
       legKickCount=0;
-    }
-    if(a.category==='STRIKE'&&a.action!=='KICK JAMBE'&&a.action!=='KICK TÊTE') legKickCount=0;
+    } else if(a.category==='STRIKE') legKickCount=0;
   });
 
-  // Kick corps accumulation
-  let bodyKickCount = 0;
-  sorted.forEach(a=>{
-    if(a.action==='KICK CORPS') bodyKickCount++;
-    if(bodyKickCount>=3){
-      const key = '3+ KICK CORPS (fatigue adverse)';
+  // Kick corps → TD (adversaire baisse les bras)
+  sorted.forEach((a,i)=>{
+    if(a.category==='STRIKE'&&a.action==='KICK CORPS'&&a.result==='TOUCHÉ'){
+      // Cherche un TD dans les 5 secondes suivantes
+      const next = sorted.slice(i+1).find(n=>n.round===a.round&&n.category==='TD_OFF'&&timeToSec(n.time)-timeToSec(a.time)<=5);
+      if(next){
+        const key='KICK CORPS → TD';
+        if(!patterns[key]) patterns[key]={att:0,land:0};
+        patterns[key].att++;
+        if(next.success==='RÉUSSI') patterns[key].land++;
+      }
+    }
+  });
+
+  // Jab → Cross → Kick corps
+  for(let i=0;i<sorted.length-2;i++){
+    const a=sorted[i],b=sorted[i+1],c=sorted[i+2];
+    if(a.action==='JAB'&&b.action==='CROSS'&&c.action==='KICK CORPS'&&a.round===c.round&&timeToSec(c.time)-timeToSec(a.time)<=4){
+      const key='JAB → CROSS → KICK CORPS';
       if(!patterns[key]) patterns[key]={att:0,land:0};
       patterns[key].att++;
-      patterns[key].land++;
-      bodyKickCount=0;
+      if(c.result==='TOUCHÉ') patterns[key].land++;
     }
-    if(a.category==='STRIKE'&&a.action!=='KICK CORPS') bodyKickCount=0;
+  }
+
+  // Middle kick → High kick
+  sorted.forEach((a,i)=>{
+    if(a.category==='STRIKE'&&a.action==='KICK CORPS'){
+      const next=sorted.slice(i+1).find(n=>n.round===a.round&&n.action==='KICK TÊTE'&&timeToSec(n.time)-timeToSec(a.time)<=6);
+      if(next){
+        const key='KICK CORPS → KICK TÊTE';
+        if(!patterns[key]) patterns[key]={att:0,land:0};
+        patterns[key].att++;
+        if(next.result==='TOUCHÉ') patterns[key].land++;
+      }
+    }
   });
 
   // Feinte → réaction → exploit
   sorted.forEach((a,i)=>{
-    if(a.category==='FEINTE'&&a.reaction==='OUVERTURE CRÉÉE'&&i<sorted.length-1){
-      const next=sorted[i+1];
-      if(next&&next.round===a.round&&timeToSec(next.time)-timeToSec(a.time)<=3){
+    if(a.category==='FEINTE'&&a.reaction==='OUVERTURE CRÉÉE'){
+      const next=sorted.slice(i+1).find(n=>n.round===a.round&&timeToSec(n.time)-timeToSec(a.time)<=3);
+      if(next){
         const key=`FEINTE → ${next.action}`;
         if(!patterns[key]) patterns[key]={att:0,land:0};
         patterns[key].att++;
         if(next.result==='TOUCHÉ') patterns[key].land++;
       }
+    }
+  });
+
+  // Pull back adverse → strike réussi
+  const defActs = acts.filter(a=>a.category==='DEF_STRIKE'&&a.action==='PULL BACK');
+  defActs.forEach((a,i)=>{
+    const next=sorted.find(n=>n.round===a.round&&n.category==='STRIKE'&&timeToSec(n.time)-timeToSec(a.time)<=3&&timeToSec(n.time)>timeToSec(a.time));
+    if(next){
+      const key=`PULL BACK → ${next.action}`;
+      if(!patterns[key]) patterns[key]={att:0,land:0};
+      patterns[key].att++;
+      if(next.result==='TOUCHÉ') patterns[key].land++;
     }
   });
 
@@ -1878,28 +1953,40 @@ function buildStrikingPatterns(acts) {
 
 function buildFatigueStats(acts) {
   if(!acts.length) return null;
-  const rounds=[1,2,3,4,5];
   const boxes=[];
-  rounds.forEach(r=>{
+
+  // Précision par round
+  [1,2,3,4,5].forEach(r=>{
     const rStrikes=acts.filter(a=>a.round===r&&a.category==='STRIKE');
     if(!rStrikes.length) return;
     const prec=Math.round(rStrikes.filter(a=>a.result==='TOUCHÉ').length/rStrikes.length*100);
     boxes.push(statBox(`PRÉC R${r}`,prec+'%',rStrikes.length+' frappes'));
   });
-  // Chute de précision R1→R3
-  const r1=acts.filter(a=>a.round===1&&a.category==='STRIKE');
-  const r3=acts.filter(a=>a.round===3&&a.category==='STRIKE');
-  if(r1.length&&r3.length){
-    const p1=Math.round(r1.filter(a=>a.result==='TOUCHÉ').length/r1.length*100);
-    const p3=Math.round(r3.filter(a=>a.result==='TOUCHÉ').length/r3.length*100);
+
+  // Chute précision R1→R3
+  const r1s=acts.filter(a=>a.round===1&&a.category==='STRIKE');
+  const r3s=acts.filter(a=>a.round===3&&a.category==='STRIKE');
+  if(r1s.length&&r3s.length){
+    const p1=Math.round(r1s.filter(a=>a.result==='TOUCHÉ').length/r1s.length*100);
+    const p3=Math.round(r3s.filter(a=>a.result==='TOUCHÉ').length/r3s.length*100);
     const diff=p1-p3;
-    boxes.push(statBox('CHUTE R1→R3',diff>0?'-'+diff+'%':'+'+Math.abs(diff)+'%',diff>10?'⚠ CARDIO':diff>5?'LÉGÈRE':'STABLE'));
+    boxes.push(statBox('CHUTE R1→R3',diff>0?'-'+diff+'%':'+'+Math.abs(diff)+'%',diff>15?'⚠⚠ CARDIO':diff>8?'⚠ CARDIO':diff>3?'LÉGÈRE':'STABLE'));
   }
-  // Volume par round
-  rounds.forEach(r=>{
+
+  // Volume par round (baisse = fatigue)
+  [1,2,3,4,5].forEach(r=>{
     const rActs=acts.filter(a=>a.round===r);
     if(rActs.length) boxes.push(statBox(`VOL R${r}`,rActs.length,'ACTIONS'));
   });
+
+  // TD R1-R2 vs R3+ (wrestlers qui abandonnent)
+  const tdEarly=acts.filter(a=>a.category==='TD_OFF'&&a.round<=2);
+  const tdLate=acts.filter(a=>a.category==='TD_OFF'&&a.round>=3);
+  if(tdEarly.length||tdLate.length){
+    boxes.push(statBox('TD R1-R2',tdEarly.length,'TENTATIVES'));
+    boxes.push(statBox('TD R3+',tdLate.length,tdEarly.length>0&&tdLate.length<tdEarly.length?'⚠ BAISSE':'STABLE'));
+  }
+
   return boxes.length?boxes:null;
 }
 
@@ -1920,6 +2007,12 @@ function buildTDStats(acts) {
   if(cage.length) boxes.push(statBox('TD CAGE',`${cage.filter(a=>a.success==='RÉUSSI').length}/${cage.length}`,Math.round(cage.filter(a=>a.success==='RÉUSSI').length/cage.length*100)+'%'));
   if(open.length) boxes.push(statBox('TD OUVERT',`${open.filter(a=>a.success==='RÉUSSI').length}/${open.length}`,Math.round(open.filter(a=>a.success==='RÉUSSI').length/open.length*100)+'%'));
 
+  // Après échange vs à froid
+  const afterExch=tds.filter(a=>a.after_exchange==='OUI');
+  const cold=tds.filter(a=>a.after_exchange==='NON');
+  if(afterExch.length) boxes.push(statBox('TD APR.ÉCHANGE',`${afterExch.filter(a=>a.success==='RÉUSSI').length}/${afterExch.length}`,Math.round(afterExch.filter(a=>a.success==='RÉUSSI').length/afterExch.length*100)+'%'));
+  if(cold.length) boxes.push(statBox('TD À FROID',`${cold.filter(a=>a.success==='RÉUSSI').length}/${cold.length}`,Math.round(cold.filter(a=>a.success==='RÉUSSI').length/cold.length*100)+'%'));
+
   // Chain wrestling
   const chain=tds.filter(a=>a.chain==='OUI');
   if(chain.length) boxes.push(statBox('CHAIN WREST.',`${chain.filter(a=>a.success==='RÉUSSI').length}/${chain.length}`,Math.round(chain.filter(a=>a.success==='RÉUSSI').length/chain.length*100)+'%'));
@@ -1936,8 +2029,11 @@ function buildTDStats(acts) {
 function buildClinchStats(acts) {
   const entries=acts.filter(a=>a.category==='CLINCH');
   const work=acts.filter(a=>a.category==='CLINCH_WORK');
+  const tdFromClinch=acts.filter(a=>a.category==='TD_OFF'&&a.action.includes('CLINCH'));
+  const tdTotal=acts.filter(a=>a.category==='TD_OFF');
   if(!entries.length&&!work.length) return null;
   const boxes=[];
+
   if(entries.length){
     const ok=entries.filter(a=>a.success==='RÉUSSIE').length;
     boxes.push(statBox('ENTRÉES',`${ok}/${entries.length}`,Math.round(ok/entries.length*100)+'%'));
@@ -1945,7 +2041,26 @@ function buildClinchStats(acts) {
     entries.forEach(e=>{const t=e.action.split(' - ').pop();if(!byType[t])byType[t]={att:0,ok:0};byType[t].att++;if(e.success==='RÉUSSIE')byType[t].ok++;});
     Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,Math.round(byType[t].ok/byType[t].att*100)+'%')));
   }
-  if(work.length) boxes.push(statBox('TRAVAIL',work.length,'ACTIONS'));
+
+  // TD depuis clinch vs ouvert
+  if(tdFromClinch.length&&tdTotal.length){
+    const tdOpen=tdTotal.filter(a=>!a.action.includes('CLINCH'));
+    const clinchOk=tdFromClinch.filter(a=>a.success==='RÉUSSI').length;
+    const openOk=tdOpen.filter(a=>a.success==='RÉUSSI').length;
+    boxes.push(statBox('TD/CLINCH',`${clinchOk}/${tdFromClinch.length}`,tdFromClinch.length>0?Math.round(clinchOk/tdFromClinch.length*100)+'%':'—'));
+    if(tdOpen.length) boxes.push(statBox('TD/OUVERT',`${openOk}/${tdOpen.length}`,tdOpen.length>0?Math.round(openOk/tdOpen.length*100)+'%':'—'));
+  }
+
+  // Genou clinch par round
+  const genoux=work.filter(a=>a.action==='GENOU CLINCH');
+  if(genoux.length){
+    [1,2,3].forEach(r=>{
+      const rG=genoux.filter(a=>a.round===r);
+      if(rG.length) boxes.push(statBox(`GENOU R${r}`,rG.length,'ACTIONS'));
+    });
+  }
+
+  if(work.length) boxes.push(statBox('TRAVAIL TOTAL',work.length,'ACTIONS'));
   return boxes;
 }
 
@@ -1954,12 +2069,26 @@ function buildSubStats(acts) {
   if(!subs.length) return null;
   const ok=subs.filter(a=>a.success==='SOUMISSION').length;
   const boxes=[statBox('TOTAL',`${ok}/${subs.length}`,subs.length>0?Math.round(ok/subs.length*100)+'%':'—')];
+
+  // Par type
   const byType={};
-  subs.forEach(s=>{if(!byType[s.action])byType[s.action]={att:0,ok:0};byType[s.action].att++;if(s.success==='SOUMISSION')byType[s.action].ok++;});
-  Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,'DEPUIS '+((subs.find(s=>s.action===t)?.position)||'—'))));
+  subs.forEach(s=>{if(!byType[s.action])byType[s.action]={att:0,ok:0,pos:{}};byType[s.action].att++;if(s.success==='SOUMISSION')byType[s.action].ok++;if(s.position){byType[s.action].pos[s.position]=(byType[s.action].pos[s.position]||0)+1;}});
+  Object.keys(byType).forEach(t=>{
+    const topPos=Object.keys(byType[t].pos).sort((a,b)=>byType[t].pos[b]-byType[t].pos[a])[0]||'—';
+    boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,'DEPUIS '+topPos));
+  });
+
+  // Par position de départ
   const byPos={};
   subs.forEach(s=>{if(s.position){if(!byPos[s.position])byPos[s.position]={att:0,ok:0};byPos[s.position].att++;if(s.success==='SOUMISSION')byPos[s.position].ok++;}});
   Object.keys(byPos).forEach(p=>boxes.push(statBox('DEPUIS '+p,`${byPos[p].ok}/${byPos[p].att}`,Math.round(byPos[p].ok/byPos[p].att*100)+'%')));
+
+  // Après GnP vs direct
+  const afterGnP=subs.filter(a=>a.setup==='GNP');
+  const direct=subs.filter(a=>a.setup==='DIRECT');
+  if(afterGnP.length) boxes.push(statBox('APR. GNP',`${afterGnP.filter(a=>a.success==='SOUMISSION').length}/${afterGnP.length}`,Math.round(afterGnP.filter(a=>a.success==='SOUMISSION').length/afterGnP.length*100)+'%'));
+  if(direct.length) boxes.push(statBox('DIRECT',`${direct.filter(a=>a.success==='SOUMISSION').length}/${direct.length}`,Math.round(direct.filter(a=>a.success==='SOUMISSION').length/direct.length*100)+'%'));
+
   return boxes;
 }
 
@@ -1968,20 +2097,139 @@ function buildDefStats(acts) {
   const tdDef=acts.filter(a=>a.category==='TD_DEF');
   if(!def.length&&!tdDef.length) return null;
   const boxes=[];
+  const sorted=[...acts].sort((a,b)=>{if(a.round!==b.round)return a.round-b.round;return timeToSec(a.time)-timeToSec(b.time);});
+
   if(def.length){
     const ok=def.filter(a=>a.success==='RÉUSSI').length;
     boxes.push(statBox('DEF STRIKE',`${ok}/${def.length}`,Math.round(ok/def.length*100)+'%'));
     const byType={};
     def.forEach(d=>{if(!byType[d.action])byType[d.action]={att:0,ok:0};byType[d.action].att++;if(d.success==='RÉUSSI')byType[d.action].ok++;});
     Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,Math.round(byType[t].ok/byType[t].att*100)+'%')));
+
+    // Contre-attaques après défense
     const counter=def.filter(a=>a.counter==='OUI');
-    if(counter.length) boxes.push(statBox('CONTRE APR. DEF',counter.length,Math.round(counter.length/def.length*100)+'%'));
+    if(counter.length) boxes.push(statBox('CONTRE/DEF',counter.length,Math.round(counter.length/def.length*100)+'%'));
+
+    // VULNÉRABILITÉS — Pull back → strike adverse suivant
+    const pullbacks=def.filter(a=>a.action==='PULL BACK'&&a.success==='TOUCHÉ QUAND MÊME');
+    if(pullbacks.length) boxes.push(statBox('PULL BACK RATÉ',pullbacks.length,'VULNÉRABILITÉ'));
+
+    // High guard → body shot
+    const highGuard=def.filter(a=>a.action==='HIGH GUARD');
+    if(highGuard.length){
+      // Cherche body shot après high guard
+      let bodyAfterHG=0;
+      highGuard.forEach(hg=>{
+        const next=sorted.find(n=>n.round===hg.round&&n.category==='STRIKE'&&n.target==='CORPS'&&timeToSec(n.time)>timeToSec(hg.time)&&timeToSec(n.time)-timeToSec(hg.time)<=4);
+        if(next&&next.result==='TOUCHÉ') bodyAfterHG++;
+      });
+      boxes.push(statBox('BODY/H.GUARD',`${bodyAfterHG}/${highGuard.length}`,highGuard.length>0?Math.round(bodyAfterHG/highGuard.length*100)+'%':'—'));
+    }
   }
+
   if(tdDef.length){
     const ok=tdDef.filter(a=>a.success==='RÉUSSIE').length;
     boxes.push(statBox('DEF TD',`${ok}/${tdDef.length}`,Math.round(ok/tdDef.length*100)+'%'));
+    const byType={};
+    tdDef.forEach(d=>{if(!byType[d.action])byType[d.action]={att:0,ok:0};byType[d.action].att++;if(d.success==='RÉUSSIE')byType[d.action].ok++;});
+    Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,Math.round(byType[t].ok/byType[t].att*100)+'%')));
   }
+
   return boxes;
+}
+
+function buildProfileGlobal(acts, fights) {
+  if(!acts.length) return null;
+  const boxes=[];
+
+  // Fighter pressure index = frappes offensives / (offensives + défensives)
+  const offStrikes=acts.filter(a=>a.category==='STRIKE').length;
+  const defStrikes=acts.filter(a=>a.category==='DEF_STRIKE').length;
+  if(offStrikes+defStrikes>0){
+    const pressureIdx=Math.round(offStrikes/(offStrikes+defStrikes)*100);
+    boxes.push(statBox('PRESSURE INDEX',pressureIdx+'%',pressureIdx>65?'AGRESSIF':pressureIdx>45?'ÉQUILIBRÉ':'COUNTER'));
+  }
+
+  // Grappling dominance
+  const tdOk=acts.filter(a=>a.category==='TD_OFF'&&a.success==='RÉUSSI').length;
+  const tdDef=acts.filter(a=>a.category==='TD_DEF'&&a.success==='RÉUSSIE').length;
+  const tdTotal=acts.filter(a=>a.category==='TD_OFF').length+acts.filter(a=>a.category==='TD_DEF').length;
+  if(tdTotal>0) boxes.push(statBox('GRAPPLING DOM.',Math.round(tdOk/(tdTotal)*100)+'%',`${tdOk} TD réussis / ${tdDef} défendus`));
+
+  // Finish rate par position
+  const subs=acts.filter(a=>a.category==='SUBMISSION');
+  const subOk=subs.filter(a=>a.success==='SOUMISSION').length;
+  if(subs.length) boxes.push(statBox('FINISH RATE SUB',Math.round(subOk/subs.length*100)+'%',''));
+
+  // Round optimal (plus d'actions significatives)
+  const roundVolumes=[1,2,3,4,5].map(r=>({r,vol:acts.filter(a=>a.round===r&&(a.category==='STRIKE'||a.category==='TD_OFF')).length}));
+  const bestRound=roundVolumes.sort((a,b)=>b.vol-a.vol)[0];
+  if(bestRound&&bestRound.vol>0) boxes.push(statBox('ROUND OPTIMAL','R'+bestRound.r,bestRound.vol+' actions offensives'));
+
+  // KO/TKO record
+  if(fights){
+    const kos=fights.filter(f=>f.result?.includes('KO')).length;
+    const subs2=fights.filter(f=>f.result?.includes('SOUMISSION')).length;
+    if(kos) boxes.push(statBox('KO/TKO',kos,'COMBATS'));
+    if(subs2) boxes.push(statBox('SOUMISSIONS',subs2,'VICTOIRES'));
+  }
+
+  return boxes.length?boxes:null;
+}
+
+function buildWinningSequences(acts) {
+  if(!acts.length) return null;
+  const sorted=[...acts].sort((a,b)=>{if(a.round!==b.round)return a.round-b.round;return timeToSec(a.time)-timeToSec(b.time);});
+
+  // Séquences → TD réussi
+  const tdSeqs={};
+  const relevant=sorted.filter(a=>['STRIKE','TD_OFF','FEINTE'].includes(a.category));
+  for(let i=0;i<relevant.length-1;i++){
+    const curr=relevant[i],next=relevant[i+1];
+    if(next.category==='TD_OFF'&&next.success==='RÉUSSI'&&curr.round===next.round&&timeToSec(next.time)-timeToSec(curr.time)<=5){
+      const key=curr.action.split(' - ').pop()+' → TD RÉUSSI';
+      tdSeqs[key]=(tdSeqs[key]||0)+1;
+    }
+  }
+
+  // Séquences → frappe tête réussie
+  const headSeqs={};
+  for(let i=0;i<relevant.length-1;i++){
+    const curr=relevant[i],next=relevant[i+1];
+    if(next.category==='STRIKE'&&next.target==='TÊTE'&&next.result==='TOUCHÉ'&&curr.round===next.round&&timeToSec(next.time)-timeToSec(curr.time)<=3){
+      const key=curr.action.split(' - ').pop()+' → '+next.action+' (TÊTE)';
+      headSeqs[key]=(headSeqs[key]||0)+1;
+    }
+  }
+
+  const topTD=Object.entries(tdSeqs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topHead=Object.entries(headSeqs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  if(!topTD.length&&!topHead.length) return null;
+
+  let html='<div style="margin-bottom:16px;padding-top:14px;border-top:1px solid var(--border);">';
+  html+='<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;letter-spacing:3px;margin-bottom:10px;">SÉQUENCES GAGNANTES</div>';
+
+  if(topTD.length){
+    html+='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;letter-spacing:2px;color:var(--blue);margin-bottom:6px;">→ TAKEDOWN RÉUSSI</div>';
+    topTD.forEach(([seq,count])=>{
+      html+=`<div style="display:flex;justify-content:space-between;padding:5px 10px;background:rgba(52,152,219,0.1);border:1px solid var(--blue);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+        <span>${seq}</span><span style="color:var(--blue);">×${count}</span>
+      </div>`;
+    });
+  }
+
+  if(topHead.length){
+    html+='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;letter-spacing:2px;color:var(--red);margin-bottom:6px;margin-top:10px;">→ FRAPPE TÊTE RÉUSSIE</div>';
+    topHead.forEach(([seq,count])=>{
+      html+=`<div style="display:flex;justify-content:space-between;padding:5px 10px;background:rgba(232,40,26,0.1);border:1px solid var(--red);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+        <span>${seq}</span><span style="color:var(--red);">×${count}</span>
+      </div>`;
+    });
+  }
+
+  html+='</div>';
+  return html;
 }
 
 function buildSequenceSection(acts, title) {
