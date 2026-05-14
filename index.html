@@ -623,7 +623,6 @@ function checkPwd(){
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">ENTRÉE AU SOL</div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;">
               <button class="ab" onclick="startGroundFlow('TD')" style="border-color:var(--blue);color:var(--blue);font-weight:600;">▼ TD RÉUSSI</button>
-              <button class="ab" onclick="startGroundFlow('CATCH KICK → TD')" style="border-color:var(--blue);color:var(--blue);">▼ CATCH KICK→TD</button>
               <button class="ab" onclick="startGroundFlow('CHUTE')" style="border-color:var(--orange);color:var(--orange);">▼ CHUTE</button>
               <button class="ab" onclick="startGroundFlow('SWEEP')" style="border-color:var(--gold);color:var(--gold);">▼ SWEEP</button>
               <button class="ab" onclick="startGroundFlow('KNOCKDOWN')" style="border-color:var(--red);color:var(--red);">▼ KNOCKDOWN</button>
@@ -1348,14 +1347,27 @@ function confirmAction() {
     pendingAction[btn.dataset.field] = btn.dataset.val;
   });
   currentActions.push({...pendingAction});
+  const action = {...pendingAction};
   pendingAction = null;
   document.getElementById('ctx-panel').classList.remove('open');
   renderLog();
   updateSaveBar();
   updateSequenceDisplay();
-  // Flash
   const log = document.querySelector('.log-entries');
   if(log){log.style.borderColor='var(--green)';setTimeout(()=>log.style.borderColor='',400);}
+
+  // Auto-trigger Ground Flow si TD réussi
+  if(action.category==='TD_OFF' && action.success==='RÉUSSI'){
+    setTimeout(()=>startGroundFlow('TD'), 300);
+  }
+  // Auto-trigger Ground Flow si Catch Kick → TD réussi
+  if(action.category==='DEF_STRIKE' && action.action==='CATCH KICK → TD' && action.td_success==='OUI'){
+    setTimeout(()=>startGroundFlow('CATCH KICK → TD'), 300);
+  }
+  // Auto-trigger Ground Flow si Catch Kick normal avec TD réussi
+  if(action.category==='DEF_STRIKE' && action.action==='CATCH KICK' && action.catch_kick_td==='OUI' && action.td_success==='OUI'){
+    setTimeout(()=>startGroundFlow('CATCH KICK → TD'), 300);
+  }
 }
 
 function cancelAction() {
