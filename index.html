@@ -1354,6 +1354,27 @@ function confirmAction() {
   const action = {...pendingAction};
   pendingAction = null;
   document.getElementById('ctx-panel').classList.remove('open');
+
+  // Si CATCH KICK avec TD → générer aussi une action TD_OFF pour les stats
+  if(action.category==='DEF_STRIKE' && (action.action==='CATCH KICK'||action.action==='CATCH KICK → TD') && action.catch_kick_td==='OUI'){
+    const tdAction = {
+      id: Date.now()+1,
+      round: action.round,
+      time: action.time,
+      category: 'TD_OFF',
+      action: 'TD - CATCH KICK',
+      success: action.td_success==='OUI' ? 'RÉUSSI' : 'DÉFENDU',
+      entry: action.td_type || 'CATCH KICK',
+      against_cage: 'NON',
+      after_exchange: 'OUI',
+      phase_id: action.phase_id,
+      fatigue_level: action.fatigue_level,
+      score_state: action.score_state,
+      _generated: true, // marqué comme généré auto
+    };
+    currentActions.push(tdAction);
+  }
+
   renderLog();
   updateSaveBar();
   updateSequenceDisplay();
@@ -1365,11 +1386,7 @@ function confirmAction() {
     setTimeout(()=>startGroundFlow('TD'), 300);
   }
   // Auto-trigger Ground Flow si Catch Kick → TD réussi
-  if(action.category==='DEF_STRIKE' && action.action==='CATCH KICK → TD' && action.td_success==='OUI'){
-    setTimeout(()=>startGroundFlow('CATCH KICK → TD'), 300);
-  }
-  // Auto-trigger Ground Flow si Catch Kick normal avec TD réussi
-  if(action.category==='DEF_STRIKE' && action.action==='CATCH KICK' && action.catch_kick_td==='OUI' && action.td_success==='OUI'){
+  if(action.category==='DEF_STRIKE' && (action.action==='CATCH KICK → TD'||action.action==='CATCH KICK') && action.catch_kick_td==='OUI' && action.td_success==='OUI'){
     setTimeout(()=>startGroundFlow('CATCH KICK → TD'), 300);
   }
 }
@@ -1988,7 +2005,9 @@ function selectRoundFighter(name, btn) {
 // ── STAT BUILDERS ──
 function buildStrikingStats(acts) {
   const strikes = acts.filter(a=>a.category==='STRIKE');
-  if(!strikes.length) return null;
+  const gnpActs = acts.filter(a=>a.category==='GNP');
+  const gnpTotal = gnpActs.reduce((s,a)=>s+(a.count||1),0);
+  if(!strikes.length && !gnpTotal) return null;
   const touched = strikes.filter(a=>a.result==='TOUCHÉ').length;
   const byType={}, byTarget={}, byDist={};
   strikes.forEach(s=>{
@@ -1996,15 +2015,18 @@ function buildStrikingStats(acts) {
     if(s.target){if(!byTarget[s.target])byTarget[s.target]={att:0,land:0};byTarget[s.target].att++;if(s.result==='TOUCHÉ')byTarget[s.target].land++;}
     if(s.distance){if(!byDist[s.distance])byDist[s.distance]={att:0,land:0};byDist[s.distance].att++;if(s.result==='TOUCHÉ')byDist[s.distance].land++;}
   });
-  let boxes = [statBox('TOTAL',`${touched}/${strikes.length}`,strikes.length>0?Math.round(touched/strikes.length*100)+'% PRÉC':'—')];
+  let boxes = [
+    statBox('STRIKE DEBOUT',`${touched}/${strikes.length}`,strikes.length>0?Math.round(touched/strikes.length*100)+'% PRÉC':'—'),
+  ];
+  if(gnpTotal) boxes.push(statBox('GNP AU SOL',gnpTotal,gnpActs.length+' séquences'));
+  boxes.push(statBox('TOTAL',touched+gnpTotal,(strikes.length+gnpTotal)+' frappes'));
   Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].land}/${byType[t].att}`,byType[t].att>0?Math.round(byType[t].land/byType[t].att*100)+'%':'—')));
   Object.keys(byTarget).forEach(t=>boxes.push(statBox('→'+t,`${byTarget[t].land}/${byTarget[t].att}`,byTarget[t].att>0?Math.round(byTarget[t].land/byTarget[t].att*100)+'%':'—')));
   Object.keys(byDist).forEach(d=>boxes.push(statBox(d,`${byDist[d].land}/${byDist[d].att}`,byDist[d].att>0?Math.round(byDist[d].land/byDist[d].att*100)+'%':'—')));
-  // Strikes début vs fin de round (première vs dernière minute)
   const early = strikes.filter(a=>timeToSec(a.time)<=60);
   const late = strikes.filter(a=>timeToSec(a.time)>=240);
-  if(early.length) boxes.push(statBox('PRÉC DÉB.ROUND',early.length>0?Math.round(early.filter(a=>a.result==='TOUCHÉ').length/early.length*100)+'%':'—',early.length+' frappes'));
-  if(late.length) boxes.push(statBox('PRÉC FIN ROUND',late.length>0?Math.round(late.filter(a=>a.result==='TOUCHÉ').length/late.length*100)+'%':'—',late.length+' frappes'));
+  if(early.length) boxes.push(statBox('PRÉC DÉB.ROUND',Math.round(early.filter(a=>a.result==='TOUCHÉ').length/early.length*100)+'%',early.length+' frappes'));
+  if(late.length) boxes.push(statBox('PRÉC FIN ROUND',Math.round(late.filter(a=>a.result==='TOUCHÉ').length/late.length*100)+'%',late.length+' frappes'));
   return boxes;
 }
 
