@@ -946,7 +946,13 @@ function importDB(e) {
           a.catch_kick_td==='OUI' && a.td_success==='OUI'
         );
         catchKicks.forEach(ck => {
-          const alreadyExists = f.actions.find(a=>a.category==='TD_OFF'&&a._generated&&Math.abs(a.id-ck.id)<100);
+          // Vérifie si un TD_OFF existe déjà au même round et timestamp pour ce catch kick
+          const alreadyExists = f.actions.find(a=>
+            a.category==='TD_OFF' &&
+            a.round===ck.round &&
+            a.time===ck.time &&
+            (a._generated || a.action==='TD - CATCH KICK')
+          );
           if(!alreadyExists) {
             f.actions.push({
               id: ck.id+1,
@@ -1973,8 +1979,8 @@ function buildStrikingStats(acts) {
   let boxes = [
     statBox('STRIKE DEBOUT',`${touched}/${strikes.length}`,strikes.length>0?Math.round(touched/strikes.length*100)+'% PRÉC':'—'),
   ];
-  if(gnpTotal) boxes.push(statBox('GNP AU SOL',gnpTotal,gnpActs.length+' séquences'));
-  boxes.push(statBox('TOTAL',touched+gnpTotal,(strikes.length+gnpTotal)+' frappes'));
+  if(gnpTotal) boxes.push(statBox('GNP AU SOL',gnpTotal,'FRAPPES'));
+  if(strikes.length) boxes.push(statBox('TOTAL',touched+gnpTotal,strikes.length+' debout + '+gnpTotal+' sol'));
   Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].land}/${byType[t].att}`,byType[t].att>0?Math.round(byType[t].land/byType[t].att*100)+'%':'—')));
   Object.keys(byTarget).forEach(t=>boxes.push(statBox('→'+t,`${byTarget[t].land}/${byTarget[t].att}`,byTarget[t].att>0?Math.round(byTarget[t].land/byTarget[t].att*100)+'%':'—')));
   Object.keys(byDist).forEach(d=>boxes.push(statBox(d,`${byDist[d].land}/${byDist[d].att}`,byDist[d].att>0?Math.round(byDist[d].land/byDist[d].att*100)+'%':'—')));
