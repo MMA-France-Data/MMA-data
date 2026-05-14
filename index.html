@@ -627,6 +627,7 @@ function checkPwd(){
               <button class="ab" onclick="startGroundFlow('SWEEP')" style="border-color:var(--gold);color:var(--gold);">▼ SWEEP</button>
               <button class="ab" onclick="startGroundFlow('KNOCKDOWN')" style="border-color:var(--red);color:var(--red);">▼ KNOCKDOWN</button>
               <button class="ab" onclick="startGroundFlow('CLINCH→SOL')" style="border-color:var(--purple);color:var(--purple);">▼ CLINCH→SOL</button>
+              <button class="ab" onclick="resumeGroundFlow()" style="border-color:#1abc9c;color:#1abc9c;">↩ REPRENDRE SOL</button>
             </div>
           </div>
 
@@ -2418,6 +2419,19 @@ function setGfDamage(level, btn) {
     if(el) el.style.fontWeight='normal';
   });
   if(btn) btn.style.fontWeight='600';
+}
+
+function resumeGroundFlow() {
+  // Recrée un ground flow sans logger d'entrée — juste rouvre le panel pour continuer
+  groundFlow = { entry: 'REPRISE', position: null, phaseId: Date.now(), round: currentRound };
+  gfDamageLevel = 'LOW';
+  document.getElementById('gf-entry-label').textContent = 'REPRISE AU SOL';
+  document.getElementById('ground-flow-panel').style.display = 'block';
+  document.getElementById('gf-step-position').style.display = 'block';
+  document.getElementById('gf-step-actions').style.display = 'none';
+  document.getElementById('gf-step-transition').style.display = 'none';
+  document.getElementById('gf-log').innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted);padding:4px 0;">↩ Reprise — sélectionne la position actuelle</div>';
+  // Pas d'action loggée — juste repositionnement
 }
 
 function startGroundFlow(entry) {
