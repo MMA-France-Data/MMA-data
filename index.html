@@ -631,6 +631,87 @@ function checkPwd(){
             </div>
           </div>
 
+          <!-- CLINCH FLOW TRIGGER -->
+          <div style="padding:0 16px 12px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">CLINCH FLOW</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button class="ab" onclick="startClinchFlow('ENTRÉE')" style="border-color:var(--purple);color:var(--purple);font-weight:600;">▶ OUVRIR CLINCH</button>
+              <button class="ab" onclick="resumeClinchFlow()" style="border-color:#1abc9c;color:#1abc9c;">↩ REPRENDRE CLINCH</button>
+            </div>
+          </div>
+
+          <!-- CLINCH FLOW PANEL -->
+          <div id="clinch-flow-panel" style="display:none;margin:0 16px 12px;background:var(--surface);border:2px solid var(--purple);padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--purple);">
+                ◉ CLINCH FLOW
+                <span id="cf-timer-display" style="font-size:13px;color:var(--gold);margin-left:12px;">0s</span>
+              </div>
+              <button onclick="closeClinchFlow()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;">FERMER</button>
+            </div>
+
+            <!-- Type d'entrée -->
+            <div id="cf-step-entry">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--purple);margin-bottom:6px;">TYPE D'ENTRÉE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="ab" onclick="cfSetEntry('DOUBLE COLLAR')" style="border-color:var(--purple);">D.COLLAR</button>
+                <button class="ab" onclick="cfSetEntry('SINGLE COLLAR')" style="border-color:var(--purple);">S.COLLAR</button>
+                <button class="ab" onclick="cfSetEntry('BODY LOCK')" style="border-color:var(--purple);">BODY LOCK</button>
+                <button class="ab" onclick="cfSetEntry('OVER-UNDER')" style="border-color:var(--purple);">OVER-UNDER</button>
+                <button class="ab" onclick="cfSetEntry('THAI PLUM')" style="border-color:var(--purple);">THAI PLUM</button>
+              </div>
+            </div>
+
+            <!-- Actions clinch -->
+            <div id="cf-step-actions" style="display:none;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--purple);margin-bottom:4px;">
+                ENTRÉE : <span id="cf-entry-label" style="color:var(--text);"></span> &nbsp;|&nbsp;
+                POSITION : <span id="cf-position-label" style="color:var(--gold);">CENTRE</span>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;">FRAPPES</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <button class="ab" onclick="cfLogStrike('GENOU')" style="border-color:var(--purple);">GENOU</button>
+                <button class="ab" onclick="cfLogStrike('COUDE')" style="border-color:var(--purple);">COUDE</button>
+                <button class="ab" onclick="cfLogStrike('DIRECT CLINCH')" style="border-color:var(--purple);">DIRECT</button>
+                <button class="ab" onclick="cfLogStrike('UPPERCUT CLINCH')" style="border-color:var(--purple);">UPPER</button>
+                <button class="ab" onclick="cfLogStrike('DIRTY BOX')" style="border-color:var(--purple);">DIRTY BOX</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;">DAMAGE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <button id="cf-dmg-low" class="ab" onclick="setCfDamage('LOW',this)" style="border-color:var(--green);color:var(--green);font-weight:600;">LÉGER</button>
+                <button id="cf-dmg-mid" class="ab" onclick="setCfDamage('MID',this)" style="border-color:var(--gold);color:var(--gold);">MOYEN</button>
+                <button id="cf-dmg-high" class="ab" onclick="setCfDamage('HIGH',this)" style="border-color:var(--red);color:var(--red);">ÉLEVÉ</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;">CONTRÔLE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <button class="ab" onclick="cfSetPosition('CENTRE')">CENTRE</button>
+                <button class="ab" onclick="cfSetPosition('CAGE ADV.')" style="border-color:var(--blue);">CAGE ADV.</button>
+                <button class="ab" onclick="cfSetPosition('CAGE MOI')" style="border-color:var(--red);">CAGE MOI</button>
+                <button class="ab" onclick="cfSetPosition('ROTATION')" style="border-color:var(--gold);">ROTATION</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;">TENTATIVE TD DEPUIS CLINCH</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <button class="ab" onclick="cfLogTD('RÉUSSI')" style="border-color:var(--blue);color:var(--blue);">TD RÉUSSI → SOL</button>
+                <button class="ab" onclick="cfLogTD('DÉFENDU')" style="border-color:var(--red);">TD DÉFENDU</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;">SORTIE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="ab" onclick="cfExit('BREAK')" style="border-color:var(--green);color:var(--green);">✓ BREAK</button>
+                <button class="ab" onclick="cfExit('POUSSÉ')">POUSSÉ</button>
+                <button class="ab" onclick="cfExit('SPIN OUT')">SPIN OUT</button>
+                <button class="ab" onclick="cfExit('FIN ROUND')" style="border-color:var(--muted);">FIN ROUND</button>
+              </div>
+            </div>
+
+            <!-- Clinch log -->
+            <div id="cf-log" style="margin-top:10px;max-height:100px;overflow-y:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;border-top:1px solid var(--border);padding-top:6px;"></div>
+          </div>
+
           <!-- GROUND FLOW PANEL -->
           <div id="ground-flow-panel" style="display:none;margin:0 16px 12px;background:var(--surface);border:2px solid var(--blue);padding:14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -1576,6 +1657,9 @@ function renderAutoStats() {
   const groundBoxes = buildGroundStats(acts);
   if(groundBoxes) html += rapportSection('GRAPPLING AU SOL', groundBoxes);
 
+  const controlBoxes = buildControlTimeStats(acts);
+  if(controlBoxes) html += rapportSection('TEMPS DE CONTRÔLE', controlBoxes);
+
   const subBoxes = buildSubStats(acts);
   if(subBoxes) html += rapportSection('SOUMISSIONS', subBoxes);
 
@@ -1794,6 +1878,7 @@ function renderFighterRapport(name) {
 
   // GRAPPLING AU SOL
   html += rapportSection('GRAPPLING AU SOL', buildGroundStats(allActs));
+  html += rapportSection('TEMPS DE CONTRÔLE', buildControlTimeStats(allActs));
 
   // SÉQUENCES GAGNANTES
   const winSeqs = buildWinningSequences(allActs);
@@ -2391,7 +2476,181 @@ function rapportSection(title, boxes) {
   </div>`;
 }
 
-// ── GROUND FLOW ──
+// ── CLINCH FLOW ──
+let clinchFlow = null;
+let cfDamageLevel = 'LOW';
+let cfTimerInterval = null;
+let cfSeconds = 0;
+
+function setCfDamage(level, btn) {
+  cfDamageLevel = level;
+  ['cf-dmg-low','cf-dmg-mid','cf-dmg-high'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.fontWeight='normal';
+  });
+  if(btn) btn.style.fontWeight='600';
+}
+
+function startClinchFlow(entry) {
+  clinchFlow = { entry, entryType: null, position: 'CENTRE', phaseId: Date.now(), round: currentRound, startTime: getTimestamp(), startSec: chronoSec };
+  cfDamageLevel = 'LOW';
+  cfSeconds = 0;
+  document.getElementById('clinch-flow-panel').style.display = 'block';
+  document.getElementById('cf-step-entry').style.display = 'block';
+  document.getElementById('cf-step-actions').style.display = 'none';
+  document.getElementById('cf-log').innerHTML = '';
+  // Timer clinch
+  cfTimerInterval = setInterval(()=>{
+    cfSeconds++;
+    const el = document.getElementById('cf-timer-display');
+    if(el) el.textContent = cfSeconds+'s';
+  }, 1000);
+  // Log entrée
+  const entryAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_ENTRY', action:'ENTRÉE CLINCH', phase_id:clinchFlow.phaseId, start_time:getTimestamp() };
+  currentActions.push(entryAction);
+  renderLog(); updateSaveBar();
+}
+
+function resumeClinchFlow() {
+  clinchFlow = { entry:'REPRISE', entryType:'REPRISE', position:'CENTRE', phaseId:Date.now(), round:currentRound, startTime:getTimestamp(), startSec:chronoSec };
+  cfDamageLevel = 'LOW';
+  cfSeconds = 0;
+  document.getElementById('clinch-flow-panel').style.display = 'block';
+  document.getElementById('cf-step-entry').style.display = 'none';
+  document.getElementById('cf-step-actions').style.display = 'block';
+  document.getElementById('cf-entry-label').textContent = 'REPRISE';
+  document.getElementById('cf-position-label').textContent = 'CENTRE';
+  document.getElementById('cf-log').innerHTML = '<div style="color:var(--muted);padding:3px 0;">↩ Reprise clinch</div>';
+  cfTimerInterval = setInterval(()=>{
+    cfSeconds++;
+    const el = document.getElementById('cf-timer-display');
+    if(el) el.textContent = cfSeconds+'s';
+  }, 1000);
+}
+
+function cfSetEntry(type) {
+  if(!clinchFlow) return;
+  clinchFlow.entryType = type;
+  document.getElementById('cf-entry-label').textContent = type;
+  document.getElementById('cf-step-entry').style.display = 'none';
+  document.getElementById('cf-step-actions').style.display = 'block';
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH', action:'ENTRÉE CLINCH - '+type, phase_id:clinchFlow.phaseId, success:'RÉUSSIE', against_cage:'NON', control:'MAINTENU' };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  cfAddLog('📍 ENTRÉE '+type);
+}
+
+function cfSetPosition(pos) {
+  if(!clinchFlow) return;
+  clinchFlow.position = pos;
+  document.getElementById('cf-position-label').textContent = pos;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_WORK', action:'CONTRÔLE CAGE', position:pos, phase_id:clinchFlow.phaseId };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  cfAddLog('📌 '+pos);
+}
+
+function cfLogStrike(type) {
+  if(!clinchFlow) return;
+  const dmgLabel = cfDamageLevel==='HIGH'?'ÉLEVÉ':cfDamageLevel==='MID'?'MOYEN':'LÉGER';
+  const dmgColor = cfDamageLevel==='HIGH'?'🔴':cfDamageLevel==='MID'?'🟡':'🟢';
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_STRIKE', action:'CLINCH — '+type, strike_type:type, position:clinchFlow.position, phase_id:clinchFlow.phaseId, damage:cfDamageLevel };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  cfAddLog(dmgColor+' '+type+' ['+dmgLabel+']');
+}
+
+function cfLogTD(result) {
+  if(!clinchFlow) return;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'TD_OFF', action:'TD - CLINCH', success:result==='RÉUSSI'?'RÉUSSI':'DÉFENDU', entry:'BODY LOCK', against_cage:clinchFlow.position.includes('CAGE')?'OUI':'NON', after_exchange:'OUI', phase_id:clinchFlow.phaseId };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  cfAddLog((result==='RÉUSSI'?'✅':'❌')+' TD '+result);
+  if(result==='RÉUSSI') {
+    closeClinchFlow();
+    setTimeout(()=>startGroundFlow('CLINCH→SOL'), 300);
+  }
+}
+
+function cfExit(reason) {
+  if(!clinchFlow) return;
+  const duration = cfSeconds;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_EXIT', action:'SORTIE CLINCH — '+reason, phase_id:clinchFlow.phaseId, duration_sec:duration, exit_reason:reason };
+  currentActions.push(action);
+  cfAddLog('↗ SORTIE '+reason+' ('+duration+'s)');
+  renderLog(); updateSaveBar();
+  closeClinchFlow();
+}
+
+function closeClinchFlow() {
+  clearInterval(cfTimerInterval);
+  clinchFlow = null;
+  document.getElementById('clinch-flow-panel').style.display = 'none';
+}
+
+function cfAddLog(msg) {
+  const log = document.getElementById('cf-log');
+  const line = document.createElement('div');
+  line.style.cssText = 'padding:2px 0;border-bottom:1px solid var(--border);color:var(--muted);font-size:10px;';
+  line.innerHTML = `<span style="color:var(--purple);margin-right:6px;">${getTimestamp()}</span>${msg}`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ── CONTROL TIME STATS ──
+function buildControlTimeStats(acts) {
+  // Temps au sol = timestamp fin - timestamp début par phase
+  const phases = {};
+
+  // Ground phases
+  acts.filter(a=>a.category==='GROUND_ENTRY').forEach(a=>{
+    if(!phases[a.phase_id]) phases[a.phase_id] = { type:'SOL', start:timeToSec(a.time), round:a.round, end:null };
+  });
+  acts.filter(a=>a.category==='GROUND_EXIT').forEach(a=>{
+    if(phases[a.phase_id]) phases[a.phase_id].end = timeToSec(a.time);
+  });
+
+  // Clinch phases
+  acts.filter(a=>a.category==='CLINCH_ENTRY').forEach(a=>{
+    if(!phases[a.phase_id]) phases[a.phase_id] = { type:'CLINCH', start:timeToSec(a.time), round:a.round, end:null };
+  });
+  acts.filter(a=>a.category==='CLINCH_EXIT').forEach(a=>{
+    if(phases[a.phase_id]){
+      phases[a.phase_id].end = timeToSec(a.time);
+      if(a.duration_sec) phases[a.phase_id].duration = a.duration_sec;
+    }
+  });
+
+  let totalSol = 0, totalClinch = 0, totalControl = 0;
+  const byRoundSol = {}, byRoundClinch = {};
+
+  Object.values(phases).forEach(p=>{
+    const dur = p.duration || (p.end ? Math.max(0, p.end - p.start) : 0);
+    if(p.type==='SOL'){
+      totalSol += dur;
+      byRoundSol[p.round] = (byRoundSol[p.round]||0) + dur;
+    } else {
+      totalClinch += dur;
+      byRoundClinch[p.round] = (byRoundClinch[p.round]||0) + dur;
+    }
+  });
+  totalControl = totalSol + totalClinch;
+
+  if(!totalControl) return null;
+
+  const fmt = s => s>=60 ? Math.floor(s/60)+'min '+( s%60)+'s' : s+'s';
+  const boxes = [
+    statBox('CONTRÔLE TOTAL', fmt(totalControl), 'SOL + CLINCH'),
+    statBox('CONTRÔLE SOL', fmt(totalSol), 'ATTAQUANT'),
+    statBox('CONTRÔLE CLINCH', fmt(totalClinch), 'ATTAQUANT'),
+  ];
+  [1,2,3,4,5].forEach(r=>{
+    const sol = byRoundSol[r]||0;
+    const clinch = byRoundClinch[r]||0;
+    if(sol+clinch>0) boxes.push(statBox('CTRL R'+r, fmt(sol+clinch), 'SOL:'+fmt(sol)+' CLI:'+fmt(clinch)));
+  });
+  return boxes;
+}
 let groundFlow = null;
 let gfDamageLevel = 'LOW';
 
