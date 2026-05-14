@@ -645,6 +645,7 @@ function checkPwd(){
                 <button class="ab" onclick="gfSetPosition('MOUNT')" style="border-color:var(--gold);">MOUNT</button>
                 <button class="ab" onclick="gfSetPosition('BACK')" style="border-color:var(--gold);">BACK</button>
                 <button class="ab" onclick="gfSetPosition('SIDE CTRL')" style="border-color:var(--gold);">SIDE CTRL</button>
+                <button class="ab" onclick="gfSetPosition('NORTH SOUTH')" style="border-color:var(--gold);">NORTH SOUTH</button>
                 <button class="ab" onclick="gfSetPosition('GUARD')" style="border-color:var(--gold);">GUARD</button>
                 <button class="ab" onclick="gfSetPosition('TURTLE')" style="border-color:var(--gold);">TURTLE</button>
                 <button class="ab" onclick="gfSetPosition('CRUCIFIX')" style="border-color:var(--gold);">CRUCIFIX</button>
@@ -718,7 +719,9 @@ function checkPwd(){
                 <button class="ab" onclick="gfSetNewPosition('MOUNT')">MOUNT</button>
                 <button class="ab" onclick="gfSetNewPosition('BACK')">BACK</button>
                 <button class="ab" onclick="gfSetNewPosition('SIDE CTRL')">SIDE CTRL</button>
+                <button class="ab" onclick="gfSetNewPosition('NORTH SOUTH')">NORTH SOUTH</button>
                 <button class="ab" onclick="gfSetNewPosition('GUARD')">GUARD</button>
+                <button class="ab" onclick="gfSetNewPosition('HALF GUARD')">HALF GUARD</button>
                 <button class="ab" onclick="gfSetNewPosition('TURTLE')">TURTLE</button>
                 <button class="ab" onclick="gfSetNewPosition('CRUCIFIX')">CRUCIFIX</button>
                 <button class="ab" onclick="gfSetNewPosition('RENVERSÉ')" style="border-color:var(--red);">RENVERSÉ</button>
@@ -1419,7 +1422,7 @@ function renderLog() {
       <span class="le-cat" style="color:${color};font-size:9px;">${a.category}</span>
       <span class="le-action" style="cursor:pointer;text-decoration:underline dotted;" onclick="editAction(${origIdx})" title="Modifier">${a.action}</span>
       <span class="le-detail">${detail}</span>
-      <button class="le-del" onclick="deleteAction(${origIdx})">✕</button>
+      <button class="le-del" onclick="deleteActionById(${a.id})">✕</button>
     </div>`;
   }).join('');
   container.scrollTop = container.scrollHeight;
@@ -1427,6 +1430,13 @@ function renderLog() {
 
 function deleteAction(idx) {
   currentActions.splice(idx,1);
+  renderLog();
+  updateSaveBar();
+  updateSequenceDisplay();
+}
+
+function deleteActionById(id) {
+  currentActions = currentActions.filter(a=>a.id!==id);
   renderLog();
   updateSaveBar();
   updateSequenceDisplay();
