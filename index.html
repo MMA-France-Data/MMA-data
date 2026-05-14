@@ -645,7 +645,7 @@ function checkPwd(){
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
               <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--purple);">
                 ◉ CLINCH FLOW
-                <span id="cf-timer-display" style="font-size:13px;color:var(--gold);margin-left:12px;">0s</span>
+                <span id="cf-timer-display" style="font-size:12px;color:var(--gold);margin-left:12px;font-family:'IBM Plex Mono',monospace;"></span>
               </div>
               <button onclick="closeClinchFlow()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;">FERMER</button>
             </div>
@@ -2479,8 +2479,6 @@ function rapportSection(title, boxes) {
 // ── CLINCH FLOW ──
 let clinchFlow = null;
 let cfDamageLevel = 'LOW';
-let cfTimerInterval = null;
-let cfSeconds = 0;
 
 function setCfDamage(level, btn) {
   cfDamageLevel = level;
@@ -2492,40 +2490,29 @@ function setCfDamage(level, btn) {
 }
 
 function startClinchFlow(entry) {
-  clinchFlow = { entry, entryType: null, position: 'CENTRE', phaseId: Date.now(), round: currentRound, startTime: getTimestamp(), startSec: chronoSec };
+  clinchFlow = { entry, entryType:null, position:'CENTRE', phaseId:Date.now(), round:currentRound, startSec:chronoSec };
   cfDamageLevel = 'LOW';
-  cfSeconds = 0;
   document.getElementById('clinch-flow-panel').style.display = 'block';
   document.getElementById('cf-step-entry').style.display = 'block';
   document.getElementById('cf-step-actions').style.display = 'none';
+  document.getElementById('cf-timer-display').textContent = '';
   document.getElementById('cf-log').innerHTML = '';
-  // Timer clinch
-  cfTimerInterval = setInterval(()=>{
-    cfSeconds++;
-    const el = document.getElementById('cf-timer-display');
-    if(el) el.textContent = cfSeconds+'s';
-  }, 1000);
-  // Log entrée
-  const entryAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_ENTRY', action:'ENTRÉE CLINCH', phase_id:clinchFlow.phaseId, start_time:getTimestamp() };
+  // Log entrée avec timestamp chrono
+  const entryAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_ENTRY', action:'ENTRÉE CLINCH', phase_id:clinchFlow.phaseId, start_chrono_sec:chronoSec };
   currentActions.push(entryAction);
   renderLog(); updateSaveBar();
 }
 
 function resumeClinchFlow() {
-  clinchFlow = { entry:'REPRISE', entryType:'REPRISE', position:'CENTRE', phaseId:Date.now(), round:currentRound, startTime:getTimestamp(), startSec:chronoSec };
+  clinchFlow = { entry:'REPRISE', entryType:'REPRISE', position:'CENTRE', phaseId:Date.now(), round:currentRound, startSec:chronoSec };
   cfDamageLevel = 'LOW';
-  cfSeconds = 0;
   document.getElementById('clinch-flow-panel').style.display = 'block';
   document.getElementById('cf-step-entry').style.display = 'none';
   document.getElementById('cf-step-actions').style.display = 'block';
   document.getElementById('cf-entry-label').textContent = 'REPRISE';
   document.getElementById('cf-position-label').textContent = 'CENTRE';
+  document.getElementById('cf-timer-display').textContent = '';
   document.getElementById('cf-log').innerHTML = '<div style="color:var(--muted);padding:3px 0;">↩ Reprise clinch</div>';
-  cfTimerInterval = setInterval(()=>{
-    cfSeconds++;
-    const el = document.getElementById('cf-timer-display');
-    if(el) el.textContent = cfSeconds+'s';
-  }, 1000);
 }
 
 function cfSetEntry(type) {
@@ -2567,23 +2554,29 @@ function cfLogTD(result) {
   renderLog(); updateSaveBar();
   cfAddLog((result==='RÉUSSI'?'✅':'❌')+' TD '+result);
   if(result==='RÉUSSI') {
-    closeClinchFlow();
+    // Log la sortie clinch avant d'aller au sol
+    cfExit('TD→SOL');
     setTimeout(()=>startGroundFlow('CLINCH→SOL'), 300);
   }
 }
 
 function cfExit(reason) {
   if(!clinchFlow) return;
-  const duration = cfSeconds;
-  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_EXIT', action:'SORTIE CLINCH — '+reason, phase_id:clinchFlow.phaseId, duration_sec:duration, exit_reason:reason };
+  // Calcul durée basé sur les timestamps du chrono (pas un timer réel)
+  const endSec = chronoSec;
+  const startSec = clinchFlow.startSec || endSec;
+  // Le chrono est un compte à rebours — durée = startSec - endSec
+  const duration = Math.max(0, startSec - endSec);
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'CLINCH_EXIT', action:'SORTIE CLINCH — '+reason, phase_id:clinchFlow.phaseId, duration_sec:duration, start_chrono_sec:clinchFlow.startSec, end_chrono_sec:endSec, exit_reason:reason };
   currentActions.push(action);
-  cfAddLog('↗ SORTIE '+reason+' ('+duration+'s)');
+  const fmt = s => s>=60?Math.floor(s/60)+'min '+(s%60)+'s':s+'s';
+  cfAddLog('↗ SORTIE '+reason+(duration>0?' ('+fmt(duration)+')':''));
+  document.getElementById('cf-timer-display').textContent = duration>0?fmt(duration):'';
   renderLog(); updateSaveBar();
   closeClinchFlow();
 }
 
 function closeClinchFlow() {
-  clearInterval(cfTimerInterval);
   clinchFlow = null;
   document.getElementById('clinch-flow-panel').style.display = 'none';
 }
@@ -2599,54 +2592,64 @@ function cfAddLog(msg) {
 
 // ── CONTROL TIME STATS ──
 function buildControlTimeStats(acts) {
-  // Temps au sol = timestamp fin - timestamp début par phase
   const phases = {};
 
-  // Ground phases
+  // Ground phases — durée = timestamp GROUND_EXIT - timestamp GROUND_ENTRY
   acts.filter(a=>a.category==='GROUND_ENTRY').forEach(a=>{
-    if(!phases[a.phase_id]) phases[a.phase_id] = { type:'SOL', start:timeToSec(a.time), round:a.round, end:null };
+    if(!phases[a.phase_id]) phases[a.phase_id] = { type:'SOL', startTime:a.time, round:a.round, endTime:null };
   });
   acts.filter(a=>a.category==='GROUND_EXIT').forEach(a=>{
-    if(phases[a.phase_id]) phases[a.phase_id].end = timeToSec(a.time);
+    if(phases[a.phase_id]) phases[a.phase_id].endTime = a.time;
   });
 
-  // Clinch phases
+  // Clinch phases — durée stockée dans CLINCH_EXIT.duration_sec
   acts.filter(a=>a.category==='CLINCH_ENTRY').forEach(a=>{
-    if(!phases[a.phase_id]) phases[a.phase_id] = { type:'CLINCH', start:timeToSec(a.time), round:a.round, end:null };
+    if(!phases[a.phase_id]) phases[a.phase_id] = { type:'CLINCH', startTime:a.time, round:a.round, endTime:null, duration:null };
   });
   acts.filter(a=>a.category==='CLINCH_EXIT').forEach(a=>{
     if(phases[a.phase_id]){
-      phases[a.phase_id].end = timeToSec(a.time);
-      if(a.duration_sec) phases[a.phase_id].duration = a.duration_sec;
+      phases[a.phase_id].endTime = a.time;
+      phases[a.phase_id].duration = a.duration_sec||null;
     }
   });
 
-  let totalSol = 0, totalClinch = 0, totalControl = 0;
-  const byRoundSol = {}, byRoundClinch = {};
+  let totalSol=0, totalClinch=0;
+  const byRoundSol={}, byRoundClinch={};
 
   Object.values(phases).forEach(p=>{
-    const dur = p.duration || (p.end ? Math.max(0, p.end - p.start) : 0);
-    if(p.type==='SOL'){
-      totalSol += dur;
-      byRoundSol[p.round] = (byRoundSol[p.round]||0) + dur;
-    } else {
-      totalClinch += dur;
-      byRoundClinch[p.round] = (byRoundClinch[p.round]||0) + dur;
+    let dur = 0;
+    if(p.duration) {
+      dur = p.duration;
+    } else if(p.startTime && p.endTime) {
+      // Calcul depuis les timestamps — le chrono est un compte à rebours
+      // donc durée = startTime - endTime (ex: 3:22 → 2:10 = 72s)
+      const startS = timeToSec(p.startTime);
+      const endS = timeToSec(p.endTime);
+      dur = Math.max(0, startS - endS);
+    }
+    if(dur > 0) {
+      if(p.type==='SOL'){
+        totalSol += dur;
+        byRoundSol[p.round] = (byRoundSol[p.round]||0) + dur;
+      } else {
+        totalClinch += dur;
+        byRoundClinch[p.round] = (byRoundClinch[p.round]||0) + dur;
+      }
     }
   });
-  totalControl = totalSol + totalClinch;
 
+  const totalControl = totalSol + totalClinch;
   if(!totalControl) return null;
 
-  const fmt = s => s>=60 ? Math.floor(s/60)+'min '+( s%60)+'s' : s+'s';
+  const fmt = s => s>=60?Math.floor(s/60)+'min '+(s%60>0?(s%60)+'s':''):s+'s';
   const boxes = [
     statBox('CONTRÔLE TOTAL', fmt(totalControl), 'SOL + CLINCH'),
     statBox('CONTRÔLE SOL', fmt(totalSol), 'ATTAQUANT'),
     statBox('CONTRÔLE CLINCH', fmt(totalClinch), 'ATTAQUANT'),
   ];
   [1,2,3,4,5].forEach(r=>{
-    const sol = byRoundSol[r]||0;
-    const clinch = byRoundClinch[r]||0;
+    const sol=byRoundSol[r]||0;
+    const clinch=byRoundClinch[r]||0;
     if(sol+clinch>0) boxes.push(statBox('CTRL R'+r, fmt(sol+clinch), 'SOL:'+fmt(sol)+' CLI:'+fmt(clinch)));
   });
   return boxes;
