@@ -936,8 +936,39 @@ function importDB(e) {
       const imp = JSON.parse(ev.target.result);
       if (!imp.categories || !imp.fights) throw new Error();
       if (!confirm(`Importer ${imp.fights.length} combats et ${imp.categories.length} catégories ? Les données actuelles seront remplacées.`)) return;
-      // Ensure all fights have actions array
-      imp.fights.forEach(f => { if (!f.actions) f.actions = []; });
+      // Ensure all fights have actions array + fix missing generated TDs
+      imp.fights.forEach(f => {
+        if (!f.actions) f.actions = [];
+        // Regenerate missing TD_OFF for catch kick
+        const catchKicks = f.actions.filter(a=>
+          a.category==='DEF_STRIKE' &&
+          (a.action==='CATCH KICK → TD'||a.action==='CATCH KICK') &&
+          a.catch_kick_td==='OUI' && a.td_success==='OUI'
+        );
+        catchKicks.forEach(ck => {
+          const alreadyExists = f.actions.find(a=>a.category==='TD_OFF'&&a._generated&&Math.abs(a.id-ck.id)<100);
+          if(!alreadyExists) {
+            f.actions.push({
+              id: ck.id+1,
+              round: ck.round,
+              time: ck.time,
+              category: 'TD_OFF',
+              action: 'TD - CATCH KICK',
+              success: 'RÉUSSI',
+              entry: ck.td_type||'CATCH KICK',
+              against_cage: 'NON',
+              after_exchange: 'OUI',
+              fatigue_level: ck.fatigue_level,
+              score_state: ck.score_state,
+              _generated: true,
+            });
+          }
+        });
+        // Fix RÉUSSI vs RÉUSSIE inconsistency in transitions
+        f.actions.forEach(a => {
+          if(a.category==='TRANSITION' && a.success==='RÉUSSI') a.success='RÉUSSIE';
+        });
+      });
       db = imp;
       localStorage.setItem('mma-db-v3', JSON.stringify(db));
       // Force full re-render
@@ -1520,134 +1551,58 @@ function renderAutoStats() {
   const acts = currentActions;
   let html = '';
 
-  // STRIKING
-  const strikes = acts.filter(a=>a.category==='STRIKE');
-  const touched = strikes.filter(a=>a.result==='TOUCHÉ').length;
-  const headS = strikes.filter(a=>a.target==='TÊTE');
-  const bodyS = strikes.filter(a=>a.target==='CORPS');
-  const legS = strikes.filter(a=>a.target==='JAMBE');
+  // Utilise les mêmes builders que le rapport coach
+  const strikingBoxes = buildStrikingStats(acts);
+  if(strikingBoxes) html += rapportSection('STRIKING', strikingBoxes);
 
-  const byType = {};
-  strikes.forEach(s=>{
-    if(!byType[s.action]) byType[s.action]={att:0,land:0};
-    byType[s.action].att++;
-    if(s.result==='TOUCHÉ') byType[s.action].land++;
-  });
+  const patternBoxes = buildStrikingPatterns(acts);
+  if(patternBoxes) html += rapportSection('PATTERNS STRIKING', patternBoxes);
 
-  html += `<div class="sh"><div class="sl">Striking</div></div>`;
-  html += `<div class="stat-grid">`;
-  html += statBox('TOTAL',`${touched}/${strikes.length}`,strikes.length>0?Math.round(touched/strikes.length*100)+'% PRÉC':'—');
-  html += statBox('TÊTE',`${headS.filter(a=>a.result==='TOUCHÉ').length}/${headS.length}`,'');
-  html += statBox('CORPS',`${bodyS.filter(a=>a.result==='TOUCHÉ').length}/${bodyS.length}`,'');
-  html += statBox('JAMBES',`${legS.filter(a=>a.result==='TOUCHÉ').length}/${legS.length}`,'');
-  Object.keys(byType).forEach(t=>{ html += statBox(t,`${byType[t].land}/${byType[t].att}`,byType[t].att>0?Math.round(byType[t].land/byType[t].att*100)+'%':'—'); });
-  html += `</div>`;
+  const fatigueBoxes = buildFatigueStats(acts);
+  if(fatigueBoxes) html += rapportSection('FATIGUE / CARDIO', fatigueBoxes);
 
-  // Feintes
-  const feintes = acts.filter(a=>a.category==='FEINTE');
-  if(feintes.length){
-    const feintesOuv = feintes.filter(a=>a.reaction==='OUVERTURE CRÉÉE').length;
-    html += `<div class="sh" style="margin-top:14px;"><div class="sl">Feintes</div></div><div class="stat-grid">`;
-    html += statBox('FEINTES',feintes.length,'TOTAL');
-    html += statBox('OUVERTURES',feintesOuv,Math.round(feintesOuv/feintes.length*100)+'%');
-    html += `</div>`;
-  }
+  const tdBoxes = buildTDStats(acts);
+  if(tdBoxes) html += rapportSection('TAKEDOWNS', tdBoxes);
 
-  // CLINCH
-  const clinchEntries = acts.filter(a=>a.category==='CLINCH');
-  const clinchWork = acts.filter(a=>a.category==='CLINCH_WORK');
-  if(clinchEntries.length||clinchWork.length){
-    html += `<div class="sh" style="margin-top:14px;"><div class="sl">Clinch</div></div><div class="stat-grid">`;
-    const clinchOk = clinchEntries.filter(a=>a.success==='RÉUSSIE').length;
-    html += statBox('ENTRÉES',`${clinchOk}/${clinchEntries.length}`,clinchEntries.length>0?Math.round(clinchOk/clinchEntries.length*100)+'%':'—');
-    html += statBox('TRAVAIL',clinchWork.length,'ACTIONS');
-    html += `</div>`;
-  }
+  const clinchBoxes = buildClinchStats(acts);
+  if(clinchBoxes) html += rapportSection('CLINCH', clinchBoxes);
 
-  // TAKEDOWNS
-  const tdOff = acts.filter(a=>a.category==='TD_OFF');
-  const tdDef = acts.filter(a=>a.category==='TD_DEF');
-  if(tdOff.length||tdDef.length){
-    html += `<div class="sh" style="margin-top:14px;"><div class="sl">Takedowns</div></div><div class="stat-grid">`;
-    const tdOk = tdOff.filter(a=>a.success==='RÉUSSI').length;
-    html += statBox('TD TENTÉS',`${tdOk}/${tdOff.length}`,tdOff.length>0?Math.round(tdOk/tdOff.length*100)+'%':'—');
-    const tdDefOk = tdDef.filter(a=>a.success==='RÉUSSIE').length;
-    html += statBox('TD DÉFENDUS',`${tdDefOk}/${tdDef.length}`,'');
+  const groundBoxes = buildGroundStats(acts);
+  if(groundBoxes) html += rapportSection('GRAPPLING AU SOL', groundBoxes);
 
-    // By setup
-    const bySetup = {};
-    tdOff.forEach(t=>{
-      const setup = t.action.split(' - ').pop();
-      if(!bySetup[setup]) bySetup[setup]={att:0,ok:0};
-      bySetup[setup].att++;
-      if(t.success==='RÉUSSI') bySetup[setup].ok++;
-    });
-    Object.keys(bySetup).forEach(s=>{
-      html += statBox('TD '+s,`${bySetup[s].ok}/${bySetup[s].att}`,Math.round(bySetup[s].ok/bySetup[s].att*100)+'%');
-    });
-    html += `</div>`;
-  }
+  const subBoxes = buildSubStats(acts);
+  if(subBoxes) html += rapportSection('SOUMISSIONS', subBoxes);
 
-  // TRANSITIONS + SOUMISSIONS
-  const trans = acts.filter(a=>a.category==='TRANSITION');
-  const subs = acts.filter(a=>a.category==='SUBMISSION');
-  if(trans.length||subs.length){
-    html += `<div class="sh" style="margin-top:14px;"><div class="sl">Sol</div></div><div class="stat-grid">`;
-    if(trans.length){
-      const transOk = trans.filter(a=>a.success==='RÉUSSIE').length;
-      html += statBox('TRANSITIONS',`${transOk}/${trans.length}`,Math.round(transOk/trans.length*100)+'%');
-    }
-    if(subs.length){
-      const subOk = subs.filter(a=>a.success==='SOUMISSION').length;
-      html += statBox('SOUMISSIONS',`${subOk}/${subs.length}`,'');
-      const bySubType = {};
-      subs.forEach(s=>{if(!bySubType[s.action])bySubType[s.action]={att:0,ok:0};bySubType[s.action].att++;if(s.success==='SOUMISSION')bySubType[s.action].ok++;});
-      Object.keys(bySubType).forEach(t=>{ html += statBox(t,`${bySubType[t].ok}/${bySubType[t].att}`,''); });
-    }
-    html += `</div>`;
-  }
+  const defBoxes = buildDefStats(acts);
+  if(defBoxes) html += rapportSection('DÉFENSE', defBoxes);
 
-  // PAR ROUND
-  html += `<div class="sh" style="margin-top:14px;"><div class="sl">Par round</div></div>`;
+  // Séquences gagnantes
+  const winSeqs = buildWinningSequences(acts);
+  if(winSeqs) html += winSeqs;
+
+  // Séquences fréquentes
+  html += buildSequenceSection(acts, 'SÉQUENCES FRÉQUENTES (≤3s)');
+
+  // Par round
+  html += `<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;margin-bottom:10px;">PAR ROUND</div>`;
   [1,2,3,4,5].forEach(r=>{
-    const ra = acts.filter(a=>a.round===r);
+    const ra=acts.filter(a=>a.round===r);
     if(!ra.length) return;
-    const rs = ra.filter(a=>a.category==='STRIKE');
-    const rtd = ra.filter(a=>a.category==='TD_OFF');
-    html += `<div style="background:var(--surface2);border:1px solid var(--border);padding:9px 12px;margin-bottom:5px;">
+    const rs=ra.filter(a=>a.category==='STRIKE');
+    const rgnp=ra.filter(a=>a.category==='GNP');
+    const rtd=ra.filter(a=>a.category==='TD_OFF');
+    const gnpTotal=rgnp.reduce((s,a)=>s+(a.count||1),0);
+    html+=`<div style="background:var(--surface2);border:1px solid var(--border);padding:9px 12px;margin-bottom:5px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--gold);">R${r}</span>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-left:12px;">
-        FRAPPES : <span style="color:var(--text);">${rs.filter(a=>a.result==='TOUCHÉ').length}/${rs.length}</span>
+        DEBOUT : <span style="color:var(--text);">${rs.filter(a=>a.result==='TOUCHÉ').length}/${rs.length}</span>
+        &nbsp;|&nbsp; GNP : <span style="color:var(--text);">${gnpTotal}</span>
         &nbsp;|&nbsp; TD : <span style="color:var(--text);">${rtd.filter(a=>a.success==='RÉUSSI').length}/${rtd.length}</span>
-        &nbsp;|&nbsp; TOTAL : <span style="color:var(--text);">${ra.length}</span>
+        &nbsp;|&nbsp; TOTAL : <span style="color:var(--blue);">${ra.length}</span>
       </span>
     </div>`;
   });
-
-  // SÉQUENCES FRÉQUENTES — actions consécutives dans les 3 secondes
-  const seqs = {};
-  const roundActions = currentActions
-    .filter(a=>a.category==='STRIKE'||a.category==='TD_OFF'||a.category==='FEINTE')
-    .sort((a,b)=>{ if(a.round!==b.round) return a.round-b.round; return timeToSec(a.time)-timeToSec(b.time); });
-
-  for(let i=0;i<roundActions.length-1;i++){
-    const curr = roundActions[i];
-    const next = roundActions[i+1];
-    // Même round et moins de 3 secondes d'écart
-    if(curr.round === next.round && (timeToSec(next.time) - timeToSec(curr.time)) <= 3){
-      const seq = curr.action.split(' - ').pop() + ' → ' + next.action.split(' - ').pop();
-      seqs[seq] = (seqs[seq]||0)+1;
-    }
-  }
-  const topSeqs = Object.entries(seqs).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  if(topSeqs.length){
-    html += `<div class="sh" style="margin-top:14px;"><div class="sl">Séquences fréquentes</div></div>`;
-    topSeqs.forEach(([seq,count])=>{
-      html += `<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
-        <span>${seq}</span><span style="color:var(--gold);">×${count}</span>
-      </div>`;
-    });
-  }
+  html += '</div>';
 
   document.getElementById('stats-content').innerHTML = html + '<div style="height:40px;"></div>';
 }
@@ -2199,10 +2154,10 @@ function buildClinchStats(acts) {
   const boxes=[];
 
   if(entries.length){
-    const ok=entries.filter(a=>a.success==='RÉUSSIE').length;
+    const ok=entries.filter(a=>a.success==='RÉUSSIE'||a.success==='RÉUSSI').length;
     boxes.push(statBox('ENTRÉES',`${ok}/${entries.length}`,Math.round(ok/entries.length*100)+'%'));
     const byType={};
-    entries.forEach(e=>{const t=e.action.split(' - ').pop();if(!byType[t])byType[t]={att:0,ok:0};byType[t].att++;if(e.success==='RÉUSSIE')byType[t].ok++;});
+    entries.forEach(e=>{const t=e.action.split(' - ').pop();if(!byType[t])byType[t]={att:0,ok:0};byType[t].att++;if(e.success==='RÉUSSIE'||e.success==='RÉUSSI')byType[t].ok++;});
     Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,Math.round(byType[t].ok/byType[t].att*100)+'%')));
   }
 
@@ -2292,10 +2247,10 @@ function buildDefStats(acts) {
   }
 
   if(tdDef.length){
-    const ok=tdDef.filter(a=>a.success==='RÉUSSIE').length;
+    const ok=tdDef.filter(a=>a.success==='RÉUSSIE'||a.success==='RÉUSSI').length;
     boxes.push(statBox('DEF TD',`${ok}/${tdDef.length}`,Math.round(ok/tdDef.length*100)+'%'));
     const byType={};
-    tdDef.forEach(d=>{if(!byType[d.action])byType[d.action]={att:0,ok:0};byType[d.action].att++;if(d.success==='RÉUSSIE')byType[d.action].ok++;});
+    tdDef.forEach(d=>{if(!byType[d.action])byType[d.action]={att:0,ok:0};byType[d.action].att++;if(d.success==='RÉUSSIE'||d.success==='RÉUSSI')byType[d.action].ok++;});
     Object.keys(byType).forEach(t=>boxes.push(statBox(t,`${byType[t].ok}/${byType[t].att}`,Math.round(byType[t].ok/byType[t].att*100)+'%')));
   }
 
@@ -2316,7 +2271,7 @@ function buildProfileGlobal(acts, fights) {
 
   // Grappling dominance
   const tdOk=acts.filter(a=>a.category==='TD_OFF'&&a.success==='RÉUSSI').length;
-  const tdDef=acts.filter(a=>a.category==='TD_DEF'&&a.success==='RÉUSSIE').length;
+  const tdDef=acts.filter(a=>a.category==='TD_DEF'&&a.success==='RÉUSSIE'||a.success==='RÉUSSI').length;
   const tdTotal=acts.filter(a=>a.category==='TD_OFF').length+acts.filter(a=>a.category==='TD_DEF').length;
   if(tdTotal>0) boxes.push(statBox('GRAPPLING DOM.',Math.round(tdOk/(tdTotal)*100)+'%',`${tdOk} TD réussis / ${tdDef} défendus`));
 
@@ -2610,7 +2565,7 @@ function buildGroundStats(acts) {
       if(!t.from) return;
       if(!byFrom[t.from]) byFrom[t.from]={att:0,ok:0,targets:{}};
       byFrom[t.from].att++;
-      if(t.success==='RÉUSSIE'){byFrom[t.from].ok++;if(t.to)byFrom[t.from].targets[t.to]=(byFrom[t.from].targets[t.to]||0)+1;}
+      if(t.success==='RÉUSSIE'||t.success==='RÉUSSI'){byFrom[t.from].ok++;if(t.to)byFrom[t.from].targets[t.to]=(byFrom[t.from].targets[t.to]||0)+1;}
     });
     Object.keys(byFrom).forEach(pos=>{
       const d=byFrom[pos];
