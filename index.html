@@ -618,6 +618,118 @@ function checkPwd(){
 
           </div><!-- /action-grid -->
 
+          <!-- GROUND FLOW TRIGGER -->
+          <div style="padding:0 16px 12px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">ENTRÉE AU SOL</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button class="ab" onclick="startGroundFlow('TD')" style="border-color:var(--blue);color:var(--blue);font-weight:600;">▼ TD RÉUSSI</button>
+              <button class="ab" onclick="startGroundFlow('CATCH KICK → TD')" style="border-color:var(--blue);color:var(--blue);">▼ CATCH KICK→TD</button>
+              <button class="ab" onclick="startGroundFlow('CHUTE')" style="border-color:var(--orange);color:var(--orange);">▼ CHUTE</button>
+              <button class="ab" onclick="startGroundFlow('SWEEP')" style="border-color:var(--gold);color:var(--gold);">▼ SWEEP</button>
+              <button class="ab" onclick="startGroundFlow('KNOCKDOWN')" style="border-color:var(--red);color:var(--red);">▼ KNOCKDOWN</button>
+              <button class="ab" onclick="startGroundFlow('CLINCH→SOL')" style="border-color:var(--purple);color:var(--purple);">▼ CLINCH→SOL</button>
+            </div>
+          </div>
+
+          <!-- GROUND FLOW PANEL -->
+          <div id="ground-flow-panel" style="display:none;margin:0 16px 12px;background:var(--surface);border:2px solid var(--blue);padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--blue);">⬇ GROUND FLOW — <span id="gf-entry-label">—</span></div>
+              <button onclick="closeGroundFlow()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;">FERMER</button>
+            </div>
+
+            <!-- Step 1: Position initiale -->
+            <div id="gf-step-position" class="gf-step">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">1. POSITION INITIALE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="ab" onclick="gfSetPosition('HALF GUARD')" style="border-color:var(--gold);">HALF GUARD</button>
+                <button class="ab" onclick="gfSetPosition('MOUNT')" style="border-color:var(--gold);">MOUNT</button>
+                <button class="ab" onclick="gfSetPosition('BACK')" style="border-color:var(--gold);">BACK</button>
+                <button class="ab" onclick="gfSetPosition('SIDE CTRL')" style="border-color:var(--gold);">SIDE CTRL</button>
+                <button class="ab" onclick="gfSetPosition('GUARD')" style="border-color:var(--gold);">GUARD</button>
+                <button class="ab" onclick="gfSetPosition('TURTLE')" style="border-color:var(--gold);">TURTLE</button>
+                <button class="ab" onclick="gfSetPosition('CRUCIFIX')" style="border-color:var(--gold);">CRUCIFIX</button>
+              </div>
+            </div>
+
+            <!-- Step 2: Actions depuis la position -->
+            <div id="gf-step-actions" class="gf-step" style="display:none;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">2. POSITION : <span id="gf-current-pos" style="color:var(--text);"></span></div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:4px;">GNP — TYPE DE COUP</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
+                <button class="ab" onclick="gfLogGnPType('DIRECT')" style="border-color:var(--red);">DIRECT</button>
+                <button class="ab" onclick="gfLogGnPType('HAMMER FIST')" style="border-color:var(--red);">HAMMER</button>
+                <button class="ab" onclick="gfLogGnPType('CROCHET SOL')" style="border-color:var(--red);">CROCHET</button>
+                <button class="ab" onclick="gfLogGnPType('UPPER SOL')" style="border-color:var(--red);">UPPER</button>
+                <button class="ab" onclick="gfLogGnPType('COUDE HORIZONTAL')" style="border-color:var(--orange);">COUDE H.</button>
+                <button class="ab" onclick="gfLogGnPType('COUDE DESCENDANT')" style="border-color:var(--orange);">COUDE DESC.</button>
+                <button class="ab" onclick="gfLogGnPType('COUDE 12-6')" style="border-color:var(--orange);">12-6</button>
+              </div>
+              <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;">DAMAGE :</span>
+                <button id="gf-dmg-low" class="ab" onclick="setGfDamage('LOW',this)" style="border-color:var(--green);color:var(--green);padding:3px 8px;font-size:9px;font-weight:600;">LÉGER</button>
+                <button id="gf-dmg-mid" class="ab" onclick="setGfDamage('MID',this)" style="border-color:var(--gold);color:var(--gold);padding:3px 8px;font-size:9px;">MOYEN</button>
+                <button id="gf-dmg-high" class="ab" onclick="setGfDamage('HIGH',this)" style="border-color:var(--red);color:var(--red);padding:3px 8px;font-size:9px;">ÉLEVÉ</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:4px;">SOUMISSION TENTÉE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <button class="ab" onclick="gfLogSub('RNC')" style="border-color:#e91e63;">RNC</button>
+                <button class="ab" onclick="gfLogSub('GUILLOTINE')" style="border-color:#e91e63;">GUILLOTINE</button>
+                <button class="ab" onclick="gfLogSub('TRIANGLE')" style="border-color:#e91e63;">TRIANGLE</button>
+                <button class="ab" onclick="gfLogSub('ARMBAR')" style="border-color:#e91e63;">ARMBAR</button>
+                <button class="ab" onclick="gfLogSub('HEEL HOOK')" style="border-color:#e91e63;">HEEL HOOK</button>
+                <button class="ab" onclick="gfLogSub('KIMURA')" style="border-color:#e91e63;">KIMURA</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:4px;">DÉFENSE ADVERSE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <button class="ab" onclick="gfLogDefense('FRAME')">FRAME</button>
+                <button class="ab" onclick="gfLogDefense('HIP ESCAPE')">HIP ESCAPE</button>
+                <button class="ab" onclick="gfLogDefense('BRIDGE')">BRIDGE</button>
+                <button class="ab" onclick="gfLogDefense('GUARD RECOVER')">GUARD REC.</button>
+                <button class="ab" onclick="gfLogDefense('GRIP FIGHT')">GRIP FIGHT</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:4px;">RÉACTION ADVERSE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <button class="ab" onclick="gfLogReaction('DONNE LE DOS')" style="border-color:#e91e63;color:#e91e63;">DONNE DOS</button>
+                <button class="ab" onclick="gfLogReaction('PAPILLON')" style="border-color:var(--gold);">PAPILLON</button>
+                <button class="ab" onclick="gfLogReaction('TURTLE')" style="border-color:var(--gold);">TURTLE</button>
+                <button class="ab" onclick="gfLogReaction('ROLLS')" style="border-color:var(--gold);">ROLLS</button>
+                <button class="ab" onclick="gfLogReaction('POMPE LES HANCHES')" style="border-color:var(--gold);">POMPE HANCHES</button>
+                <button class="ab" onclick="gfLogReaction('STAND UP ADVERSE')" style="border-color:var(--green);">STAND UP ADV.</button>
+                <button class="ab" onclick="gfLogReaction('CAGE WALK UP')" style="border-color:var(--orange);">CAGE WALK UP</button>
+              </div>
+
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:4px;">SUITE</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="ab" onclick="gfTransition()" style="border-color:#1abc9c;color:#1abc9c;">→ TRANSITION</button>
+                <button class="ab" onclick="gfStandUp()" style="border-color:var(--green);color:var(--green);">↑ RELEVÉ</button>
+                <button class="ab" onclick="gfEndRound()" style="border-color:var(--muted);">FIN ROUND</button>
+              </div>
+            </div>
+
+            <!-- Step 3: Transition -->
+            <div id="gf-step-transition" class="gf-step" style="display:none;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:#1abc9c;margin-bottom:6px;">3. TRANSITION DEPUIS <span id="gf-trans-from"></span></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="ab" onclick="gfSetNewPosition('HALF GUARD')">HALF GUARD</button>
+                <button class="ab" onclick="gfSetNewPosition('MOUNT')">MOUNT</button>
+                <button class="ab" onclick="gfSetNewPosition('BACK')">BACK</button>
+                <button class="ab" onclick="gfSetNewPosition('SIDE CTRL')">SIDE CTRL</button>
+                <button class="ab" onclick="gfSetNewPosition('GUARD')">GUARD</button>
+                <button class="ab" onclick="gfSetNewPosition('TURTLE')">TURTLE</button>
+                <button class="ab" onclick="gfSetNewPosition('CRUCIFIX')">CRUCIFIX</button>
+                <button class="ab" onclick="gfSetNewPosition('RENVERSÉ')" style="border-color:var(--red);">RENVERSÉ</button>
+              </div>
+            </div>
+
+            <!-- Ground flow log -->
+            <div id="gf-log" style="margin-top:10px;max-height:120px;overflow-y:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;border-top:1px solid var(--border);padding-top:8px;"></div>
+          </div>
+
           <!-- LOG -->
           <div class="log-section">
             <div class="log-header">
@@ -1679,6 +1791,9 @@ function renderFighterRapport(name) {
   // PROFIL GLOBAL
   html += rapportSection('PROFIL GLOBAL', buildProfileGlobal(allActs, fights));
 
+  // GRAPPLING AU SOL
+  html += rapportSection('GRAPPLING AU SOL', buildGroundStats(allActs));
+
   // SÉQUENCES GAGNANTES
   const winSeqs = buildWinningSequences(allActs);
   if(winSeqs) html += winSeqs;
@@ -2268,6 +2383,296 @@ function rapportSection(title, boxes) {
       ${boxes.join('')}
     </div>
   </div>`;
+}
+
+// ── GROUND FLOW ──
+let groundFlow = null;
+let gfDamageLevel = 'LOW';
+
+function setGfDamage(level, btn) {
+  gfDamageLevel = level;
+  ['gf-dmg-low','gf-dmg-mid','gf-dmg-high'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.fontWeight='normal';
+  });
+  if(btn) btn.style.fontWeight='600';
+}
+
+function startGroundFlow(entry) {
+  groundFlow = { entry, position: null, phaseId: Date.now(), round: currentRound };
+  gfDamageLevel = 'LOW';
+  document.getElementById('gf-entry-label').textContent = entry;
+  document.getElementById('ground-flow-panel').style.display = 'block';
+  document.getElementById('gf-step-position').style.display = 'block';
+  document.getElementById('gf-step-actions').style.display = 'none';
+  document.getElementById('gf-step-transition').style.display = 'none';
+  document.getElementById('gf-log').innerHTML = '';
+  const entryAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GROUND_ENTRY', action:'ENTRÉE SOL — '+entry, phase_id:groundFlow.phaseId };
+  currentActions.push(entryAction);
+  renderLog(); updateSaveBar();
+}
+
+function gfSetPosition(pos) {
+  if(!groundFlow) return;
+  groundFlow.position = pos;
+  document.getElementById('gf-current-pos').textContent = pos;
+  document.getElementById('gf-step-position').style.display = 'none';
+  document.getElementById('gf-step-actions').style.display = 'block';
+  const posAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'POSITION', action:pos, phase_id:groundFlow.phaseId, entry_type:groundFlow.entry };
+  currentActions.push(posAction);
+  renderLog(); updateSaveBar();
+  gfAddLog('📍 '+pos);
+}
+
+function gfLogGnP(count) {
+  if(!groundFlow) return;
+  const dmgLabel = gfDamageLevel==='HIGH'?'ÉLEVÉ':gfDamageLevel==='MID'?'MOYEN':'LÉGER';
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GNP', action:'GNP ×'+count, position:groundFlow.position, phase_id:groundFlow.phaseId, count, damage:gfDamageLevel };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  gfAddLog('🥊 GNP ×'+count+' ['+dmgLabel+'] depuis '+groundFlow.position);
+}
+
+function gfLogGnPCustom() {
+  const n = prompt('Nombre de frappes GnP ?');
+  if(n && !isNaN(n)) gfLogGnP(parseInt(n));
+}
+
+function gfLogSub(type) {
+  if(!groundFlow) return;
+  const result = confirm(type+' depuis '+groundFlow.position+' — RÉUSSIE ?');
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'SUBMISSION', action:type, position:groundFlow.position, success:result?'SOUMISSION':'ÉCHAPPÉE', phase_id:groundFlow.phaseId, setup:'GNP' };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  gfAddLog((result?'✅':'❌')+' '+type+' depuis '+groundFlow.position);
+}
+
+function gfLogDefense(type) {
+  if(!groundFlow) return;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GROUND_DEF', action:'DEF ADV — '+type, position:groundFlow.position, phase_id:groundFlow.phaseId };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  gfAddLog('🛡 DEF '+type);
+}
+
+function gfLogReaction(type) {
+  if(!groundFlow) return;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GROUND_REACTION', action:'RÉACTION ADV — '+type, position:groundFlow.position, phase_id:groundFlow.phaseId };
+  currentActions.push(action);
+  gfAddLog('👁 ADV: '+type);
+  if(type==='DONNE LE DOS'){
+    const transAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'TRANSITION', action:'BACK TAKE', from:groundFlow.position, to:'BACK', success:'RÉUSSIE', phase_id:groundFlow.phaseId };
+    currentActions.push(transAction);
+    groundFlow.position='BACK';
+    document.getElementById('gf-current-pos').textContent='BACK';
+    gfAddLog('→ BACK TAKE AUTO');
+  }
+  if(type==='TURTLE') gfAddLog('💡 Option : BACK TAKE disponible');
+  renderLog(); updateSaveBar();
+}
+
+function gfTransition() {
+  if(!groundFlow) return;
+  document.getElementById('gf-step-actions').style.display='none';
+  document.getElementById('gf-step-transition').style.display='block';
+  document.getElementById('gf-trans-from').textContent=groundFlow.position;
+}
+
+function gfSetNewPosition(newPos) {
+  if(!groundFlow) return;
+  const transAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'TRANSITION', action:'TRANSITION', from:groundFlow.position, to:newPos, success:newPos==='RENVERSÉ'?'BLOQUÉE':'RÉUSSIE', phase_id:groundFlow.phaseId };
+  currentActions.push(transAction);
+  gfAddLog('→ '+groundFlow.position+' → '+newPos);
+  groundFlow.position=newPos==='RENVERSÉ'?'DÉFENSIF':newPos;
+  document.getElementById('gf-current-pos').textContent=groundFlow.position;
+  document.getElementById('gf-step-transition').style.display='none';
+  document.getElementById('gf-step-actions').style.display='block';
+  renderLog(); updateSaveBar();
+}
+
+function gfStandUp() {
+  if(!groundFlow) return;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GROUND_EXIT', action:'RELEVÉ', position:groundFlow.position, phase_id:groundFlow.phaseId };
+  currentActions.push(action);
+  gfAddLog('↑ RELEVÉ depuis '+groundFlow.position);
+  renderLog(); updateSaveBar();
+  closeGroundFlow();
+}
+
+function gfEndRound() { gfAddLog('⏱ FIN ROUND'); closeGroundFlow(); }
+
+function closeGroundFlow() {
+  groundFlow=null;
+  document.getElementById('ground-flow-panel').style.display='none';
+}
+
+function gfAddLog(msg) {
+  const log=document.getElementById('gf-log');
+  const line=document.createElement('div');
+  line.style.cssText='padding:3px 0;border-bottom:1px solid var(--border);color:var(--muted);font-family:\'IBM Plex Mono\',monospace;font-size:10px;';
+  line.innerHTML=`<span style="color:var(--gold);margin-right:8px;">${getTimestamp()}</span>${msg}`;
+  log.appendChild(line);
+  log.scrollTop=log.scrollHeight;
+}
+
+// ── GROUND STATS ──
+function buildGroundStats(acts) {
+  const gnp=acts.filter(a=>a.category==='GNP');
+  const transitions=acts.filter(a=>a.category==='TRANSITION');
+  const subs=acts.filter(a=>a.category==='SUBMISSION');
+  if(!gnp.length&&!transitions.length&&!subs.length) return null;
+  const boxes=[];
+
+  if(gnp.length){
+    const total=gnp.reduce((s,a)=>s+(a.count||1),0);
+    const high=gnp.filter(a=>a.damage==='HIGH').reduce((s,a)=>s+(a.count||1),0);
+    const mid=gnp.filter(a=>a.damage==='MID').reduce((s,a)=>s+(a.count||1),0);
+    const low=gnp.filter(a=>a.damage==='LOW'||!a.damage).reduce((s,a)=>s+(a.count||1),0);
+    boxes.push(statBox('GNP TOTAL',total,gnp.length+' séquences'));
+    if(high) boxes.push(statBox('DMG ÉLEVÉ',high,Math.round(high/total*100)+'%'));
+    if(mid) boxes.push(statBox('DMG MOYEN',mid,Math.round(mid/total*100)+'%'));
+    if(low) boxes.push(statBox('DMG LÉGER',low,Math.round(low/total*100)+'%'));
+    const byPos={};
+    gnp.forEach(g=>{
+      if(!g.position) return;
+      if(!byPos[g.position]) byPos[g.position]={total:0,high:0,mid:0};
+      byPos[g.position].total+=(g.count||1);
+      if(g.damage==='HIGH') byPos[g.position].high+=(g.count||1);
+      if(g.damage==='MID') byPos[g.position].mid+=(g.count||1);
+    });
+    Object.keys(byPos).forEach(p=>{
+      const pct=byPos[p].total>0?Math.round((byPos[p].high+byPos[p].mid)/byPos[p].total*100):0;
+      boxes.push(statBox('GNP '+p,byPos[p].total,pct+'% MID+HIGH'));
+    });
+  }
+
+  if(transitions.length){
+    const byFrom={};
+    transitions.forEach(t=>{
+      if(!t.from) return;
+      if(!byFrom[t.from]) byFrom[t.from]={att:0,ok:0,targets:{}};
+      byFrom[t.from].att++;
+      if(t.success==='RÉUSSIE'){byFrom[t.from].ok++;if(t.to)byFrom[t.from].targets[t.to]=(byFrom[t.from].targets[t.to]||0)+1;}
+    });
+    Object.keys(byFrom).forEach(pos=>{
+      const d=byFrom[pos];
+      const top=Object.keys(d.targets).sort((a,b)=>d.targets[b]-d.targets[a])[0]||'—';
+      boxes.push(statBox('TRANS. '+pos,`${d.ok}/${d.att}`,d.att>0?Math.round(d.ok/d.att*100)+'% → '+top:'—'));
+    });
+  }
+
+  if(subs.length){
+    const byPos={};
+    subs.forEach(s=>{
+      if(!s.position) return;
+      if(!byPos[s.position]) byPos[s.position]={att:0,ok:0};
+      byPos[s.position].att++;
+      if(s.success==='SOUMISSION') byPos[s.position].ok++;
+    });
+    Object.keys(byPos).forEach(p=>{
+      boxes.push(statBox('SUB '+p,`${byPos[p].ok}/${byPos[p].att}`,Math.round(byPos[p].ok/byPos[p].att*100)+'%'));
+    });
+  }
+
+  return boxes.length?boxes:null;
+}
+
+function gfLogGnPType(type) {
+  if(!groundFlow) return;
+  const dmgLabel = gfDamageLevel==="HIGH"?"ÉLEVÉ":gfDamageLevel==="MID"?"MOYEN":"LÉGER";
+  const dmgColor = gfDamageLevel==="HIGH"?"🔴":gfDamageLevel==="MID"?"🟡":"🟢";
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:"GNP", action:"GNP — "+type, strike_type:type, position:groundFlow.position, phase_id:groundFlow.phaseId, count:1, damage:gfDamageLevel };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  gfAddLog(dmgColor+" "+type+" ["+dmgLabel+"] depuis "+groundFlow.position);
+}
+
+
+function gfLogSub(type) {
+  if(!groundFlow) return;
+  const result = confirm(type+' depuis '+groundFlow.position+' — RÉUSSIE ?');
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'SUBMISSION', action:type, position:groundFlow.position, success:result?'SOUMISSION':'ÉCHAPPÉE', phase_id:groundFlow.phaseId, setup:'GNP' };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  gfAddLog((result?'✅':'❌')+' '+type+' depuis '+groundFlow.position);
+}
+
+function gfLogDefense(type) {
+  if(!groundFlow) return;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GROUND_DEF', action:'DEF ADV — '+type, position:groundFlow.position, phase_id:groundFlow.phaseId };
+  currentActions.push(action);
+  renderLog(); updateSaveBar();
+  gfAddLog('🛡 DEF '+type);
+}
+
+function gfLogReaction(type) {
+  if(!groundFlow) return;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GROUND_REACTION', action:'RÉACTION ADV — '+type, position:groundFlow.position, phase_id:groundFlow.phaseId };
+  currentActions.push(action);
+  gfAddLog('👁 ADV: '+type);
+
+  // Si l'adversaire donne le dos → transition auto vers BACK
+  if(type === 'DONNE LE DOS') {
+    const transAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'TRANSITION', action:'BACK TAKE', from:groundFlow.position, to:'BACK', success:'RÉUSSIE', phase_id:groundFlow.phaseId };
+    currentActions.push(transAction);
+    groundFlow.position = 'BACK';
+    document.getElementById('gf-current-pos').textContent = 'BACK';
+    gfAddLog('→ BACK TAKE AUTO');
+  }
+
+  // Si turtle → option de prendre le dos
+  if(type === 'TURTLE') {
+    gfAddLog('💡 Option : BACK TAKE disponible');
+  }
+
+  renderLog(); updateSaveBar();
+}
+
+function gfTransition() {
+  if(!groundFlow) return;
+  document.getElementById('gf-step-actions').style.display = 'none';
+  document.getElementById('gf-step-transition').style.display = 'block';
+  document.getElementById('gf-trans-from').textContent = groundFlow.position;
+}
+
+function gfSetNewPosition(newPos) {
+  if(!groundFlow) return;
+  const transAction = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'TRANSITION', action:'TRANSITION', from:groundFlow.position, to:newPos, success:newPos==='RENVERSÉ'?'BLOQUÉE':'RÉUSSIE', phase_id:groundFlow.phaseId };
+  currentActions.push(transAction);
+  gfAddLog('→ '+groundFlow.position+' → '+newPos);
+  groundFlow.position = newPos==='RENVERSÉ'?'DÉFENSIF':newPos;
+  document.getElementById('gf-current-pos').textContent = groundFlow.position;
+  document.getElementById('gf-step-transition').style.display = 'none';
+  document.getElementById('gf-step-actions').style.display = 'block';
+  renderLog(); updateSaveBar();
+}
+
+function gfStandUp() {
+  if(!groundFlow) return;
+  const action = { id:Date.now(), round:currentRound, time:getTimestamp(), category:'GROUND_EXIT', action:'RELEVÉ', position:groundFlow.position, phase_id:groundFlow.phaseId };
+  currentActions.push(action);
+  gfAddLog('↑ RELEVÉ depuis '+groundFlow.position);
+  renderLog(); updateSaveBar();
+  closeGroundFlow();
+}
+
+function gfEndRound() {
+  gfAddLog('⏱ FIN ROUND');
+  closeGroundFlow();
+}
+
+function closeGroundFlow() {
+  groundFlow = null;
+  document.getElementById('ground-flow-panel').style.display = 'none';
+}
+
+function gfAddLog(msg) {
+  const log = document.getElementById('gf-log');
+  const line = document.createElement('div');
+  line.style.cssText = 'padding:3px 0;border-bottom:1px solid var(--border);color:var(--muted);font-family:\'IBM Plex Mono\',monospace;font-size:10px;';
+  line.innerHTML = `<span style="color:var(--gold);margin-right:8px;">${getTimestamp()}</span>${msg}`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
 }
 setInterval(()=>{
   if(currentFightId && currentActions.length>0){
