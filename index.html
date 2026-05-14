@@ -497,6 +497,7 @@ function checkPwd(){
                 <button class="ab" onclick="startAction('DEF_STRIKE','HIGH GUARD')">HIGH GUARD</button>
                 <button class="ab" onclick="startAction('DEF_STRIKE','COVER')">COVER</button>
                 <button class="ab" onclick="startAction('DEF_STRIKE','CATCH KICK')">CATCH KICK</button>
+                <button class="ab" onclick="startAction('DEF_STRIKE','CATCH KICK → TD')" style="border-color:var(--blue);">CATCH → TD</button>
               </div>
               <div class="act-row-label">COUNTER</div>
               <div class="act-row">
@@ -1122,9 +1123,12 @@ const CTX_FIELDS = {
     {id:'followup', label:'SUITE', opts:['JAB','CROSS','TD','KICK','AUCUNE']},
   ],
   'DEF_STRIKE': [
-    {id:'success', label:'SUCCÈS', opts:['RÉUSSI','PARTIELLEMENT','TOUCHÉ QUAND MÊME']},
+    {id:'success', label:'SUCCÈS DÉFENSE', opts:['RÉUSSI','PARTIELLEMENT','TOUCHÉ QUAND MÊME']},
     {id:'counter', label:'CONTRE-ATTAQUE', opts:['OUI','NON']},
-    {id:'counter_type', label:'TYPE CONTRE', opts:['JAB','CROSS','KICK','GENOU','AUCUN']},
+    {id:'counter_type', label:'TYPE CONTRE', opts:['JAB','CROSS','KICK','GENOU','TD','AUCUN']},
+    {id:'catch_kick_td', label:'CATCH KICK → TD', opts:['OUI','NON','N/A']},
+    {id:'td_type', label:'TYPE TD (si catch → TD)', opts:['DOUBLE LEG','SINGLE LEG','TRIP','BODY LOCK','N/A']},
+    {id:'td_success', label:'TD RÉUSSI', opts:['OUI','NON','N/A']},
   ],
   'CLINCH': [
     {id:'success', label:'ENTRÉE RÉUSSIE', opts:['RÉUSSIE','BLOQUÉE']},
