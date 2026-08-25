@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fight Night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--nuit:#12161e;--nuit-2:#1a2029;--tungstene:#f2b25a;--craie:#e9e5da;
+        --craie-2:#9aa0a8;--cuir:#b6412f;--trait:#2a323d;--bleu:#5f8fc4}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{background:var(--nuit);color:var(--craie);font-family:"Barlow Semi Condensed",system-ui,sans-serif;overflow:hidden;user-select:none}
+  .app{max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative}
+
+  .entete{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:12px 14px 6px;gap:8px}
+  .coin{min-width:0;cursor:pointer}
+  .coin b{font-family:Anton;font-weight:400;letter-spacing:.04em;font-size:.95rem;text-transform:uppercase;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .coin span{font-size:.66rem;color:var(--craie-2)}
+  .coin.d{text-align:right}
+  .coin i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:1px}
+  .coin.d i{margin:0 0 0 6px}
+  .horloge{text-align:center}
+  .horloge b{font-variant-numeric:tabular-nums;font-size:1.25rem;font-weight:700;letter-spacing:.04em}
+  .horloge span{display:block;font-size:.6rem;letter-spacing:.18em;color:var(--craie-2);font-weight:600}
+
+  .momentum{height:5px;margin:4px 14px 0;border-radius:3px;background:#242b35;overflow:hidden;display:flex}
+  .momentum .a{background:var(--tungstene);transition:width 1s}
+  .momentum .b{background:var(--bleu);flex:1}
+
+  .cartes{display:flex;gap:5px;justify-content:center;padding:6px 12px 0;min-height:0}
+  .cartes .c{font-size:.6rem;font-weight:700;letter-spacing:.04em;
+    background:var(--nuit-2);border:1px solid var(--trait);border-radius:6px;
+    padding:2px 7px;font-variant-numeric:tabular-nums}
+  .cartes .c small{color:var(--craie-2);font-weight:600;margin-right:4px}
+  .cartes .c .g{color:var(--tungstene)} .cartes .c .d{color:var(--bleu)}
+  .cartes .tot{border-color:var(--tungstene)}
+
+  .direct{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:8px 12px 2px}
+  .cel{background:var(--nuit-2);border:1px solid var(--trait);border-radius:8px;padding:4px 0;text-align:center}
+  .cel small{display:block;font-size:.5rem;letter-spacing:.14em;color:var(--craie-2);font-weight:700}
+  .cel b{font-variant-numeric:tabular-nums;font-size:.76rem;font-weight:700}
+  .cel b .g{color:var(--tungstene)} .cel b .d{color:var(--bleu)}
+  .cel b .sep{color:#4a5361;font-weight:400;padding:0 3px}
+
+  .scene{flex:1;position:relative;min-height:0;display:flex;align-items:center;justify-content:center}
+  .scene svg{width:min(100%,430px);height:100%;display:block}
+  .phase{position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    font-size:.66rem;font-weight:700;letter-spacing:.2em;color:var(--craie-2);
+    background:rgba(18,22,30,.7);padding:3px 12px;border-radius:10px}
+  .phase.chaud{color:var(--tungstene)}
+  #criEcho{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%) scale(.8);
+    font-size:21px;font-weight:800;text-align:center;padding:10px 18px;border-radius:14px;
+    background:rgba(10,12,16,.88);border:1.5px solid var(--or);color:var(--or);
+    opacity:0;pointer-events:none;z-index:40;transition:opacity .25s,transform .25s;
+    max-width:82%}
+  #criEcho.perdu{border-color:var(--doux);color:var(--doux)}
+  #criEcho.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .flash{position:absolute;inset:0;background:var(--cuir);opacity:0;pointer-events:none}
+  .flash.on{animation:fl .5s}
+  @keyframes fl{20%{opacity:.28}100%{opacity:0}}
+  .pt{cursor:pointer}
+
+  /* entre-rounds : le tapis respire, on comprend sans lire */
+  .gong{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-family:Anton;font-size:1.6rem;letter-spacing:.12em;color:var(--tungstene);
+    opacity:0;pointer-events:none}
+  .gong.on{animation:go 1.6s}
+  @keyframes go{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}
+                25%{opacity:1}75%{opacity:1}100%{opacity:0}}
+
+  .corps{position:absolute;bottom:8px;width:48px}
+  .corps.g{left:10px}.corps.d{right:10px}
+  .corps svg{width:100%}
+  .corps .z{fill:#232b36;transition:fill .8s}
+
+  .commentaire{min-height:48px;display:flex;align-items:center;justify-content:center;
+    padding:4px 22px;text-align:center;font-size:.9rem;line-height:1.3;color:#d8d3c6}
+  .commentaire.pop{animation:pop .35s}
+  @keyframes pop{0%{opacity:0;transform:translateY(6px)}100%{opacity:1}}
+
+  .essences{display:flex;gap:10px;padding:0 14px 8px}
+  .ess{flex:1;height:4px;border-radius:2px;background:#242b35;overflow:hidden}
+  .ess i{display:block;height:100%;border-radius:2px;transition:width 1.2s}
+  .ess.g i{background:var(--tungstene)}.ess.d i{background:var(--bleu);margin-left:auto}
+
+  .ctl{display:flex;gap:8px;padding:0 14px calc(14px + env(safe-area-inset-bottom))}
+  .ctl button{flex:1;padding:12px 4px;border-radius:12px;border:1px solid var(--trait);
+    background:var(--nuit-2);color:var(--craie);font-family:inherit;font-weight:700;font-size:.78rem;
+    letter-spacing:.05em;cursor:pointer}
+  .ctl button.plein{background:var(--tungstene);border-color:var(--tungstene);color:#1a1206}
+  .ctl button:focus-visible{outline:2px solid var(--tungstene);outline-offset:2px}
+
+  /* /!\ LA CARTE DE FIN PREND TOUT L'ECRAN (Mael, teste sur telephone :
+     "fin de combat illisible"). Elle etait posee DANS la scene, en semi
+     transparent : le compteur de stats, le commentaire et les boutons de
+     lecture restaient visibles PAR-DESSOUS et les textes se croisaient.
+     Fond opaque, position fixe, au-dessus de tout. */
+  .fin{position:fixed;inset:0;background:var(--nuit);display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:8px;z-index:50;text-align:center;padding:24px}
+  .fin.la{display:flex}
+  .fin small{letter-spacing:.24em;color:var(--craie-2);font-weight:600;font-size:.7rem}
+  .fin h1{font-family:Anton;font-weight:400;font-size:2rem;letter-spacing:.05em;text-transform:uppercase}
+  .fin p{color:var(--tungstene);font-weight:700;letter-spacing:.08em}
+  .fin button{padding:12px 22px;border-radius:12px;border:0;background:var(--tungstene);
+    color:#1a1206;font-family:inherit;font-weight:700;font-size:.83rem;cursor:pointer}
+
+  /* /!\ AU-DESSUS DE LA CARTE DE FIN (Mael, en jouant : "les boutons
+     n'etaient pas cliquables"). En passant .fin a z-index 50 pour la
+     rendre lisible, j'avais fait passer la feuille de stats DERRIERE
+     elle : elle s'ouvrait, invisible, et le bouton semblait mort. */
+  .stats{position:fixed;inset:0;background:var(--nuit);display:none;
+    flex-direction:column;z-index:60;padding:18px 16px calc(16px + env(safe-area-inset-bottom));overflow:auto}
+  .stats.la{display:flex}
+  .stats .tete{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:4px}
+  .stats .tete b{font-family:Anton;font-weight:400;font-size:1rem;letter-spacing:.04em;text-transform:uppercase}
+  .stats .tete .vs{font-size:.6rem;letter-spacing:.22em;color:var(--craie-2);font-weight:700}
+  .stats .tete .d{text-align:right}
+  .stats .verdict{text-align:center;font-size:.72rem;color:var(--tungstene);font-weight:700;letter-spacing:.1em;margin-bottom:12px}
+  .stats h3{font-size:.62rem;letter-spacing:.22em;color:var(--craie-2);font-weight:700;text-align:center;margin:14px 0 8px}
+  .ligne{display:grid;grid-template-columns:46px 1fr 92px 1fr 46px;align-items:center;gap:8px;font-size:.78rem;margin-bottom:7px}
+  .ligne b{font-variant-numeric:tabular-nums;font-weight:700}
+  .ligne b:last-child{text-align:right}
+  .ligne .lib{text-align:center;font-size:.66rem;color:var(--craie-2);font-weight:600}
+  .demi{height:6px;border-radius:3px;background:#242b35;overflow:hidden;display:flex}
+  .demi.g{justify-content:flex-end}
+  .demi i{display:block;height:100%}
+  .demi.g i{background:var(--tungstene);border-radius:3px 0 0 3px}
+  .demi.d i{background:var(--bleu);border-radius:0 3px 3px 0}
+  .ligne .gagne{color:var(--tungstene)}
+  .stats .fermer{margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--trait);
+    background:var(--nuit-2);color:var(--craie);font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+/* ---- LE COIN DU COACH ----
+   /!\ PAS .coin : cette classe designe deja les coins rouge/bleu des
+   combattants en tete d'ecran. Collision evitee de justesse. */
+#coach{position:fixed;inset:0;z-index:60;background:rgba(6,9,14,.88);
+  display:none;align-items:center;justify-content:center;padding:18px;
+  backdrop-filter:blur(3px)}
+#coach.la{display:flex}
+#coach .c-boite{width:100%;max-width:380px;background:var(--nuit-2);
+  border:1px solid var(--trait);border-radius:12px;padding:16px 15px 15px}
+#coach .c-tete{font-family:Anton,sans-serif;font-size:1.15rem;letter-spacing:.03em;
+  color:var(--tungstene)}
+#coach .c-sous{font-size:.72rem;color:var(--craie-2);margin:2px 0 12px}
+#coach .c-lib{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--craie-2);margin:11px 0 5px}
+#coach .c-rang{display:flex;gap:6px}
+.cbtn{flex:1;padding:9px 4px;border-radius:7px;cursor:pointer;
+  background:var(--nuit);border:1px solid var(--trait);color:var(--craie);
+  font-family:inherit;font-size:.78rem}
+.cbtn.actif{background:var(--tungstene);border-color:var(--tungstene);
+  color:#12161e;font-weight:700}
+#coach .c-note{font-size:.66rem;color:var(--craie-2);margin:12px 0 10px;text-align:center}
+#coach .c-go{width:100%;padding:12px;border-radius:8px;cursor:pointer;
+  background:var(--cuir);border:1px solid var(--cuir);color:#fff;
+  font-family:Anton,sans-serif;font-size:.95rem;letter-spacing:.05em}
+/* ---- LES CRIS DU CHANTIER G ----
+   Le panneau se superpose SANS mettre le combat en pause : un vrai coin
+   crie pendant l'action. Le cri part a la prochaine tranche de 30 s. */
+#crier{position:fixed;left:0;right:0;bottom:0;z-index:55;
+  background:rgba(12,16,24,.96);border-top:1px solid var(--trait);
+  padding:10px 14px calc(12px + env(safe-area-inset-bottom));display:none}
+#crier.la{display:block}
+#crier .cr-tete{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+#crier .cr-tete b{font-family:Anton;font-weight:400;font-size:.9rem;letter-spacing:.06em;color:var(--tungstene)}
+#crier .cr-tete span{font-size:.66rem;color:var(--craie-2);font-weight:600}
+#crier .cr-liste{display:flex;flex-wrap:wrap;gap:7px}
+.cri-b{padding:9px 12px;border-radius:9px;cursor:pointer;
+  background:var(--nuit-2);border:1px solid var(--trait);color:var(--craie);
+  font-family:inherit;font-size:.8rem;font-weight:600}
+.cri-b.choisi{background:var(--cuir);border-color:var(--cuir);color:#fff}
+#btnCrier.arme{background:var(--cuir);border-color:var(--cuir);color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="entete">
+    <div class="coin" onclick="voirStats()"><b><i style="background:var(--tungstene)"></i><span id="nomA">—</span></b><span id="ficheA"></span></div>
+    <div class="horloge"><b id="clk">5:00</b><span id="rnd">ROUND 1</span></div>
+    <div class="coin d" onclick="voirStats()"><b><span id="nomB">—</span><i style="background:var(--bleu)"></i></b><span id="ficheB"></span></div>
+  </div>
+
+  <div class="momentum"><div class="a" id="mom" style="width:50%"></div><div class="b"></div></div>
+
+  <!-- LES CARTES DES JUGES, round par round. /!\ Elles viennent du LOG :
+       c'est le moteur qui a juge, l'ecran ne rejuge rien. -->
+  <div class="cartes" id="cartes"></div>
+
+  <div class="direct">
+    <div class="cel"><small>SIG.</small><b id="dSig"></b></div>
+    <div class="cel"><small>FRAPPES</small><b id="dFr"></b></div>
+    <div class="cel"><small>TAKEDOWNS</small><b id="dTd"></b></div>
+    <div class="cel"><small>CONTRÔLE</small><b id="dCt"></b></div>
+    <div class="cel"><small>SOUM.</small><b id="dSub"></b></div>
+  </div>
+
+  <div class="scene" id="scene">
+    <svg viewBox="0 0 360 360">
+      <defs><radialGradient id="tapis" cx="50%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#1d2530"/><stop offset="100%" stop-color="#141a24"/>
+      </radialGradient></defs>
+      <polygon id="oct" class="oct" points="" fill="url(#tapis)" stroke="#3a4452" stroke-width="5"/>
+      <polygon id="oct2" points="" fill="none" stroke="#243040" stroke-width="1.5"/>
+      <circle cx="180" cy="180" r="34" fill="none" stroke="#243040" stroke-width="1.5"/>
+      <text id="posSol" x="180" y="150" text-anchor="middle" fill="#f2b25a" font-size="11" font-weight="700" letter-spacing="2" opacity="0"></text>
+      <g id="pA" class="pt" onclick="voirStats()"><circle r="12" fill="#f2b25a" opacity=".2"/><circle r="7" fill="#f2b25a" stroke="#12161e" stroke-width="2"/></g>
+      <g id="pB" class="pt" onclick="voirStats()"><circle r="12" fill="#5f8fc4" opacity=".2"/><circle r="7" fill="#5f8fc4" stroke="#12161e" stroke-width="2"/></g>
+    </svg>
+    <div class="phase" id="phase">DISTANCE</div>
+    <div class="flash" id="flash"></div>
+    <div id="criEcho"></div>
+    <div class="gong" id="gong"></div>
+
+    <div class="corps g"><svg viewBox="0 0 40 90">
+      <circle class="z" id="At" cx="20" cy="12" r="9"/><rect class="z" id="Ac" x="10" y="24" width="20" height="30" rx="6"/>
+      <rect class="z" id="Aj" x="12" y="57" width="7" height="30" rx="3"/><rect class="z" id="Aj2" x="21" y="57" width="7" height="30" rx="3"/>
+    </svg></div>
+    <div class="corps d"><svg viewBox="0 0 40 90">
+      <circle class="z" id="Bt" cx="20" cy="12" r="9"/><rect class="z" id="Bc" x="10" y="24" width="20" height="30" rx="6"/>
+      <rect class="z" id="Bj" x="12" y="57" width="7" height="30" rx="3"/><rect class="z" id="Bj2" x="21" y="57" width="7" height="30" rx="3"/>
+    </svg></div>
+
+    <div class="fin" id="fin">
+      <small id="finTitre">VICTOIRE</small>
+      <h1 id="finNom"></h1>
+      <p id="finMethode"></p>
+      <span style="font-size:.78rem;color:var(--craie-2)" id="finBourse"></span>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button style="background:none;border:1px solid var(--trait);color:var(--craie)" onclick="voirStats()">Feuille de stats</button>
+        <button onclick="rejouer()">Revoir le combat</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="commentaire" id="com">Les deux hommes touchent les gants. C'est parti.</div>
+
+  <div class="essences">
+    <div class="ess g"><i id="essA" style="width:100%"></i></div>
+    <div class="ess d"><i id="essB" style="width:100%"></i></div>
+  </div>
+
+  <div class="ctl">
+    <button id="btnPause" onclick="pause()">⏸ PAUSE</button>
+    <button onclick="voirStats()">STATS</button>
+    <button class="plein" id="btnVit" onclick="vitesse()">×1</button>
+    <button id="btnCrier" onclick="ouvrirCris()">📣 CRIER</button>
+    <button id="btnSim" onclick="simulerRound()">⏭ SIMULER</button>
+  </div>
+
+  <!-- LE COIN : s'ouvre a chaque cloche en mode direct. Le combat ATTEND. -->
+  <div id="coach">
+    <div class="c-boite">
+      <div class="c-tete" id="coinRound">FIN DU ROUND 1</div>
+      <div class="c-sous">Une minute avec ton combattant.</div>
+
+      <div class="c-lib">Plan de jeu</div>
+      <div class="c-rang">
+        <button class="cbtn" data-cle="plan" data-val="frappe" onclick="choisir('plan','frappe')">Boxer</button>
+        <button class="cbtn" data-cle="plan" data-val="lutte"  onclick="choisir('plan','lutte')">Lutter</button>
+        <button class="cbtn" data-cle="plan" data-val="clinch" onclick="choisir('plan','clinch')">Clinch</button>
+      </div>
+
+      <div class="c-lib">Allure</div>
+      <div class="c-rang">
+        <button class="cbtn" data-cle="allure" data-val="eco"  onclick="choisir('allure','eco')">Économiser</button>
+        <button class="cbtn" data-cle="allure" data-val="fort" onclick="choisir('allure','fort')">Tout donner</button>
+      </div>
+
+      <div class="c-lib">Au sol</div>
+      <div class="c-rang">
+        <button class="cbtn" data-cle="sol" data-val="soumission" onclick="choisir('sol','soumission')">Chercher la soumission</button>
+      </div>
+
+      <div class="c-lib">Cible</div>
+      <div class="c-rang">
+        <button class="cbtn" data-cle="cible" data-val="tete"   onclick="choisir('cible','tete')">Tête</button>
+        <button class="cbtn" data-cle="cible" data-val="corps"  onclick="choisir('cible','corps')">Corps</button>
+        <button class="cbtn" data-cle="cible" data-val="jambes" onclick="choisir('cible','jambes')">Jambes</button>
+      </div>
+
+      <div class="c-note">Rien de sélectionné = on ne change rien.</div>
+      <button class="c-go" onclick="reprendre()">▶ REPRENDRE LE COMBAT</button>
+    </div>
+  </div>
+
+  <!-- CHANTIER G : le coin crie pendant le round. Trois cris par round,
+       ceux de la phase reelle du moteur. Le cri s'applique a la tranche
+       de 30 s SUIVANTE — jamais a ce qui est deja calcule. -->
+  <div id="crier">
+    <div class="cr-tete"><b>CRIER DEPUIS LE COIN</b>
+      <span id="crReste">3 cris restants</span></div>
+    <div class="cr-liste" id="crListe"></div>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="tete"><b id="sNomA"></b><span class="vs">VS</span><b class="d" id="sNomB"></b></div>
+    <div class="verdict" id="verdict">ROUND 1 · EN COURS</div>
+    <h3>LE COMBAT</h3>
+    <div id="lignes-combat"></div>
+    <h3 id="tete-frappes">FRAPPES SIGNIFICATIVES</h3>
+    <div id="lignes-frappes"></div>
+    <h3>SUR LE PAPIER</h3>
+    <div id="lignes-profil"></div>
+    <button class="fermer" onclick="fermerStats()">Retour au combat</button>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   BLOC DE DONNEES — sortie de traducteur.py, rien d'autre.
+   Pour rejouer un autre combat : remplacer ce bloc, ne rien toucher
+   en dessous.
+   ===================================================================== */
+const DATA = /*__DATA__*/;
+
+let   S      = DATA.S;
+/* Rejouer : en page autonome, un simple rechargement. En surcouche (iframe
+   srcdoc), location.reload() ne rejoue pas fiablement le document injecte :
+   on demande au parent de reconstruire l'ecran, avec la MEME graine donc le
+   MEME combat. */
+/* ============ LA CLOCHE ET LE COIN ============ */
+function cloche(){
+  if(FIN||fini)return;                 /* pas de coin apres la fin (15/08) */
+  attenteCoin=true; enPause=true;
+  crisRestants=3; criEnAttente=null;           /* la voix revient entre les rounds */
+  $('btnCrier').classList.remove('arme'); $('crier').classList.remove('la');
+  $('btnPause').textContent='▶ REPRENDRE';
+  ordre={};
+  $('coinRound').textContent=`FIN DU ROUND ${RD}`;
+  majBoutonsCoin();
+  $('coach').classList.add('la');
+}
+function choisir(cle,valeur){
+  ordre[cle]=(ordre[cle]===valeur)?undefined:valeur;
+  if(ordre[cle]===undefined)delete ordre[cle];
+  majBoutonsCoin();
+}
+function majBoutonsCoin(){
+  document.querySelectorAll('#coach [data-cle]').forEach(b=>{
+    const on = ordre[b.dataset.cle]===b.dataset.val
+      || (b.dataset.val==='' && ordre[b.dataset.cle]===undefined && b.dataset.defaut==='1');
+    b.className = 'cbtn'+(ordre[b.dataset.cle]===b.dataset.val?' actif':'');
+  });
+}
+/* Traduit les boutons en ordre pour coin.js. Rien n'est envoye si le coach
+   n'a rien demande : un round sans consigne doit rester un round sans
+   consigne, pas un gameplan "neutre" ecrit par l'ecran. */
+function ordreCoin(){
+  const o={};
+  if(ordre.plan==='frappe'){o.striking=6;o.wrestling=2;o.clinch=2}
+  else if(ordre.plan==='lutte'){o.striking=2;o.wrestling=6;o.clinch=2}
+  else if(ordre.plan==='clinch'){o.striking=2;o.wrestling=2;o.clinch=6}
+  if(ordre.allure==='eco')o.allure=0.8;
+  else if(ordre.allure==='fort')o.allure=1.25;
+  if(ordre.cible)o.cible=ordre.cible;
+  if(ordre.sol)o.sol=ordre.sol;
+  return Object.keys(o).length?o:null;
+}
+function reprendre(){
+  $('coach').classList.remove('la');
+  const o=ordreCoin();
+  envoyer({mma:"reprendre",ordre:o});
+}
+function envoyer(m){
+  if(window.parent&&window.parent!==window)window.parent.postMessage(m,"*");
+}
+/* Le jeu renvoie la chronologie du log COMPLET. On remplace S et on se
+   recale par le TEMPS, pas par l'index : les etapes deja jouees ont pu
+   etre reecrites. */
+window.addEventListener("message",e=>{
+  const m=e&&e.data; if(!m||m.mma!=="suite")return;
+  /* /!\ L'ECOULE SE CAPTURE AVANT DE REMPLACER S (Mael, 16/08 : chrono
+     fige a 5:00). tM0=ecoule() etait calcule APRES S=m.S — la fraction
+     se mesurait sur la nouvelle liste, plus longue a chaque tranche,
+     donc ecrasee vers zero : le chrono restait colle en haut de round. */
+  const eAvant=ecoule();
+  S=m.S;
+  /* CHANTIER G : l'etat de tranche et l'echo du cri. */
+  const etaitTranche=attenteTranche;
+  attenteTranche=false;
+  if(m.finRound!==undefined)finRound=m.finRound;
+  if($('crier').classList.contains('la'))majCris();
+  if(m.criMot){
+    /* /!\ LE CRI SE VOIT (Mael, 21/08 : "crier on voit pas bien le
+       resultat") : l'echo passait par la ligne de commentaire, noye dans
+       le flux. Desormais un bandeau dedie au-dessus de la cage — dore si
+       le cri porte, gris s'il se perd ou arrive trop tard — visible ~2,6 s. */
+    const e=$('criEcho');
+    e.textContent=m.criMot;
+    e.classList.toggle('perdu',/trop tard|couvre|n'entend|bruit/i.test(m.criMot));
+    e.classList.remove('on');void e.offsetWidth;e.classList.add('on');
+    clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600);
+  }
+  /* La fenetre de temps moteur de la tranche recue : l'horloge
+     progressera de tM0 a tM1 pendant sa lecture. En fin de round, la
+     borne haute est le temps de la derniere etape (recalee par le
+     verdict) — l'heure d'un KO reste la vraie. */
+  if(etaitTranche||m.finRound!==undefined){
+    tM0=Math.max(0,Math.min(SEC_RD,eAvant));
+    if(m.tMoteur!=null)tM1=m.tMoteur;
+    else if(m.finRound&&m.S&&m.S.length)
+      tM1=Math.max(0,Math.min(SEC_RD,m.S[m.S.length-1].t-(RD-1)*SEC_RD));
+    else tM1=Math.min(SEC_RD,tM0+30);
+  }
+  /* /!\ FIN S'ASSIGNE AVANT TOUT CHEMIN (crash vu par Mael, 15/08 : KO
+     pendant SIMULER -> le bloc d'avalage tournait AVANT l'assignation ->
+     la fin de combat s'appliquait sans FIN -> pas de carte -> CLOCHE
+     FANTOME -> le joueur donne un plan -> consigne() jette "le combat
+     est termine". La fin du combat prime sur tout le reste. */
+  if(m.FIN)FIN=m.FIN;
+  if(m.feuille&&typeof FEUILLE_MAJ==="function")FEUILLE_MAJ(m.feuille);
+  if(m.cartes){CARTES=m.cartes;majCartes();}
+  if(sauteRound){
+    /* Meme regle : index garde, pli, puis on avale jusqu'a la borne —
+       la fin provisoire d'une TRANCHE ne se joue jamais. */
+    if(etaitTranche){
+      i=Math.min(i,S.length-1);
+      iBase=i;
+      replierEtat();
+      retemporiser();
+    }
+    const borne=finRound?S.length:S.length-1;
+    while(i+1<borne){i++;etape=S[i];applique(etape);t=etape.t;}
+    suiv=S[i+1]; horloge(); majDirect();
+    if(!finRound){demanderTranche();return}
+    sauteRound=false;
+    if(!fini)cloche();
+    return;
+  }
+  /* /!\ UNE TRANCHE N'EST PAS UNE REPRISE DE ROUND (defaut vu par Mael,
+     15/08 : compteurs a 214/563 pour 12 frappes reelles — puis, premiere
+     correction, des PERTES : le reliquat redistribue passait sous le
+     recalage par temps). La regle finale : INDEX GARDE, chronologie de la
+     nouvelle liste adoptee, et PLI — voir replierEtat(). */
+  if(etaitTranche){
+    i=Math.min(i,S.length-1);
+    iBase=i;
+    replierEtat();
+    retemporiser();
+    etape=S[i]; suiv=S[i+1];
+    return;
+  }
+  i=0; while(i+1<S.length&&S[i+1].t<=t)i++;
+  etape=S[i]; suiv=S[i+1];
+
+  /* /!\ BUG VU EN VRAI : l'ecran restait sur "ROUND 1 0:00" apres la
+     reprise. RD n'est mis a jour que DANS applique(), or les etapes
+     franchies par le recalage ne sont PAS rejouees — sinon on doublerait
+     les statistiques. L'etape de transition du round suivant (rd:2, posee
+     a t≈300) se retrouvait donc DERRIERE l'index et n'etait jamais
+     appliquee. On relit le round directement dans les etapes deja passees. */
+  let rdVu=1;
+  for(let k=0;k<=i;k++) if(S[k].rd!==undefined) rdVu=S[k].rd;
+  if(rdVu!==RD){
+    RD=rdVu;
+    const g=$('gong');g.textContent=`ROUND ${RD}`;
+    g.classList.remove('on');void g.offsetWidth;g.classList.add('on');
+  }
+  /* Le round commence a sa seconde 0, pas la ou la cloche a sonne : sans
+     ca on entamait le round suivant avec 4 s deja consommees (le temps de
+     respiration que le traducteur ajoute en fin de log). */
+  t=Math.max(t,(RD-1)*SEC_RD);
+  if(t>(RD-1)*SEC_RD+1) t=(RD-1)*SEC_RD;
+  horloge();
+
+  attenteCoin=false; enPause=false;
+  tM0=0; if(m.tMoteur!=null)tM1=m.tMoteur; iBase=i;
+  /* /!\ LA REPRISE DE ROUND REPLIE AUSSI (Mael, 16/08 : "ils sont en
+     dehors de la cage", DEMI-GARDE affiche en pleine DISTANCE). Les
+     etapes franchies par le recalage ne sont pas rejouees — l'etat
+     VISUEL (position au sol, points sur la grille, phase) restait donc
+     celui de la fin du round precedent. Le pli remet tout : compteurs,
+     grille, phase, round — depuis la liste fraiche, en muet.
+     /!\ LE PLI D'ABORD, LA RETEMPORISATION ENSUITE : retemporiser()
+     depend du round courant — le lancer avant le pli l'ancrait sur le
+     round precedent (invariant du banc rompu, 16/08). */
+  replierEtat();
+  /* /!\ SEULEMENT SI LE TEMPS MOTEUR EST FOURNI : sans lui (un "suite"
+     a l'ancienne, round entier), retemporiser sur une fenetre par
+     defaut de 30 s COMPRESSAIT tout le round — et avalait les
+     suivants (invariant du banc, 16/08). Pas d'info moteur, pas de
+     reecriture : la chronologie du traducteur reste. */
+  if(m.tMoteur!=null)retemporiser();
+  $('btnPause').textContent='⏸ PAUSE';
+});
+
+function rejouer(){
+  if(window.parent && window.parent!==window)
+    window.parent.postMessage({mma:"rejouer"},"*");
+  else location.reload();
+}
+let   FIN    = DATA.FIN;
+/* ============ MODE DIRECT ============
+   DATA.direct : le combat n'est PAS roule d'avance. L'ecran joue le round
+   qu'on lui a donne, s'arrete a la cloche, ouvre le coin, et demande la
+   suite au jeu (postMessage). Le jeu joue le round suivant avec coin.js,
+   retraduit le log COMPLET hors flux, et renvoie une nouvelle chronologie.
+   /!\ On remplace S en entier a chaque round, on ne concatene PAS des
+   tranches : le traducteur reecrit la derniere etape du round precedent
+   (4 s de respiration qui deviennent une transition). Voir le carnet. */
+const DIRECT = !!DATA.direct;
+let attenteCoin=false, ordre={};
+/* ==== CHANTIER G : LES CRIS ====
+   finRound : la derniere tranche recue clot-elle le round ? Si non, a
+   court d'etapes on demande la SUIVANTE au jeu, automatiquement — le
+   combat coule. criEnAttente part avec cette demande et s'applique a la
+   tranche qui n'est pas encore calculee : l'ecran ne ment jamais.
+   crisRestants : trois par round (regle de Mael), remis a la cloche. */
+let finRound = DATA.finRound!==undefined?DATA.finRound:true;
+/* /!\ LE PANNEAU SUIT LA PHASE VISIBLE, PAS CELLE DU MOTEUR (defaut vu
+   par Mael, 15/08 : cris du sol proposes debout contre la grille). Le
+   moteur est UNE TRANCHE EN AVANCE sur la lecture — ses cris decrivaient
+   un futur que le joueur ne voyait pas encore. L'ecran filtre donc le
+   vocabulaire complet (DATA.vocabCris) sur ce qui est A L'IMAGE ; le jeu
+   verifie a l'application et repond "trop tard" si ca a change. */
+const VOCAB_CRIS = DATA.vocabCris||[];
+/* /!\ L'HORLOGE DIT LE TEMPS DU MOTEUR (Mael, 15/08 : "le combat
+   continuait meme a 0 sec timer"). La chronologie du traducteur est
+   FICTIVE et se re-etale a chaque retraduction — decalage cumule =
+   derive = un chrono a 0:00 pendant que le combat continue. Le moteur,
+   lui, donne son temps REEL a chaque arret de tranche : l'ecran
+   interpole l'affichage entre deux arrets (tM0 -> tM1) selon la
+   progression des etapes. Le chrono raconte le combat calcule, plus la
+   fiction du traducteur. */
+let tM0=0, tM1=(DATA.tMoteur!=null?DATA.tMoteur:30), iBase=0;
+let solVisible="", ctrlVisible=null, phVisible="DISTANCE";
+function phaseVisible(){
+  if(solVisible)return ctrlVisible==='A'?'sol_dessus':'sol_dessous';
+  if(phVisible==='CLINCH')return 'clinch';
+  return 'debout';
+}
+let criEnAttente=null, crisRestants=3, attenteTranche=false;
+function ouvrirCris(){
+  if(!DIRECT||fini)return;
+  const z=$('crier');
+  if(z.classList.contains('la')){z.classList.remove('la');return;}
+  majCris(); z.classList.add('la');
+}
+function majCris(){
+  $('crReste').textContent=crisRestants>0
+    ?`${crisRestants} cri${crisRestants>1?'s':''} restant${crisRestants>1?'s':''} ce round`
+    :"plus de voix ce round";
+  const ph=phaseVisible();
+  const dispo=VOCAB_CRIS.filter(c=>c.phase===ph||c.phase==='toute');
+  $('crListe').innerHTML=dispo.map(c=>
+    `<button class="cri-b ${criEnAttente===c.id?'choisi':''}"
+      onclick="choisirCri('${c.id}')">${c.mot}</button>`).join('')
+    ||'<span style="font-size:.7rem;color:var(--craie-2)">La reprise arrive…</span>';
+}
+function choisirCri(id){
+  if(crisRestants<=0)return;
+  criEnAttente=(criEnAttente===id)?null:id;
+  $('btnCrier').classList.toggle('arme',!!criEnAttente);
+  majCris();
+  if(criEnAttente)$('crier').classList.remove('la');
+}
+function demanderTranche(){
+  if(attenteTranche)return;
+  attenteTranche=true;
+  const cri=criEnAttente; criEnAttente=null;
+  if(cri){crisRestants--; $('btnCrier').classList.remove('arme');}
+  envoyer({mma:"tranche",cri:cri||null});
+}
+const NOMS   = DATA.noms;
+const FICHES = DATA.fiches || ["",""];
+const PROFIL = DATA.profils || [];
+const BOURSE = DATA.bourse || "";
+const SEC_RD = DATA.sec_round || 300;
+
+/* ============ ETAT ============ */
+const $=id=>document.getElementById(id);
+const pA=$('pA'),pB=$('pB');
+const DMG=['#232b36','#7a4a33','#b6412f','#e33b28'];
+const niveaux={At:0,Ac:0,Aj:0,Bt:0,Bc:0,Bj:0};
+const V={sigA:0,frA:0,sigB:0,frB:0,tdA:[0,0],tdB:[0,0],ctA:0,ctB:0,subA:0,subB:0};
+let ctrl=null, knockA=0, knockB=0;
+let i=0,t=0,mult=1,ralenti=1,enPause=false,pauseAvant=false,essA=100,essB=100,fini=false;
+let RD=1;
+
+const mmss=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+const nom=c=>NOMS[c==='A'?0:1];
+
+/* Horloge multi-rounds : `t` est ABSOLU dans la sortie du traducteur.
+   Le round courant vient du champ `rd` (present sur l'etape de reprise) ;
+   a defaut on retombe sur le decoupage par SEC_RD. */
+/* /!\ UNE SEULE CHRONOLOGIE (Mael, 16/08 : "le chrono baisse super
+   lentement") : le rythme de lecture suivait la chronologie FICTIVE du
+   traducteur (etalee) pendant que le chrono suivait le temps moteur
+   (30 s par tranche) — a x8 on regardait du x1,5. La regle du carnet
+   s'applique jusqu'au bout : LE TEMPS MOTEUR EST LE MAITRE, du chrono
+   ET du rythme. retemporiser() reecrit les temps des etapes a venir,
+   uniformement sur la fenetre moteur de la tranche — t redevient le
+   temps du combat, x8 veut dire x8. */
+function retemporiser(){
+  const tAbs1=(RD-1)*SEC_RD+Math.max(0,Math.min(SEC_RD,tM1!=null?tM1:30));
+  const borne=Math.min(S.length-1,finRound?S.length-1:S.length-2);
+  const n=Math.max(1,borne-i);
+  const t0=Math.max(t,(RD-1)*SEC_RD);
+  for(let k=i+1;k<=borne;k++)
+    S[k].t=t0+(k-i)/n*Math.max(0.5,tAbs1-t0);
+  if(!finRound&&S.length-1>borne)S[S.length-1].t=tAbs1+4;
+}
+function ecoule(){return Math.max(0,Math.min(SEC_RD,t-(RD-1)*SEC_RD))}
+function horloge(){
+  const r=SEC_RD-ecoule();
+  $('clk').textContent=`${Math.floor(r/60)}:${String(Math.floor(r%60)).padStart(2,'0')}`;
+  $('rnd').textContent=`ROUND ${RD}`;
+}
+/* Le temps d'un evenement, en langage de fiche : "R2 4:17".
+   /!\ La derniere etape du traducteur porte t_abs+4 (respiration avant la
+   carte) : sans borne, une fin de round s'affiche "5:01" dans un round de
+   5:00 — l'ecran raconterait une seconde qui n'existe pas. */
+const marque=tt=>{const r=Math.min(RD,Math.floor(tt/SEC_RD)+1);
+  return `R${r} ${mmss(Math.min(SEC_RD,tt-(r-1)*SEC_RD))}`};
+
+/* ============ LES CARTES DES JUGES ============
+   /!\ ON N'AFFICHE QUE LES ROUNDS TERMINES : montrer le round en cours
+   reviendrait a dire au joueur qui gagne avant la cloche. */
+let CARTES = DATA.cartes || [];
+function majCartes(){
+  const z=$('cartes');
+  if(!CARTES.length){z.innerHTML='';return;}
+  let ta=0,tb=0;
+  const cases=CARTES.map(c=>{ta+=c.a;tb+=c.b;
+    return `<span class="c"><small>R${c.rd}</small>`
+      +`<span class="${c.a>c.b?'g':''}">${c.a}</span>-`
+      +`<span class="${c.b>c.a?'d':''}">${c.b}</span></span>`;});
+  if(CARTES.length>1)cases.push(`<span class="c tot">`
+    +`<span class="${ta>tb?'g':''}">${ta}</span>-<span class="${tb>ta?'d':''}">${tb}</span></span>`);
+  z.innerHTML=cases.join('');
+}
+
+function majDirect(){
+  $('dSig').innerHTML=`<span class="g">${V.sigA}</span><span class="sep">–</span><span class="d">${V.sigB}</span>`;
+  $('dFr').innerHTML =`<span class="g">${V.frA}</span><span class="sep">–</span><span class="d">${V.frB}</span>`;
+  $('dTd').innerHTML =`<span class="g">${V.tdA[0]}/${V.tdA[1]}</span><span class="sep">–</span><span class="d">${V.tdB[0]}/${V.tdB[1]}</span>`;
+  $('dCt').innerHTML =`<span class="g">${mmss(V.ctA)}</span><span class="sep">–</span><span class="d">${mmss(V.ctB)}</span>`;
+  $('dSub').innerHTML=`<span class="g">${V.subA}</span><span class="sep">–</span><span class="d">${V.subB}</span>`;
+}
+
+/* ============ CARTE DE FIN ============ */
+const LIB={SOUMISSION:"Soumission",KO:"KO",TKO:"TKO",
+           "DÉCISION":"Décision","ARRÊT":"Arrêt","NUL":"Match nul"};
+/* VERDICT (optionnel) vient de verdict.js : c'est la MEME phrase que celle
+   du palmares du jeu. Quand il est fourni, l'ecran anime et la carte de
+   resultat parlent d'une seule voix. Absent (ecran autonome produit par
+   rendu_combat.py), on retombe sur l'ancienne redaction. */
+const VERDICT = DATA.verdict || null;
+function carteFin(){
+  fini=true;
+  const tFin=S[S.length-1].t, m=FIN.methode, v=FIN.vainqueur;
+  let detail;
+  if(VERDICT){
+    const quand = m==="DÉCISION" ? `${RD} rounds` : marque(tFin);
+    const tete  = VERDICT.libelle.charAt(0).toUpperCase()+VERDICT.libelle.slice(1);
+    detail = `${tete} · ${quand}`;
+  }
+  else if(m==="SOUMISSION") detail=`Soumission — ${FIN.detail||''} · ${marque(tFin)}`;
+  else if(m==="KO")     detail=`KO · ${marque(tFin)}`;
+  else if(m==="TKO")    detail=`TKO — l'arbitre arrête · ${marque(tFin)}`;
+  else if(m==="DÉCISION") detail=v?`Décision · ${RD} rounds`:`Match nul · ${RD} rounds`;
+  else                  detail=`${LIB[m]||m} · ${marque(tFin)}`;
+
+  $('finTitre').textContent = v?"VICTOIRE":"MATCH NUL";
+  $('finNom').textContent   = v?nom(v):`${NOMS[0]} — ${NOMS[1]}`;
+  $('finMethode').textContent = detail;
+  $('finBourse').textContent  = BOURSE;
+  $('verdict').textContent    = (v?`${nom(v).toUpperCase()} · `:'')+detail.toUpperCase();
+  $('fin').classList.add('la');
+}
+
+function applique(e,muet){
+  /* L'etape de fin porte les frappes accumulees depuis la derniere etape
+     emise (traducteur). Les verser AVANT la carte, sinon la fin du combat
+     manque au tableau : 4/7 et 10/12 affiches pour 4/8 et 11/17 reels. */
+  if(e.fin){
+    if(e.st){V.sigA+=e.st[0];V.frA+=e.st[1];V.sigB+=e.st[2];V.frB+=e.st[3];majDirect()}
+    /* /!\ EN MODE DIRECT, le traducteur marque la fin du log qu'on lui a
+       donne — donc la fin du ROUND joue, pas celle du combat. Tant que le
+       jeu n'a pas envoye FIN, ce n'est qu'une cloche : on verse les stats
+       et on laisse la boucle appeler cloche(). */
+    if(DIRECT&&!FIN)return;
+    carteFin();return
+  }
+  if(e.rd!==undefined&&e.rd!==RD){
+    RD=e.rd;
+    if(!muet){const g=$('gong');g.textContent=`ROUND ${RD}`;
+    g.classList.remove('on');void g.offsetWidth;g.classList.add('on');}
+  }
+  if(e.com){const c=$('com');c.textContent=e.com;
+    if(!muet){c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop')}}
+  const ph=$('phase');ph.textContent=e.ph;ph.classList.toggle('chaud',!!e.chaud);
+  if(e.mom!==undefined)$('mom').style.width=e.mom+'%';
+  if(e.flash&&!muet){const f=$('flash');f.classList.remove('on');void f.offsetWidth;f.classList.add('on');
+    if(navigator.vibrate)navigator.vibrate(40)}
+  if(e.dmg)for(const[z,n]of Object.entries(e.dmg)){
+    niveaux[z]=Math.min(3,niveaux[z]+n);$(z).style.fill=DMG[niveaux[z]];
+    const j=$(z+'2');if(j)j.style.fill=DMG[niveaux[z]];
+  }
+  /* knockdown : le traducteur le dit explicitement (champ kd = celui qui
+     TOMBE). On ne le devine plus a partir des degats. */
+  if(e.kd){if(e.kd==='A')knockA++;else knockB++}
+  if(e.st){V.sigA+=e.st[0];V.frA+=e.st[1];V.sigB+=e.st[2];V.frB+=e.st[3]}
+  if(e.tdA){V.tdA[0]+=e.tdA[0];V.tdA[1]+=e.tdA[1]}
+  if(e.tdB){V.tdB[0]+=e.tdB[0];V.tdB[1]+=e.tdB[1]}
+  if(e.subA)V.subA+=e.subA; if(e.subB)V.subB+=e.subB;
+  if(e.ctrl!==undefined)ctrl=e.ctrl||null;
+  const sol=$('posSol');
+  if(e.sol!==undefined){sol.textContent=e.sol||'';sol.setAttribute('opacity',e.sol?1:0);
+    solVisible=e.sol||''}
+  if(e.ph)phVisible=e.ph;
+  if(e.ctrl!==undefined)ctrlVisible=e.ctrl||null;
+  if(!muet&&$('crier').classList.contains('la'))majCris();
+  ralenti=e.slow?0.35:1;
+  majDirect();
+}
+/* /!\ LE PLI (defaut vu par Mael, 15/08 : "Frappes sign. 214/563" pour 12
+   frappes reelles). Le traducteur RE-TEMPORISE tout le round a chaque
+   retraduction : aucun recalage par temps ne peut etre juste en cours de
+   round, et une accumulation incrementale derive — en double (rejeu) ou
+   en perte (reliquat redistribue). Verifie sur banc : le CONTENU hors
+   temps est un prefixe stable — donc on garde L'INDEX, on adopte la
+   nouvelle chronologie, et on RECONSTRUIT tous les compteurs en repliant
+   la liste fraiche de 0 a i. L'ecran ne compte plus : il reflete. */
+function replierEtat(){
+  V.sigA=0;V.frA=0;V.sigB=0;V.frB=0;V.tdA=[0,0];V.tdB=[0,0];
+  /* /!\ LE CONTROLE NE RECULE JAMAIS (Mael, 21/08 : "5:30 -> 4:30
+     pendant le combat") : le recalcul par etapes repartait de zero sur
+     une chronologie RETEMPORISEE (compressee) — il rendait moins que le
+     cumul du tick temps-reel. Deux horloges pour un meme compteur : on
+     garde LE MAX. L'ecran est indicatif, le verdict lit le moteur. */
+  const ctA0=V.ctA||0, ctB0=V.ctB||0;
+  V.subA=0;V.subB=0;V.ctA=0;V.ctB=0;knockA=0;knockB=0;ctrl=null;
+  for(const z in niveaux){niveaux[z]=0;$(z).style.fill=DMG[0];
+    const j=$(z+'2');if(j)j.style.fill=DMG[0];}
+  RD=1;
+  for(let k=0;k<=i&&k<S.length;k++){
+    /* le controle s'integre entre les etapes, comme la boucle le fait */
+    if(k>0&&ctrl){const dt=Math.max(0,S[k].t-S[k-1].t);
+      if(ctrl==='A')V.ctA+=dt;else V.ctB+=dt;}
+    applique(S[k],true);
+  }
+  V.ctA=Math.max(V.ctA,ctA0);V.ctB=Math.max(V.ctB,ctB0);
+  majDirect();horloge();
+}
+function pos(el,x,y){el.setAttribute('transform',`translate(${x},${y})`)}
+
+/* ============ DEMARRAGE ============ */
+const pts=[...Array(8)].map((_,k)=>{const a=Math.PI/8+k*Math.PI/4;
+  return [180+158*Math.cos(a),180+158*Math.sin(a)]});
+$('oct').setAttribute('points',pts.map(p=>p.join(',')).join(' '));
+$('oct2').setAttribute('points',pts.map(([x,y])=>
+  [180+(x-180)*.9,180+(y-180)*.9].join(',')).join(' '));
+
+if(!DIRECT)$('btnCrier').style.display='none';
+$('nomA').textContent=$('sNomA').textContent=NOMS[0];
+$('nomB').textContent=$('sNomB').textContent=NOMS[1];
+$('ficheA').textContent=FICHES[0];$('ficheB').textContent=FICHES[1];
+
+let etape=S[0],suiv=S[1];
+/* /!\ LA PREMIERE TRANCHE SE RETEMPORISE AUSSI (Mael, 21/08 : "round 1
+   bug, tout se joue dans les 10 dernieres secondes" + "mon cri met plus
+   d'1 min a arriver"). La tranche initiale etait lue avec la chronologie
+   DU TRADUCTEUR — etalee sur les 300 s du round : la lecture trainait,
+   puis chaque retemporisation compressait le reste en fin de round, et
+   la reponse au cri attendait la fin de cette lecture interminable. Le
+   temps moteur est le maitre DES LE PREMIER INSTANT. */
+if(DIRECT&&!FIN&&DATA.tMoteur!=null)retemporiser();
+applique(etape);pos(pA,...etape.a);pos(pB,...etape.b);majDirect();majCartes();horloge();
+
+const boucle=setInterval(()=>{
+  if(enPause||fini)return;
+  const dt=0.06*mult*ralenti;
+  t+=dt;
+  if(ctrl==='A')V.ctA+=dt; if(ctrl==='B'){V.ctB+=dt;majDirect()}
+  /* PLACEHOLDER : l'essence n'est PAS encore fournie par le traducteur.
+     Décroissance identique des deux côtés — l'écran ne prétend donc rien
+     sur qui gaze. A brancher sur le cardio du moteur. */
+  essA=essB=Math.max(14,100-ecoule()/SEC_RD*22-(RD-1)*16);
+  $('essA').style.width=essA+'%';$('essB').style.width=essB+'%';
+  horloge();
+  while(suiv&&t>=suiv.t){
+    /* La fin provisoire d'une TRANCHE ne se joue pas (voir sauteRound) :
+       on s'arrete devant et on demande la suite. */
+    if(DIRECT&&!fini&&!finRound&&i+2===S.length)break;
+    etape=suiv;applique(etape);i++;suiv=S[i+1]}
+  if(DIRECT&&!fini&&!attenteCoin&&!finRound&&suiv&&i+2===S.length){
+    demanderTranche();/* la lecture continue pendant que le jeu calcule */}
+  /* Plus d'etape a jouer et le combat n'est pas fini : la tranche
+     suivante si le round court encore, la cloche s'il est termine. */
+  if(DIRECT&&!suiv&&!fini&&!attenteCoin){
+    if(!finRound){demanderTranche();return}
+    cloche();return}
+  if(suiv&&etape.a){
+    const k=Math.min(1,(t-etape.t)/Math.max(.001,suiv.t-etape.t));
+    const l=(p,q)=>p+(q-p)*k;
+    const der=Math.sin(t*2.6)*3;
+    pos(pA,l(etape.a[0],(suiv.a||etape.a)[0])+der,l(etape.a[1],(suiv.a||etape.a)[1]));
+    pos(pB,l(etape.b[0],(suiv.b||etape.b)[0])-der,l(etape.b[1],(suiv.b||etape.b)[1]));
+  }
+},60);
+
+/* ============ FEUILLE ============ */
+/* ============ FRAPPES SIGNIFICATIVES (format ufcstats) ============
+   DATA.feuille vient de feuille.js : repartition par CIBLE et par POSITION,
+   round par round.
+   /!\ CE BLOC NE DOIT JAMAIS DEVOILER L'AVENIR. La feuille contient le
+   combat ENTIER des le depart ; l'afficher tel quel dirait au joueur, au
+   round 1, combien de coups il prendra au round 3. On ne cumule donc que
+   les rounds DEJA JOUES — le round en cours reste dans les compteurs
+   vivants de "LE COMBAT", au-dessus. */
+/* /!\ LA FEUILLE SUIT LE DIRECT (22/08, dossier "feuille croisee" de
+   Mael : recap "tout en A", detail fige). FEUILLE_MAJ etait appelee au
+   protocole (415) mais N'EXISTAIT NULLE PART — la feuille recalculee
+   envoyee a chaque tranche etait JETEE : en direct, le detail des zones
+   restait fige sur la feuille du BOOT (le R1 partiel). Desormais la
+   feuille se met a jour, et c'est ELLE — la verite recalculee du log —
+   que lit le recap de fin. */
+let FEUILLE = DATA.feuille || null;
+function FEUILLE_MAJ(f){ FEUILLE=f; }
+let parRound = false;   /* le depliant "PER ROUND" d'ufcstats */
+
+/** Rounds entierement joues : RD-1 en cours de combat, tous a la fin. */
+function roundsAcquis(){
+  if(!FEUILLE) return 0;
+  return Math.max(0, Math.min(FEUILLE.rounds.length, fini ? FEUILLE.rounds.length : RD-1));
+}
+function cumul(cote, jusqua){
+  const vide={sig:[0,0],tete:[0,0],corps:[0,0],jambe:[0,0],
+              distance:[0,0],clinch:[0,0],sol:[0,0]};
+  for(let r=0;r<jusqua;r++){const s=FEUILLE.rounds[r][cote];
+    for(const k in vide){vide[k][0]+=s[k][0];vide[k][1]+=s[k][1];}}
+  return vide;
+}
+const surTotal=p=>`${p[0]} of ${p[1]}`;
+
+function ligneFrappes(lib,pa,pb){
+  const m=Math.max(pa[0],pb[0],1);
+  return `<div class="ligne"><b class="${pa[0]>pb[0]?'gagne':''}">${surTotal(pa)}</b>
+    <div class="demi g"><i style="width:${pa[0]/m*100}%"></i></div>
+    <span class="lib">${lib}</span>
+    <div class="demi d"><i style="width:${pb[0]/m*100}%"></i></div>
+    <b class="${pb[0]>pa[0]?'gagne':''}">${surTotal(pb)}</b></div>`;
+}
+
+function basculerRounds(){parRound=!parRound;rendreFrappes();}
+
+function rendreFrappes(){
+  const cible=$('lignes-frappes'), titre=$('tete-frappes');
+  if(!FEUILLE){
+    titre.textContent="FRAPPES SIGNIFICATIVES";
+    cible.innerHTML='<div style="text-align:center;font-size:.7rem;color:var(--craie-2)">'
+      +'Répartition non fournie par le moteur.</div>';
+    return;
+  }
+  const n=roundsAcquis();
+  titre.innerHTML=`FRAPPES SIGNIFICATIVES`
+    + (n>1?` <span onclick="basculerRounds()" style="cursor:pointer;color:var(--tungstene);`
+        +`font-size:.62rem;letter-spacing:.04em">${parRound?'▼ CUMUL':'▶ PAR ROUND'}</span>`:'');
+
+  if(n===0){
+    cible.innerHTML='<div style="text-align:center;font-size:.7rem;color:var(--craie-2)">'
+      +`Round ${RD} en cours — la répartition s'affiche round terminé.</div>`;
+    return;
+  }
+
+  let html='';
+  const bloc=(a,b)=>ligneFrappes('Tête',a.tete,b.tete)
+    +ligneFrappes('Corps',a.corps,b.corps)
+    +ligneFrappes('Jambes',a.jambe,b.jambe)
+    +`<div class="ligne" style="opacity:.55"><b></b><div class="demi g"></div>`
+    +`<span class="lib">— position —</span><div class="demi d"></div><b></b></div>`
+    +ligneFrappes('Distance',a.distance,b.distance)
+    +ligneFrappes('Clinch',a.clinch,b.clinch)
+    +ligneFrappes('Au sol',a.sol,b.sol);
+
+  if(parRound){
+    for(let r=0;r<n;r++){
+      html+=`<div class="lib" style="text-align:center;margin:8px 0 3px;`
+        +`font-size:.62rem;letter-spacing:.08em;color:var(--tungstene)">ROUND ${r+1}</div>`;
+      html+=bloc(FEUILLE.rounds[r][0],FEUILLE.rounds[r][1]);
+    }
+  }else{
+    html=bloc(cumul(0,n),cumul(1,n));
+    if(!fini) html+=`<div class="lib" style="text-align:center;margin-top:6px;font-size:.6rem;`
+      +`color:var(--craie-2)">cumul après ${n} round${n>1?'s':''} · le round ${RD} est en cours</div>`;
+  }
+  cible.innerHTML=html;
+}
+
+function rendreFeuille(){
+  const pc=a=>a[1]?Math.round(a[0]/a[1]*100):0;
+  /* /!\ LE RECAP DE FIN DIT CE QUE LE MOTEUR A CALCULE (22/08) : la
+     feuille (recalculee depuis le log complet) prime sur les compteurs
+     vecus de la lecture — le live ne sert qu'au bandeau du direct. */
+  const T=FEUILLE&&FEUILLE.total?FEUILLE.total:null;
+  const sA=T?T[0].sig:[V.sigA,V.frA], sB=T?T[1].sig:[V.sigB,V.frB];
+  const tA=T?T[0].td:V.tdA,           tB=T?T[1].td:V.tdB;
+  const uA=T?T[0].sub:V.subA,         uB=T?T[1].sub:V.subB;
+  const cA=T?T[0].controle:V.ctA,     cB=T?T[1].controle:V.ctB;
+  /* kd de la feuille = INFLIGES par le cote (m[1] tombe, 1-c credite le
+     frappeur) : la gauche lit T[0].kd — verifie sur feuille.js:187. */
+  const kA=T?T[0].kd:knockB,          kB=T?T[1].kd:knockA;
+  const C=[
+    ["Frappes sign.",`${sA[0]} / ${sA[1]}`,sA[0],sB[0],`${sB[0]} / ${sB[1]}`],
+    ["Précision",`${pc(sA)} %`,pc(sA),pc(sB),`${pc(sB)} %`],
+    ["Takedowns",`${tA[0]} / ${tA[1]}`,tA[0]*10,tB[0]*10,`${tB[0]} / ${tB[1]}`],
+    ["Contrôle",mmss(cA),cA,cB,mmss(cB)],
+    ["Tent. soumission",String(uA),uA*20,uB*20,String(uB)],
+    ["Knockdowns",String(kA),kA*40,kB*40,String(kB)],
+  ];
+  const rend=(cible,lignes,max)=>{$(cible).innerHTML=lignes.map(l=>{
+    const [lib,tg,vg,vd,td]=l.length===5?l:[l[0],l[1],l[1],l[2],l[2]];
+    const m=max||Math.max(vg,vd,1);
+    return `<div class="ligne"><b class="${vg>vd?'gagne':''}">${tg}</b>
+      <div class="demi g"><i style="width:${vg/m*100}%"></i></div>
+      <span class="lib">${lib}</span>
+      <div class="demi d"><i style="width:${vd/m*100}%"></i></div>
+      <b class="${vd>vg?'gagne':''}">${td}</b></div>`}).join('')};
+  rend('lignes-combat',C);
+  rendreFrappes();
+  if(PROFIL.length){rend('lignes-profil',PROFIL,100)}
+  else{$('lignes-profil').innerHTML=
+    '<div style="text-align:center;font-size:.7rem;color:var(--craie-2)">Profils non fournis par le moteur.</div>'}
+  if(!fini)$('verdict').textContent=`ROUND ${RD} · ${$('clk').textContent} · EN COURS`;
+}
+function voirStats(){pauseAvant=enPause;enPause=true;rendreFeuille();$('stats').classList.add('la')}
+function fermerStats(){$('stats').classList.remove('la');if(!fini)enPause=pauseAvant;
+  $('btnPause').textContent=enPause?'▶ REPRENDRE':'⏸ PAUSE'}
+function pause(){enPause=!enPause;$('btnPause').textContent=enPause?'▶ REPRENDRE':'⏸ PAUSE'}
+/* 900 s de combat : x1 pour un temps fort, x8 pour traverser un round creux. */
+/* Sauter l'animation du round en cours : on applique toutes les etapes
+   restantes d'un coup et on laisse la boucle sonner la cloche. Le combat
+   n'est pas modifie — seule la vitesse de LECTURE change. */
+let sauteRound=false;
+function simulerRound(){
+  if(fini||attenteCoin)return;
+  while(suiv){ t=suiv.t; etape=suiv; applique(etape); i++; suiv=S[i+1]; }
+  horloge(); majDirect();
+  /* CHANTIER G : le round n'est peut-etre calcule qu'a moitie — on avale
+     les tranches restantes une a une avant de sonner la cloche. */
+  if(DIRECT&&!finRound){sauteRound=true;demanderTranche();return}
+  if(DIRECT&&!fini)cloche();
+}
+function vitesse(){mult=mult===1?4:mult===4?8:1;$('btnVit').textContent=`×${mult}`}
+</script>
+</body>
+</html>
