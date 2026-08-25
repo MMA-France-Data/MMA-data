@@ -1494,12 +1494,26 @@ function jouerTrancheDirect(r,criId){
     }
   }
   const res=r.gen.next();
-  let crisDispo=[], finRound=false, tMoteur=null;
+  let crisDispo=[], finRound=false, tMoteur=null, ressenti=null;
   if(res.done){
     r.gen=null;
     if(r.defaireCri){r.defaireCri();r.defaireCri=null;}
     r.criPatient=null;   /* le round est fini — ce qui devait etre crie l'a ete */
     finRound=true;
+    /* /!\ CE QU'IL DIT AU COIN (chantier grave au cas 104). Il est lu
+       ICI, a la cloche, sur son etat REEL — apres le bilan et apres la
+       recuperation, donc exactement ce que le coin a devant lui.
+       /!\ ressenti.js NE TIRE RIEN : aucun alea, aucun Math.random. Le
+       flux du combat n'est pas decale, et deux fois la meme graine
+       donnent deux fois la meme phrase. C'est pour ca qu'il n'est pas
+       enveloppe dans horsFlux — il n'y a rien a proteger. */
+    if(!r.moteur.fini){
+      const dernier=r.moteur.bilans[r.moteur.bilans.length-1];
+      try{ ressenti=MMA.ressenti.ressenti(r.fa,{
+        round:dernier?dernier.round:r.moteur.round-1,
+        gagne:dernier?dernier.w===r.fa.name:null, adv:r.fb}); }
+      catch(e){ console.error("ressenti :",e); }
+    }
   }else{
     r.dernierEtat=res.value.etat;
     tMoteur=res.value.t;   /* le temps REEL dans le round — l'horloge de l'ecran */
@@ -1507,7 +1521,7 @@ function jouerTrancheDirect(r,criId){
       .map(id=>({id,mot:MMA.cris.CRIS[id].mot}));
   }
   retraduire(r);
-  return {finRound,crisDispo,criMot,tMoteur};
+  return {finRound,crisDispo,criMot,tMoteur,ressenti};
 }
 
 /* ==== L'ECRAN DE COMBAT EN SURCOUCHE =====================================
@@ -1529,6 +1543,7 @@ function donneesEcran(r){
     finRound:r.dernierTr?r.dernierTr.finRound:true,
     crisDispo:r.dernierTr?r.dernierTr.crisDispo:[],
     tMoteur:r.dernierTr?r.dernierTr.tMoteur:null,
+    ressenti:r.dernierTr?r.dernierTr.ressenti||null:null,
     /* Le vocabulaire complet : l'ecran filtre par la phase VISIBLE. */
     vocabCris:Object.keys(MMA.cris.CRIS).map(id=>({id,
       mot:MMA.cris.CRIS[id].mot,phase:MMA.cris.CRIS[id].phase})),
@@ -1639,6 +1654,7 @@ window.addEventListener("message",e=>{
     $("sc-cadre").contentWindow.postMessage(
       {mma:"suite",S:d.S,FIN:d.FIN,feuille:d.feuille,cartes:d.cartes,
        finRound:tr?tr.finRound:true,crisDispo:tr?tr.crisDispo:[],
+       ressenti:tr?tr.ressenti||null:null,
        tMoteur:tr?tr.tMoteur:null},"*");
     if(COMBAT1.moteur.fini){encaisserResultat();
       /* /!\ LE RESULTAT SE SCELLE ICI (Mael, 10/08 : "mon combat compte
@@ -1660,7 +1676,8 @@ window.addEventListener("message",e=>{
     $("sc-cadre").contentWindow.postMessage(
       {mma:"suite",S:d.S,FIN:d.FIN,feuille:d.feuille,cartes:d.cartes,
        finRound:tr?tr.finRound:true,crisDispo:tr?tr.crisDispo:[],
-       criMot:tr?tr.criMot:null,tMoteur:tr?tr.tMoteur:null},"*");
+       criMot:tr?tr.criMot:null,ressenti:tr?tr.ressenti||null:null,
+       tMoteur:tr?tr.tMoteur:null},"*");
     if(COMBAT1.moteur.fini){encaisserResultat();
       if(typeof sauvegarder==="function")sauvegarder(true);
       $("sc-fermer").style.display="";}

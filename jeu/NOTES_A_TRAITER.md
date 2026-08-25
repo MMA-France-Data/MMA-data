@@ -11651,3 +11651,102 @@ d'appareil, fond sombre autour. Les elements FIXES (#onglets, #voile,
 #surcouche, #scene) se calent sur la colonne et non plus sur l'ecran
 entier (le piege du position:fixed). CSS pur, zero ecran touche, le
 mobile inchange. Chaine : 26 bancs CONFORME.
+
+===========================================================================
+SEANCE DU 25/08 — LA REPRISE DES CHANTIERS DE JEU
+(la liste laissee par la cloture du feuilleton sauvegarde, cas 122 : l'endgame,
+le dialogue d'entre-rounds, les demandes de coach, le marquage des contrats)
+===========================================================================
+
+## BANC 27 — LE SINGE, RENDU PERMANENT (a lire en premier)
+Le singe du cas 31 avait tourne UNE fois, dans une conversation, puis
+disparu. Tous les defauts de la classe « ca ne leve pas, ca ne fait
+simplement RIEN » sont revenus ensuite — pour une raison simple et
+jamais dite : AUCUN DES 26 BANCS NE CHARGEAIT demo_jeu.html. Le moteur
+etait tenu au caractere pres, la PARTIE ne l'etait pas.
+ - js/bac_partie.js monte un DOM minimal (celui du banc 26, elargi),
+   charge le bundle + le gabarit, puis execute le script de demo_jeu.html
+   dedans. On recupere le contexte : toutes les fonctions du jeu,
+   appelables comme un onclick.
+ - js/verifier_partie.js JOUE : il avance les jours, tranche les
+   blocages, repond aux offres et aux demandes, signe les contrats,
+   passe des amateurs pro, demarche, ouvre les sept onglets, les fiches,
+   les contrats, les camps. Trois parties, 560 jours, ZERO exception.
+ - /!\ REPRODUCTIBLE, ET CA A COUTE DEUX PASSES. Math.random seme ne
+   suffisait pas : graineDuMonde() tire `Date.now() ^ Math.random()`.
+   Deux passages du banc construisaient DEUX MONDES et un echec ne se
+   rejouait jamais. Le bac fige aussi l'horloge murale. Le vrai Math et
+   le vrai Date ne sont pas touches.
+ - CE QU'IL NE VOIT PAS : les pixels. Une couleur, un debordement, un
+   bouton illisible — ca reste le terrain de Mael. Ce qu'il voit : ce qui
+   LEVE, ce qui ne FAIT RIEN, ce qui DIVERGE entre deux vues.
+ - DEUX CORRECTIONS PAYEES PAR LUI, COTE BANC (consignees parce que la
+   prochaine seance les repaiera sinon) :
+   1. RESULTATS ne porte que les combats PRO du joueur : en partie neuve
+      la salle vit d'abord de galas amateurs. Le banc criait au feu sur
+      un jeu qui marchait. On compte les bilans, pas les cartes.
+   2. LE SINGE N'APPUIE QUE SUR LES BOUTONS QUE L'ECRAN OFFRE. Il
+      proposait un marche sur TOUTE demande, y compris celles que
+      montrerDemande() declare non negociables — demandes.js jette, a
+      juste titre. Un singe qui invente des boutons mesure son invention.
+
+## MARQUAGE DES CONTRATS ECHUS (chantier de la liste — FAIT)
+Le contrat echu forcait deja une decision (cas 98), mais RIEN NE SE
+VOYAIT AVANT qu'elle tombe, et un pro sans contrat de salle se promenait
+dans l'effectif sans que rien ne le distingue.
+ - marqueContrat(cle) rend un des quatre etats — sans contrat / N
+   combats / dernier combat / contrat echu — et dit lequel demande une
+   decision. La lecture passe par contrats.js (contratSalle, salleEchue) :
+   AUCUNE deuxieme source, la lecon du 09/08.
+ - Il se voit dans la liste des pros, dans l'effectif, et sur la fiche
+   (avec le bouton qui mene a la signature).
+ - /!\ ON NE MARQUE QUE CE QUI DEMANDE UNE DECISION : une liste ou tout
+   est marque ne marque plus rien. La puce de filtre « Contrats »
+   n'apparait que s'il y a quelque chose a signer, et se REFERME toute
+   seule quand il n'y a plus rien — un filtre vide est un piege.
+ - Le fil previent UN COMBAT A L'AVANCE (restants==1), au lieu de ne
+   parler qu'une fois l'accord mort.
+Banc 27 le verifie sur la partie DEMO, et c'est voulu : en partie neuve
+un pro n'apparait qu'apres des mois de gestion — un banc qui en depend
+mesurerait l'economie de lancement, pas le marquage.
+
+## LE DIALOGUE D'ENTRE-ROUNDS (chantier grave au cas 104 §3 — FAIT)
+« Au coin, le combattant dit SON RESSENTI avant les consignes », avec la
+condition posee dans la meme phrase : LE RESSENTI DOIT VENIR DU MOTEUR,
+PAS D'UNE BANQUE DE PHRASES HORS-SOL. Module js/ressenti.js, banc 28.
+LES QUATRE REGLES, et chacune est verifiee :
+ 1. CHAQUE PHRASE A UN FAIT DERRIERE — head_damage, cardio,
+    body.degats_corps, legs, sonne, knockdowns, le bilan du round. Le
+    banc abime UN champ et verifie que la phrase change ; il verifie
+    aussi qu'un homme intact n'invente rien.
+ 2. IL PARLE, IL NE RAPPORTE PAS — aucun chiffre ne sort du module.
+ 3. /!\ CE QU'IL DIT EST SON AVIS, PAS LA VERITE. La regle fondatrice du
+    jeu (celle des estimations de coach) appliquee au combattant : un
+    fight_iq haut nomme le vrai probleme ; un homme qui ne se lit pas dit
+    « ça va » — et un homme SONNE n'est jamais lucide. En face, LES
+    SIGNES : ce que le coin VOIT sur le corps, jamais bruite. Les deux
+    voix peuvent se contredire, et on ne tranche pas a la place du
+    joueur : c'est le sel du coin.
+ 4. AUCUN TIRAGE. /!\ La condition de coin.js — le coin vit entre deux
+    rounds, et le hasard est GLOBAL : une seule ligne d'alea ici
+    decalerait le flux. La part subjective se DERIVE de l'etat (jeton
+    FNV sur nom+round+degats), elle ne se tire pas. Le banc le prouve
+    deux fois : le compteur du Mersenne ne bouge pas, et un combat joue
+    en lisant le ressenti a chaque cloche produit EXACTEMENT le meme log
+    qu'un combat joue sans le lire.
+LES SEUILS SONT MESURES, PAS DEVINES. Releve sur 80 combats en 5 rounds,
+etat lu A LA CLOCHE (donc apres recuperation — ce que le coin voit) :
+    tete    p25  38 · med 121 · p75 276 · p90 498
+    cardio  p25  15 · med  52 · p75  80
+    corps   p25   3 · med  11 · p75  31 · p90  69
+    jambes  p25   0 · med   3 · p75   9 · p90  42
+« entame » se pose ou la moitie des hommes sont passes, « casse » ou il
+n'en reste qu'un sur dix. Des seuils au doigt mouille auraient fait
+parler tout le monde pareil.
+CE QU'IL DEMANDE MENE AUX CONSIGNES, IL N'EN INVENTE PAS : sa demande
+pre-coche UN des boutons deja la (plan / allure / cible / sol) — le banc
+verifie qu'aucun levier inconnu ne sort jamais, et que le bouton change
+vraiment l'ordre envoye a coin.js.
+/!\ IL NE PARLE PLUS DU ROUND D'AVANT : reprendre() efface le ressenti.
+Sans ca la cloche suivante rouvrait le coin sur une phrase perimee tant
+que le jeu n'en avait pas renvoye une — l'ecran aurait menti d'un round.

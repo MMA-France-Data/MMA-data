@@ -29,7 +29,9 @@ const RACINES = ["engine.js", "generator.js", "traducteur.js", "mesure.js",
                  "relation.js", "offres.js", "entente.js", "dialogue.js",
                  "demandes.js", "contrats.js",
                  // le chantier G (14/08) : crier depuis le coin.
-                 "cris.js"];
+                 "cris.js",
+                 // le dialogue d'entre-rounds : ce qu'il dit au coin.
+                 "ressenti.js"];
 
 const ici = __dirname;
 const RE_REQUIRE = /require\(\s*["']\.\/([\w.-]+)["']\s*\)/g;

@@ -153,6 +153,22 @@
   font-family:inherit;font-size:.78rem}
 .cbtn.actif{background:var(--tungstene);border-color:var(--tungstene);
   color:#12161e;font-weight:700}
+/* LE RESSENTI (chantier grave au cas 104) : il parle AVANT les consignes.
+   Deux voix qui peuvent se contredire — ce qu'il DIT, et ce que tu VOIS. */
+#coach .c-dit{background:var(--nuit);border:1px solid var(--trait);border-left:3px solid var(--tungstene);
+  border-radius:9px;padding:10px 11px;margin:2px 0 4px}
+#coach .c-dit p{font-size:.86rem;line-height:1.42;font-style:italic;margin:0}
+#coach .c-etat{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--craie-2);margin-bottom:4px}
+#coach .c-etat b{font-style:normal;letter-spacing:.06em}
+#coach .c-etat b.dur{color:var(--cuir)}
+#coach .c-signes{font-size:.7rem;color:var(--craie-2);line-height:1.4;margin:6px 0 2px}
+#coach .c-signes span{display:block}
+#coach .c-signes span:before{content:"— "}
+#coach .c-demande{width:100%;margin-top:8px;padding:9px;border-radius:8px;cursor:pointer;
+  background:var(--nuit-2);border:1px dashed var(--tungstene);color:var(--tungstene);
+  font-family:inherit;font-size:.75rem}
+#coach .c-demande.pris{border-style:solid;background:var(--tungstene);color:#12161e;font-weight:700}
 #coach .c-note{font-size:.66rem;color:var(--craie-2);margin:12px 0 10px;text-align:center}
 #coach .c-go{width:100%;padding:12px;border-radius:8px;cursor:pointer;
   background:var(--cuir);border:1px solid var(--cuir);color:#fff;
@@ -257,6 +273,10 @@
       <div class="c-tete" id="coinRound">FIN DU ROUND 1</div>
       <div class="c-sous">Une minute avec ton combattant.</div>
 
+      <!-- IL PARLE D'ABORD. Le ressenti vient du moteur (js/ressenti.js) :
+           ce qu'il dit est SON avis, les signes sont ce que tu vois. -->
+      <div id="coinDit"></div>
+
       <div class="c-lib">Plan de jeu</div>
       <div class="c-rang">
         <button class="cbtn" data-cle="plan" data-val="frappe" onclick="choisir('plan','frappe')">Boxer</button>
@@ -323,6 +343,41 @@ let   S      = DATA.S;
    on demande au parent de reconstruire l'ecran, avec la MEME graine donc le
    MEME combat. */
 /* ============ LA CLOCHE ET LE COIN ============ */
+/* CE QU'IL DIT ENTRE LES ROUNDS. Envoye par le jeu, jamais calcule ici. */
+let RESSENTI = DATA.ressenti || null;
+const MOT_ETAT={frais:"frais",entamé:"entamé",touché:"touché","cassé":"cassé"};
+function rendreRessenti(){
+  const z=$('coinDit'); if(!z)return;
+  if(!RESSENTI){z.innerHTML='';return;}
+  const R=RESSENTI, dur=(R.etat==="touché"||R.etat==="cassé");
+  /* /!\ LES DEUX VOIX NE SE FONDENT PAS. Ce qu'il DIT est en italique,
+     a la premiere personne. Ce que tu VOIS est en dessous, sec. Quand
+     elles se contredisent, c'est au coach de trancher — c'est le sel du
+     coin, on ne le resout pas a sa place. */
+  z.innerHTML='<div class="c-dit">'
+    +'<div class="c-etat">Il est <b class="'+(dur?'dur':'')+'">'+(MOT_ETAT[R.etat]||R.etat)+'</b></div>'
+    +'<p>« '+R.dit+' »</p>'
+    +(R.signes&&R.signes.length
+      ?'<div class="c-signes">'+R.signes.map(x=>'<span>'+x+'</span>').join('')+'</div>':'')
+    +'</div>'
+    +(R.demande
+      ?'<button class="c-demande'+(demandePrise()?' pris':'')+'" onclick="suivreSaDemande()">'
+        +(demandePrise()?'✓ tu l\'écoutes':'Faire ce qu\'il demande')+'</button>'
+      :'');
+}
+/* Sa demande n'est pas un nouveau levier : c'est UN des boutons deja la,
+   pre-coche. Le ressenti mene aux consignes, il n'en invente pas. */
+function demandePrise(){
+  const d=RESSENTI&&RESSENTI.demande; if(!d)return false;
+  return Object.keys(d).filter(k=>k!=="mot").every(k=>ordre[k]===d[k]);
+}
+function suivreSaDemande(){
+  const d=RESSENTI&&RESSENTI.demande; if(!d)return;
+  const pris=demandePrise();
+  for(const k of Object.keys(d)){ if(k==="mot")continue;
+    if(pris)delete ordre[k]; else ordre[k]=d[k]; }
+  majBoutonsCoin(); rendreRessenti();
+}
 function cloche(){
   if(FIN||fini)return;                 /* pas de coin apres la fin (15/08) */
   attenteCoin=true; enPause=true;
@@ -332,12 +387,13 @@ function cloche(){
   ordre={};
   $('coinRound').textContent=`FIN DU ROUND ${RD}`;
   majBoutonsCoin();
+  rendreRessenti();
   $('coach').classList.add('la');
 }
 function choisir(cle,valeur){
   ordre[cle]=(ordre[cle]===valeur)?undefined:valeur;
   if(ordre[cle]===undefined)delete ordre[cle];
-  majBoutonsCoin();
+  majBoutonsCoin(); rendreRessenti();
 }
 function majBoutonsCoin(){
   document.querySelectorAll('#coach [data-cle]').forEach(b=>{
@@ -362,6 +418,10 @@ function ordreCoin(){
 }
 function reprendre(){
   $('coach').classList.remove('la');
+  /* /!\ IL NE PARLE PLUS DU ROUND D'AVANT. Sans ca, la cloche suivante
+     rouvrait le coin sur le ressenti perime tant que le jeu n'en avait
+     pas renvoye un — et l'ecran aurait menti d'un round entier. */
+  RESSENTI=null;
   const o=ordreCoin();
   envoyer({mma:"reprendre",ordre:o});
 }
@@ -383,6 +443,10 @@ window.addEventListener("message",e=>{
   const etaitTranche=attenteTranche;
   attenteTranche=false;
   if(m.finRound!==undefined)finRound=m.finRound;
+  /* CE QU'IL DIT AU COIN. Le jeu l'envoie avec la tranche qui clot le
+     round — l'ecran ne le CALCULE pas, il ne fait que le rendre : le
+     ressenti sort du moteur (js/ressenti.js), jamais d'ici. */
+  if(m.ressenti!==undefined)RESSENTI=m.ressenti;
   if($('crier').classList.contains('la'))majCris();
   if(m.criMot){
     /* /!\ LE CRI SE VOIT (Mael, 21/08 : "crier on voit pas bien le
