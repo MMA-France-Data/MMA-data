@@ -33,7 +33,9 @@ const RACINES = ["engine.js", "generator.js", "traducteur.js", "mesure.js",
                  // le dialogue d'entre-rounds : ce qu'il dit au coin.
                  "ressenti.js",
                  // ce que le staff vient te demander.
-                 "demandes_staff.js"];
+                 "demandes_staff.js",
+                 // ce qui reste quand les annees passent.
+                 "endgame.js"];
 
 const ici = __dirname;
 const RE_REQUIRE = /require\(\s*["']\.\/([\w.-]+)["']\s*\)/g;
@@ -123,6 +125,7 @@ ${morceaux.join("\n")}
     // la reprise du 25/08
     ressenti:   require("./ressenti.js"),
     demandes_staff: require("./demandes_staff.js"),
+    endgame:    require("./endgame.js"),
     require: require
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -11807,3 +11807,91 @@ du 09/08 ne se reproduiront pas.
    cas 22 ne pourra plus revenir en silence. La premiere version du banc
    29 avait recopie cette main en oubliant la visite : 192 exceptions,
    et l'echec accusait le jeu. Une main, pas deux.
+
+## L'ENDGAME (dernier chantier de la liste — FAIT)
+Le jeu savait faire une semaine, une saison, une carriere. Il ne savait pas
+faire UNE VIE DE SALLE : au bout de cinq ans plus rien ne montait, les
+hommes partaient a la retraite et disparaissaient, et deux combats contre
+le meme homme etaient deux combats sans histoire. Module js/endgame.js,
+banc 30, ecran « Le mur & les objectifs » depuis l'onglet Salle.
+
+LE MUR DES LEGENDES — trois rangs, et des FAITS DE CARRIERE, pas des notes :
+  legende  une ceinture, ou 15 victoires avec un top 5 ;
+  pilier   8 victoires, OU 5 ans ET 5 victoires ;
+  maison   3 ans et 3 victoires.
+/!\ RENDRE null EST LE CAS NORMAL. Un mur ou tout le monde est accroche ne
+dit rien — meme regle que le marquage des contrats. La plaque porte UNE
+phrase, tiree de ce qui domine vraiment sa carriere (les regnes, les
+finitions, les annees), jamais un compliment generique.
+/!\ LA DUREE SEULE NE FAIT PAS UN PILIER (corrige au banc) : la premiere
+version accrochait « pilier » a tout homme reste cinq ans, meme a 1-9.
+/!\ IL A FALLU CREER l.arriveLe : « cinq ans de maison » n'etait pas
+calculable, la date d'arrivee n'existait nulle part. Et l.meilleurRang :
+l.rang est le rang DU JOUR, un ancien n°3 redescendu n'avait plus aucune
+trace de son sommet.
+Le poids du mur PLAFONNE a 12 : une salle ne vit pas de ses morts.
+
+LES OBJECTIFS LONGS — douze, trois etages (la salle · le sport · l'heritage).
+/!\ AUCUN COMPTEUR. Chaque objectif se LIT dans l'etat du jeu au moment ou
+on regarde. Sur un objectif de dix ans, un compteur qui derive d'un point
+ne se repare plus jamais — et c'est la plaie du 09/08 en pire. Le banc
+change UN champ de l'etat et verifie que l'objectif suit.
+/!\ ATTEINT RESTE ATTEINT : on compare a la liste des annonces DEJA faites,
+pas a l'etat. Un champion qui perd sa ceinture ne « deverrouille » pas
+l'objectif, et il ne se re-annonce pas non plus.
+La recompense passe par bougerReputation (donc par une depeche) — meme
+piege que le gala amateur : sans le canal officiel, la salle perdrait de la
+reputation « faute d'actualite » le jour meme d'un jalon.
+
+LES RIVALITES — /!\ ELLES NAISSENT D'UN FAIT, JAMAIS D'UN TIRAGE.
+Avant, le contexte des demandes disait `rival: notoriete >= 15`, ce qui
+veut dire « il est connu », pas « ils se detestent » : la demande « Trouve-
+le-moi » se declenchait donc contre PERSONNE en particulier. Sept causes,
+toutes reelles : defaite, revanche (2e defaite contre le meme), ceinture
+perdue, decision volee, trash talk, victoire (l'autre veut sa revanche),
+depart chez une salle rivale.
+/!\ ELLE REFROIDIT — 100 points en deux ans. Sans ca, au bout de dix ans
+tout le monde est rival de tout le monde et le mot ne veut plus rien dire.
+Vivante au-dessus de 25 ; en dessous c'est un souvenir. Des mots seuls (18)
+ne font PAS une rivalite : il faut qu'il se soit passe quelque chose dans
+la cage.
+/!\ ELLE NE TOUCHE PAS AU MOTEUR — on ne truque pas un combat parce qu'il y
+a une histoire. Elle agit AUTOUR : la bourse de l'offre (x1 a x1,45), ce
+que la presse en fait (x1 a x1,8), et ce que la victoire pese entre lui et
+toi. Le banc mesure la bourse avec et sans, a graine identique.
+
+## /!\ LA PARTIE LONGUE — CE QUE DIX ANS ONT APPRIS
+1. LE BAC NE RESPIRAIT PAS, et ca ressemblait a une fuite du jeu. Un banc
+   qui pilote la partie en boucle SYNCHRONE ne rend jamais la main a la
+   file de microtaches : sauvegarder() empilait une chaine de promesses par
+   jour, chacune retenant l'etat serialise (2 a 4 Mo). MESURE : 848 Mo de
+   tas au jour 200, 2 Go au jour 400, puis node meurt. LE JEU, LUI, EST
+   PROPRE : autosauvegarde coupee, 19 Mo au jour 200 et 24 Mo au jour 600.
+   Correction : vm.createContext(..., {microtaskMode:"afterEvaluate"}).
+   => AVANT DE CRIER A LA FUITE, COUPER CE QUE LE BANC AJOUTE.
+2. LA TAILLE DE LA SAUVEGARDE, MESUREE (partie neuve, singe) :
+       jour  200 : 2,7 Mo   jour  600 : 4,6 Mo   jour 1200 : 7,3 Mo
+   dont 98 % dans MONDE.pros — 4 800 hommes, leur fiche et leurs cinq
+   dernieres empreintes. Ca ne se degonfle pas : c'est le monde.
+   CONSEQUENCE, ET C'EST LE CAS 122 EN PLUS DISCRET : le secours
+   localStorage (5 Mo, donc ~2,5 M de caracteres UTF-16) etait DEJA mort
+   passe le jour ~150, en silence. Sur une partie de dix ans, il n'a jamais
+   existe.
+3. /!\ ET LA COMPRESSION N'EST PAS LA REPONSE PARTOUT. MESURE :
+       jour 600 : 4 563 Ko -> 1 294 Ko, mais 1,2 s de calcul (sur PC).
+   Une seconde et demie a CHAQUE « Continuer », sur telephone, serait le
+   pire defaut jamais introduit dans cette boucle. DEUX VERSIONS FAUSSES
+   ecrites avant la bonne, consignees pour ne pas les refaire :
+     - compresser le coffre a chaque sauvegarde : le coffre a le quota, il
+       avale le brut, et on paierait 1,2 s pour rien ;
+     - compresser le secours a chaque sauvegarde : des que le coffre est
+       indisponible (navigation privee, certains webviews Android), c'est
+       1,2 s par journee. Le remede pire que le mal.
+   LA BONNE : on ecrit le BRUT, et on ne paie la compression QUE si le
+   quota a vraiment parle. Le banc 27 le prouve dans les deux sens — avec
+   un stockage a quota qui refuse, et un qui accepte.
+   Toutes les lectures acceptent les deux formats (prefixe MMALZ1|) : une
+   sauvegarde ecrite avant aujourd'hui se recharge sans rien savoir de ca.
+   Et la compression n'est JAMAIS utilisee a l'aveugle : la premiere de la
+   session est relue avant d'etre acceptee ; si l'aller-retour ne rend pas
+   exactement la meme chaine, la partie ne compresse plus jamais.

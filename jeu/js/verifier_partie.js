@@ -17,7 +17,7 @@
  * CE QU'IL NE SAIT PAS VOIR : les pixels. Une couleur fausse, un
  * debordement, un bouton illisible — ca reste le terrain de Mael.
  */
-const { ouvrirPartie, trancherBlocage } = require("./bac_partie.js");
+const { ouvrirPartie, trancherBlocage, coffreMemoire } = require("./bac_partie.js");
 
 let echecs = 0;
 const dit = (n, ok, i) => { console.log(`  ${ok ? "ok  " : "ECHEC"} ${n}${i ? " — " + i : ""}`); if (!ok) echecs++; };
@@ -286,6 +286,71 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
   dit("sur une saison, le staff vient te demander des choses", total > 0,
       vues.map((c) => `${c.nom}:${c.demandes}`).join(" · "));
   dit("aucune exception pendant la saison du staff", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
+/* ==================================================================== */
+/* LA SAUVEGARDE D'UNE PARTIE QUI DURE                                   */
+/* /!\ CE BLOC EXISTE PARCE QUE LE CAS 122 A COUTE UNE PARTIE. La        */
+/* sauvegarde grossit avec le monde (2,7 Mo au jour 200, 7,3 Mo au jour  */
+/* 1200) : les deux chemins doivent tenir, et surtout se RELIRE.         */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "neuf", graine: 4 });
+  jouer(P, 200, 4);
+
+  /* Le coffre est indisponible dans le bac : c'est donc le chemin de
+     SECOURS qui s'exerce ici — celui qui etait mort en silence. */
+  const t = P.lire(`(function(){
+    const brut=JSON.stringify(etatDuJeu());
+    const petit=compresserSiSur(brut);
+    return {brut:brut.length, petit:petit?petit.length:null,
+            relu:petit?(decompresserSauvegarde(petit)===brut):null,
+            jour:t.jour};})()`);
+  dit("la sauvegarde de secours se compresse", t.petit !== null && t.petit < t.brut,
+      `${Math.round(t.brut / 1024)} Ko -> ${Math.round(t.petit / 1024)} Ko au jour ${t.jour}`);
+  dit("et elle se relit au caractère près", t.relu === true);
+  dit("elle tient dans le quota de localStorage (5 Mo en UTF-16)",
+      t.petit * 2 < 5 * 1024 * 1024, `${Math.round(t.petit * 2 / 1024)} Ko en UTF-16`);
+
+  /* /!\ LES DEUX FORMATS SE RECHARGENT. Une partie ecrite avant
+     aujourd'hui ne doit rien perdre. */
+  const deux = P.lire(`(function(){
+    const brut=JSON.stringify(etatDuJeu());
+    const jour=t.jour;
+    const A=(function(){chargerEtat(JSON.parse(decompresserSauvegarde(brut)));return t.jour;})();
+    const B=(function(){chargerEtat(JSON.parse(decompresserSauvegarde(compresserSiSur(brut))));return t.jour;})();
+    return {jour,A,B};})()`);
+  dit("le format d'hier se recharge", deux.A === deux.jour, `jour ${deux.A}`);
+  dit("le format compressé aussi", deux.B === deux.jour, `jour ${deux.B}`);
+
+  /* La sauvegarde a vraiment ete ECRITE quelque part pendant la partie —
+     sinon tout ce qui precede teste une fonction que personne n'appelle. */
+  dit("la partie s'est réellement sauvegardée en jouant", P.stock._map.size > 0,
+      [...P.stock._map.keys()].join(", "));
+  dit("et elle a été écrite en clair tant que le quota le permettait",
+      !String(P.stock.getItem("mma_sauve_1") || "").startsWith("MMALZ1|"),
+      "le brut passe : on ne paie pas la compression pour rien");
+}
+
+/* /!\ LE JOUR OU LE NAVIGATEUR DIT NON. C'est le seul chemin qui a
+   vraiment compte dans l'histoire de ce jeu (cas 122) : une partie s'y
+   est perdue. Un stockage de banc qui accepte tout ne le teste jamais. */
+{
+  const petitCoffre = coffreMemoire(900 * 1024);   // ~1,8 Mo en UTF-16
+  const P = ouvrirPartie({ mode: "neuf", graine: 4, stock: petitCoffre });
+  jouer(P, 200, 4);
+  const ecrit = String(petitCoffre.getItem("mma_sauve_1") || "");
+  dit("quota dépassé : la sauvegarde se compresse et passe quand même",
+      ecrit.startsWith("MMALZ1|"),
+      ecrit ? `${Math.round(ecrit.length / 1024)} Ko compressés` : "RIEN N'A ÉTÉ ÉCRIT");
+  dit("et ce qui est écrit se relit",
+      P.lire(`(function(){const s=localStorage.getItem("mma_sauve_1");
+        const c=decompresserSauvegarde(s); if(!c)return false;
+        try{const o=JSON.parse(c);return o&&o.v===1&&o.jour>0;}catch(e){return false;}})()`));
+  dit("aucune exception quand le quota refuse", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+  dit("aucune exception sur le chemin de la sauvegarde", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 

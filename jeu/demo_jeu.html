@@ -308,6 +308,9 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
       <button class="puce" style="float:right" onclick="ouvrirSemaine()">Régler la semaine</button></h2>
     <div class="bloc" id="prog"></div>
     <h2>À venir</h2><div class="bloc" id="horizon"></div>
+    <h2>Où tu en es
+      <button class="puce" style="float:right" onclick="ouvrirHeritage()">Le mur & les objectifs</button></h2>
+    <div class="bloc" id="ou-tu-en-es"></div>
     <h2>Le fil de la salle</h2>
     <div class="bloc" id="fil"><div class="fl"><span class="quand">—</span>La salle ouvre. Appuie sur Continuer.</div></div>
   </div>
@@ -1969,6 +1972,16 @@ function retombees(r){
    lieu. Pas de rang, pas de notoriete, pas d'empreinte pour le
    scouting adverse, pas de relation avec l'organisation.
    ================================================================= */
+/* /!\ LE MEILLEUR RANG ATTEINT SE RETIENT. `l.rang` est le rang DU JOUR :
+   un homme qui a ete n°3 puis qui redescend n'a plus aucune trace de son
+   sommet, et le mur des legendes ne saurait pas qu'il en fut un. On garde
+   le sommet a part — c'est un FAIT de carriere, pas un etat. */
+function noterLeSommet(l){
+  if(!l||l.rang===null||l.rang===undefined)return;
+  if(l.meilleurRang===undefined||l.meilleurRang===null||l.rang<l.meilleurRang)
+    l.meilleurRang=l.rang;
+}
+
 function remonterDansLeMonde(r){
   if(!MONDE||!r||!r.moteur.fini||r.remonte)return;
   const l=MESGARS[r.a]; if(!l)return;      /* pas un homme de la salle */
@@ -2123,6 +2136,25 @@ function remonterDansLeMonde(r){
     MMA.classement.bougerEchelle(MONDE,org,l.division,
       gagne?l.id:adv.id, gagne?adv.id:l.id, fini);
     if(gagne){adv.bilan.d++;adv.bilan.serie=0;}else{adv.bilan.v++;adv.bilan.serie++;}
+    noterLeSommet(l);
+    /* ==== LA RIVALITE NAIT ICI, D'UN FAIT (endgame.js) ==================
+       /!\ JAMAIS D'UN TIRAGE NI D'UN SEUIL DE NOTORIETE : la version
+       d'avant disait `rival: notoriete >= 15`, ce qui veut dire "il est
+       connu", pas "ils se detestent". Ce qui la fait naitre, c'est ce qui
+       vient de se passer dans la cage. */
+    try{
+      const R=rivalitesTable();
+      const deja=Object.values(R).filter(x=>x.a===cle&&x.b===adv.id).length;
+      let cause=null;
+      if(o&&o.titre&&!gagne&&!l.champion&&adv.champion)cause="ceinture";
+      else if(!gagne)cause=deja?"revanche":"defaite";
+      else cause="gagne";
+      MMA.endgame.nourrir(R,cle,adv.id,cause,t.jour,adv.nom);
+      const r=R[MMA.endgame.clefRiv(cle,adv.id)];
+      if(MMA.endgame.vivante(r,t.jour))
+        raconter(t.jour,[`⚔️ ${lienGars(cle)} c. ${lienMonde(adv.id,adv.nom)} — `
+          +`${MMA.endgame.mot(r,t.jour)}`],false);
+    }catch(e){ console.error("rivalites :",e); }
     MMA.cartes.vitaliser(MONDE,adv);
     adv.vie.dernier=t.jour; adv.vie.dispo=t.jour+35; adv.vie.advPrec=l.id;
   }
@@ -2316,7 +2348,16 @@ function encaisserResultat(){
     else{im.sympathie=bornes(im.sympathie-6);
       depeche(t.jour,"combat",`${FICHES[r.a].nom} avait promis un finish au premier round.`,null);}
   }
-  im.notoriete=bornes(im.notoriete+(gagne?3:1));
+  /* /!\ UN COMBAT QU'ON ATTENDAIT SE RACONTE PLUS FORT (endgame.js). La
+     rivalite est deja passee sur la bourse a l'offre ; ici c'est la
+     presse. Toujours AUTOUR du combat, jamais dedans. */
+  let mult=1;
+  try{
+    const rv=rivalitesTable()[MMA.endgame.clefRiv(r.a,r.b)];
+    const eff=rv?MMA.endgame.effetsDuCombat(rv,t.jour):null;
+    if(eff)mult=eff.notoriete;
+  }catch(e){ console.error("rivalite/presse :",e); }
+  im.notoriete=bornes(im.notoriete+(gagne?3:1)*mult);
   im.sympathie=bornes(im.sympathie+(gagne?2:-1));
   im.pression=0; im.cardioJourJ=1;
 
@@ -2779,6 +2820,7 @@ function rendreSalle(){
   }
   const cs=grilleDe()[t.jour%7]||[];
   rendrePas();
+  rendreOuTuEnEs();
   $("prog").innerHTML=cs.length
     ? cs.map(([h,titre,fam,groupes],ixC)=>{
         let qui=groupes.join(" + ");
@@ -2849,7 +2891,8 @@ function rendreSalle(){
         <div class="quoi"><b>${of.nomGars} c. ${lienMonde(of.adversaire,b.nom)}</b>
           ${b.rang!==null&&b.rang<=15?" · #"+b.rang:""} · ${b.bilan.v}-${b.bilan.d}
           <br>${of.place.replace(/_/g," ")} · ${of.bourse.toLocaleString("fr-FR")} € · camp ${of.camp} j
-          ${of.avertissement?'<br><span style="color:var(--accent)">⚠ '+of.avertissement+'</span>':""}</div>
+          ${of.avertissement?'<br><span style="color:var(--accent)">⚠ '+of.avertissement+'</span>':""}
+          ${of.rivalite?'<br><span style="color:var(--or)">⚔️ '+texte(of.rivalite)+'</span>':""}</div>
         <div class="choix"><button class="oui" onclick="repondreOffre('${of.cle}',true)">Accepter</button>
           <button onclick="repondreOffre('${of.cle}',false)">Refuser</button></div></div>`;
       return;
@@ -2913,6 +2956,87 @@ function rendreSalle(){
     }
     $("zone-attend").innerHTML="";
   }
+}
+
+/* ==== L'ECRAN DE L'HERITAGE ============================================
+   Trois choses qu'aucun autre ecran ne dit : ce que la salle a produit
+   (le mur), ou elle en est (les objectifs), et ce que le passe fait au
+   prochain combat (les rivalites). */
+
+/** Le resume, sur l'onglet Salle : LE PROCHAIN objectif de chaque etage,
+    pas les douze — une liste de douze barres ne se lit pas. */
+function rendreOuTuEnEs(){
+  const z=$("ou-tu-en-es"); if(!z)return;
+  let L=[];
+  try{ L=MMA.endgame.objectifs(etatEndgame()); }catch(e){ z.innerHTML=""; return; }
+  const lignes=[];
+  for(const [tier,lib] of MMA.endgame.TIERS){
+    const dedans=L.filter(o=>o.tier===tier);
+    const restants=dedans.filter(o=>!o.fait);
+    const faits=dedans.length-restants.length;
+    const o=restants[0];
+    lignes.push(`<div class="ef-ligne">
+      <span class="ef-groupe">${lib}</span>
+      <span class="ef-nom">${o?o.titre:"Tout est fait."}
+        <div class="sous">${o?o.sous:"Il n'y a plus rien à prouver à cet étage."}</div></span>
+      <span class="ef-barre" style="width:${Math.max(2,Math.round((o?o.part:1)*54))}px"></span>
+      <span class="ef-prog" style="${faits===dedans.length?"color:var(--or)":""}">${faits}/${dedans.length}</span></div>`);
+  }
+  const mur=murDeLaSalle();
+  if(mur.length)lignes.push(`<div class="ef-ligne">
+    <span class="ef-groupe" style="color:var(--or);border-color:rgba(201,162,39,.35)">au mur</span>
+    <span class="ef-nom">${mur.slice(0,3).map(p=>p.nom).join(" · ")}${mur.length>3?` +${mur.length-3}`:""}
+      <div class="sous">${mur.length} plaque${mur.length>1?"s":""} — ils sont passés par ici.</div></span></div>`);
+  z.innerHTML=lignes.join("");
+}
+
+function ouvrirHeritage(){
+  let L=[];
+  try{ L=MMA.endgame.objectifs(etatEndgame()); }catch(e){}
+  const mur=murDeLaSalle();
+  const R=rivalitesTable();
+  const vivantes=Object.values(R).filter(r=>MMA.endgame.vivante(r,t.jour)&&MESGARS[r.a])
+    .sort((a,b)=>MMA.endgame.chaleur(b,t.jour)-MMA.endgame.chaleur(a,t.jour));
+  const an=2026+Math.floor(t.jour/365);
+  $("fiche").innerHTML=
+    `<div class="f-tete"><div class="f-nom">${SALLE.nomSalle||"La salle"}</div>
+       <div class="f-sous">${an} · ${Math.floor(t.jour/365)} an${Math.floor(t.jour/365)>1?"s":""} d'existence
+         · ${mur.length} au mur</div>
+       <button class="f-fermer" onclick="fermerFiche()">Fermer</button></div>
+
+     <h3>Le mur</h3>
+     ${mur.length?mur.map(p=>`<div class="f-statut" style="margin-top:8px;border-color:${
+         p.rang==="legende"?"var(--or)":"var(--bord)"}">
+         <div style="display:flex;justify-content:space-between;align-items:baseline">
+           <b>${FICHES[p.cle]?lien(p.cle):texte(p.nom)}</b>
+           <span class="f-sous" style="color:${p.rang==="legende"?"var(--or)":"var(--doux)"}">${p.mot}</span></div>
+         <div class="f-sous" style="margin-top:3px">${p.bilan}${
+           p.titres?` · ${p.titres} fois champion`:""}${
+           p.annees?` · ${p.annees} an${p.annees>1?"s":""} à la salle`:""} · ${p.an}</div>
+         <div style="margin-top:5px">${texte(p.pourquoi)}</div></div>`).join("")
+       :`<div class="f-statut" style="margin-top:8px;color:var(--doux)">
+          Personne encore. On n'accroche pas quelqu'un parce qu'il est parti —
+          on l'accroche pour ce qu'il a fait ici.</div>`}
+
+     <h3>Les objectifs</h3>
+     ${MMA.endgame.TIERS.map(([tier,lib])=>{
+        const d=L.filter(o=>o.tier===tier);
+        return `<div class="f-sous" style="margin-top:12px;letter-spacing:.06em;text-transform:uppercase">${lib}</div>`
+          +d.map(o=>`<div class="ef-ligne" style="padding:8px 0;border-color:var(--bord)">
+            <span style="min-width:18px;color:${o.fait?"var(--or)":"var(--doux)"}">${o.fait?"✓":"○"}</span>
+            <span class="ef-nom" style="${o.fait?"":"opacity:.75"}">${o.titre}
+              <div class="sous">${o.sous}</div></span>
+            <span class="ef-prog" style="color:${o.fait?"var(--or)":"var(--doux)"};font-weight:400">${
+              o.fait?"":`${o.ou}/${o.sur}`}</span></div>`).join("");
+      }).join("")}
+
+     <h3>Les rivalités</h3>
+     ${vivantes.length?vivantes.map(r=>`<div class="f-statut" style="margin-top:8px">
+         <b>${lienGars(r.a)}</b> c. ${typeof r.b==="number"?lienMonde(r.b,r.nomB):texte(r.nomB)}
+         <div class="f-sous" style="margin-top:3px">${texte(MMA.endgame.mot(r,t.jour))}</div></div>`).join("")
+       :`<div class="f-statut" style="margin-top:8px;color:var(--doux)">
+          Aucune. Elles ne se décrètent pas : il faut qu'il se soit passé quelque chose.</div>`}`;
+  $("voile").classList.add("ouvert");
 }
 
 function rendreEffectif(){
@@ -3309,6 +3433,81 @@ function devenirCoach(cle,l,fi){
 /* /!\ UN HOMME QUI RACCROCHE. Il quitte le roster, il quitte la salle,
    et il reste dans FICHES : son palmares ne s'efface pas — c'est ce
    qu'il laisse. */
+/* ==== L'ENDGAME (dernier chantier de la liste du 22/08) ==================
+   Le mur, les objectifs longs, les rivalites. Le module endgame.js decide
+   ; ici on lui donne la salle a lire, et on garde ce qui doit durer.
+   /!\ TOUT L'ETAT VIT DANS SALLE — donc il traverse la sauvegarde sans une
+   ligne de plus (SALLE est serialise en entier par etatDuJeu). */
+const murDeLaSalle = () => (SALLE.mur = SALLE.mur || []);
+const rivalitesTable = () => (SALLE.rivalites = SALLE.rivalites || {});
+const objectifsVus = () => (SALLE.objectifsVus = SALLE.objectifsVus || []);
+
+/** L'etat que les objectifs LISENT. /!\ AUCUN COMPTEUR : tout se recalcule
+    a partir de ce qui existe. Un compteur de dix ans derive ; une lecture,
+    jamais. */
+function etatEndgame(){
+  const rangLocal=Math.max(0,LOCAUX.findIndex(x=>x.id===SALLE.local));
+  const vivants=Object.entries(MESGARS).filter(([,l])=>!l.retraite);
+  let meilleurRang=null;
+  for(const [,l] of vivants){
+    if(l.rang===null||l.rang===undefined)continue;
+    if(meilleurRang===null||l.rang<meilleurRang)meilleurRang=l.rang;
+  }
+  /* Les victoires de la salle : celles de tous ceux qui sont passes —
+     l'effectif d'aujourd'hui ET le mur. Sinon le compteur RECULE quand un
+     homme raccroche, ce qui serait absurde pour un objectif d'heritage. */
+  let victoiresSalle=0;
+  for(const [c] of Object.entries(MESGARS)){
+    const fi=FICHES[c]; if(fi&&fi.bilan)victoiresSalle+=fi.bilan[0]||0;
+  }
+  for(const p of murDeLaSalle())
+    victoiresSalle+=parseInt(String(p.bilan).split("-")[0],10)||0;
+  return {
+    jour:t.jour, rangLocal, coachs:staffDe().filter(c=>!c.moi).length,
+    effectif:EFFECTIF.length,
+    prosSousContrat:vivants.filter(([,l])=>!l.amateur
+      &&MMA.contrats.contratSalle(l)&&!MMA.contrats.salleEchue(l)).length,
+    meilleurRang,
+    champions:vivants.filter(([,l])=>l.champion).length,
+    /* /!\ "FORME CHEZ TOI" VEUT DIRE ARRIVE AMATEUR : c'est le vrai
+       metier, et c'est different d'avoir signe un champion tout fait. */
+    championsMaison:vivants.filter(([c,l])=>l.champion
+      &&(FICHES[c]&&FICHES[c].bilanAmateur)).length,
+    legendes:murDeLaSalle().filter(p=>p.rang==="legende").length,
+    victoiresSalle,
+  };
+}
+
+/** Les objectifs franchis depuis la derniere fois. Une seule annonce. */
+function regarderLesObjectifs(){
+  let neufs=[];
+  try{ neufs=MMA.endgame.nouveaux(etatEndgame(),objectifsVus()); }
+  catch(e){ console.error("objectifs :",e); return; }
+  for(const o of neufs){
+    objectifsVus().push(o.cle);
+    raconter(t.jour,[`🎯 <b>${o.titre}</b> — ${o.sous}`],true);
+    depeche(t.jour,"event",`${SALLE.nomSalle||"La salle"} : ${o.titre.toLowerCase()}.`,"");
+    /* /!\ LA RECOMPENSE EST REELLE, ET ELLE PASSE PAR LE CANAL OFFICIEL :
+       bougerReputation ecrit une depeche, donc l'objectif compte comme
+       actualite (meme piege que le gala amateur, cas du 10/08). */
+    bougerReputation(o.tier==="heritage"?3.5:o.tier==="sport"?2:1,
+      `${SALLE.nomSalle||"La salle"} — ${o.titre.toLowerCase()}.`);
+  }
+}
+
+/** On l'accroche au mur, s'il l'a merite. Rend la plaque, ou null. */
+function accrocherAuMur(cle,l,fi){
+  let p=null;
+  try{ p=MMA.endgame.plaqueDe(Object.assign({cle},l),fi,t.jour); }
+  catch(e){ console.error("mur :",e); return null; }
+  if(!p)return null;
+  p.cle=cle;
+  murDeLaSalle().unshift(p);
+  raconter(t.jour,[`🖼 <b>${p.nom} entre au mur — ${p.mot}.</b> ${p.pourquoi}`],true);
+  ecrireArticle("retraiteMaison",l,{titres:p.titres});
+  return p;
+}
+
 function raccrocher(cle,cause){
   const l=MESGARS[cle]; if(!l)return;
   const fi=FICHES[cle];
@@ -3327,7 +3526,10 @@ function raccrocher(cle,cause){
   raconter(t.jour,[`🏁 ${lienGars(cle)} raccroche — ${l.age} ans, ${bil}.`],true);
   depeche(t.jour,"event",`${l.nom} met un terme à sa carrière (${bil}).`,"");
   /* La presse salue un homme de la maison (22/08). */
-  if(!l.amateur)ecrireArticle("retraiteMaison",l,{titres:(l.faits||[]).filter(f=>/Champion/.test(f.quoi)).length});
+  /* /!\ LE MUR PARLE A SA PLACE QUAND IL Y ENTRE : sans ca l'article
+     partait deux fois pour le meme homme le meme jour. */
+  const plaque=accrocherAuMur(cle,l,fi);
+  if(!l.amateur&&!plaque)ecrireArticle("retraiteMaison",l,{titres:(l.faits||[]).filter(f=>/Champion/.test(f.quoi)).length});
   l.retraite=true; l.combatPrevu=null; l.camp=null;
   if(fi){fi.gr="retraite";fi.statut=`A raccroché à ${l.age} ans.`;}
   /* Le fil du carnet : les pros qui raccrochent deviennent des coachs. */
@@ -3704,6 +3906,11 @@ function vieDuStaff(){
   verifierPromessesStaff();
   poserDemandesStaff();
   interpellations();
+  /* /!\ UNE FOIS PAR SEMAINE, PAS PAR JOUR : un objectif qui se franchit
+     et se defranchit (un champion perd sa ceinture le mois suivant) ne
+     doit pas s'annoncer deux fois. La liste des annonces faites tranche —
+     un objectif atteint reste atteint. */
+  regarderLesObjectifs();
 }
 
 /* ==== LES DEMANDES DU STAFF (chantier de la liste du 22/08) ============
@@ -4934,8 +5141,22 @@ function proposerOffres(){
       if(!o)continue;
       o.cle=cle; o.nomGars=l.nom;
       l.derniereOffre=t.jour;
+      /* /!\ UNE RIVALITE SE VEND (endgame.js). Elle ne touche PAS au
+         moteur — on ne truque pas un combat parce qu'il y a une histoire.
+         Elle agit sur ce qui se negocie AUTOUR : la bourse d'abord. Sans
+         cette ligne, la rivalite serait une etiquette, et le carnet a un
+         mot pour ca. */
+      try{
+        const R=rivalitesTable()[MMA.endgame.clefRiv(cle,o.adversaire)];
+        const eff=R?MMA.endgame.effetsDuCombat(R,t.jour):null;
+        if(eff){
+          o.bourse=Math.round(o.bourse*eff.bourse);
+          o.rivalite=MMA.endgame.mot(R,t.jour);
+        }
+      }catch(e){ console.error("rivalite/offre :",e); }
       OFFRES.push(o);
-      raconter(t.jour,[`✉ ${l.org} propose un combat à ${lienGars(cle)}.`],true);
+      raconter(t.jour,[`✉ ${l.org} propose un combat à ${lienGars(cle)}.`
+        +(o.rivalite?` — <b>${o.rivalite}</b>`:"")],true);
     }catch(e){}
   }
 }
@@ -6617,6 +6838,11 @@ function rejoindreLaSalle(cle,meta){
       groupe:meta.groupe,fiche:meta.fiche||null,archetype:meta.archetype||null}]);
   }catch(e){ console.error("rejoindreLaSalle :",e); }
   if(l){ l.entente=MMA.entente.etatDepart(); l.moral=1; l.forme=1;
+         /* /!\ LE JOUR DE SON ARRIVEE. Il n'existait nulle part : "cinq ans
+            de maison" n'etait donc pas calculable, et le mur des legendes
+            n'aurait pu dire que des banalites. Il vit sur l'homme du MONDE
+            (donc il traverse la sauvegarde comme le reste de sa vie). */
+         if(l.arriveLe===undefined)l.arriveLe=t.jour;
          MESGARS[cle]=l; }
   return l;
 }
@@ -7440,7 +7666,17 @@ function contexteDe(l){
     /* /!\ A-T-IL UN COMBAT PREVU ? Sans ca, on discutait du coin et du
        deplacement alors qu'aucune date n'etait posee. */
     aUnCombat:!!l.combatPrevu,
-    rival:l.notoriete>=15};
+    /* /!\ LE RIVAL ETAIT UN MENSONGE. `notoriete >= 15` veut dire "il est
+       connu", pas "ils se detestent" — et la demande "Trouve-le-moi" se
+       declenchait donc contre personne en particulier. Il y a maintenant
+       un NOM derriere, ne d'un fait (endgame.js). */
+    rival:(function(){try{
+      /* On retrouve sa cle de salle : contexteDe ne recoit que l'homme. */
+      const cle=Object.keys(MESGARS).find(k=>MESGARS[k]===l);
+      if(!cle)return null;
+      const R=MMA.endgame.rivalitesDe(rivalitesTable(),cle,t.jour);
+      return R.length?R[0].nomB:null;
+    }catch(e){return null;}})()};
 }
 
 /* /!\ CORRIGE LE 09/08 (Mael, en jouant, capture a l'appui) : le bouton
@@ -8009,21 +8245,79 @@ function alerteSauvegarde(msg){
     document.body.appendChild(z); }
   z.innerHTML=`⚠ ${msg} — <span style="text-decoration:underline" onclick="exporterSauvegarde()">exporter la partie</span>`;
 }
+/* ==== LA TAILLE DE LA SAUVEGARDE, MESUREE (25/08) =======================
+   Sur une partie neuve menee au singe (banc 27) :
+       jour  200 : 2,7 Mo     jour  600 : 4,6 Mo     jour 1200 : 7,3 Mo
+   dont 98 % dans MONDE.pros — 4 800 hommes qui portent chacun leur fiche
+   et leurs cinq dernieres empreintes. Ca ne se degonfle pas : c'est le
+   monde, et on ne va pas l'appauvrir pour tenir dans un quota.
+   /!\ LE CAS 122 QUI REVIENT, EN PLUS DISCRET : le secours localStorage
+   (5 Mo, donc ~2,5 M de caracteres UTF-16) etait DEJA mort passe le jour
+   ~150, en silence. Sur une partie de dix ans il n'a jamais existe.
+   /!\ ET LA COMPRESSION N'EST PAS LA REPONSE PARTOUT — MESURE :
+       jour 600 : 4 563 Ko -> 1 294 Ko, mais 1,2 s de calcul (sur PC).
+   Une seconde et demie a CHAQUE « Continuer », c'est-a-dire a chaque
+   journee du jeu, sur un telephone : ce serait le pire defaut jamais
+   introduit dans cette boucle. On ne compresse donc PAS le coffre — il a
+   le quota pour l'avaler brut, et il est le chemin normal.
+   ON COMPRESSE LE SECOURS, et lui seul : il ne part que si le coffre a
+   echoue, c'est rare, et c'est le seul endroit ou 5 Mo font la loi.
+   /!\ ON NE COMPRESSE PAS A L'AVEUGLE : la premiere compression de la
+   session est RELUE avant d'etre acceptee. Si l'aller-retour ne rend pas
+   exactement la meme chaine, la partie n'utilise plus jamais la
+   compression. Le carnet a paye une partie entiere pour apprendre qu'un
+   stockage ne se croit pas sur parole.
+   /!\ TOUTES LES LECTURES ACCEPTENT LES DEUX FORMATS : une sauvegarde
+   ecrite avant aujourd'hui se recharge sans rien savoir de tout ca. */
+let _lzSur=null;                        /* null = pas encore verifie */
+function compresserSiSur(texte){
+  if(_lzSur===false)return null;
+  try{
+    const c="MMALZ1|"+lzC(texte);
+    if(_lzSur===null){
+      _lzSur=(lzD(c.slice(7))===texte);
+      if(!_lzSur){ console.error("compression refusee : l'aller-retour ne rend pas la meme chaine"); return null; }
+    }
+    return c;
+  }catch(e){ _lzSur=false; return null; }
+}
+/** Toute lecture de sauvegarde passe par ici. Les deux formats entrent. */
+function decompresserSauvegarde(s){
+  if(typeof s!=="string"||!s.startsWith("MMALZ1|"))return s;
+  try{ return lzD(s.slice(7)); }catch(e){ return null; }
+}
+
 function sauvegarder(silencieux){
   let s;
   try{ s=JSON.stringify(etatDuJeu()); }
   catch(e){ alerteSauvegarde("Sauvegarde impossible"); return false; }
-  /* Le coffre d'abord (gros quota), localStorage en secours. */
+  /* Le coffre d'abord (gros quota, et il avale le brut), localStorage en
+     secours — et LUI seul est compresse (voir le pave ci-dessus). */
   coffreEcrire(s).then(()=>{
     alerteSauvegarde(null);
     try{ localStorage.setItem(CLE_SAUVE+"_jour",String(t.jour)); }catch(e){}
+    /* La taille annoncee est celle qui part vraiment sur le disque. */
     if(!silencieux)toast("Partie sauvegardée ("+Math.round(s.length/1024)+" Ko).");
   }).catch(()=>{
+    /* /!\ ON ESSAIE LE BRUT D'ABORD, ET C'EST VOLONTAIRE. Version
+       precedente : on compressait systematiquement le secours — donc
+       1,2 s de calcul A CHAQUE JOURNEE des que le coffre est indisponible
+       (navigation privee, certains webviews Android). Le remede etait
+       pire que le mal. La compression ne se paie QUE quand le quota a
+       vraiment parle : c'est la seule fois ou elle sert. */
     try{ localStorage.setItem(CLE_SAUVE,s); alerteSauvegarde(null);
       if(!silencieux)toast("Partie sauvegardée ("+Math.round(s.length/1024)+" Ko).");
-    }catch(e){
-      alerteSauvegarde("La partie ne se sauvegarde plus ("+Math.round(s.length/1024)+" Ko)");
+      return;
+    }catch(e){}
+    const petit=compresserSiSur(s);
+    if(petit){
+      try{ localStorage.setItem(CLE_SAUVE,petit); alerteSauvegarde(null);
+        if(!silencieux)toast("Partie sauvegardée, compressée ("+Math.round(petit.length/1024)+" Ko).");
+        return;
+      }catch(e2){}
     }
+    alerteSauvegarde("La partie ne se sauvegarde plus ("
+      +Math.round((petit||s).length/1024)+" Ko)");
   });
   return true;
 }
@@ -8031,7 +8325,11 @@ function chargerSauvegarde(){
   return coffreLire().then(s=>{
     if(!s){ try{ s=localStorage.getItem(CLE_SAUVE); }catch(e){} }
     if(!s)return false;
-    try{ chargerEtat(JSON.parse(s)); return true; }
+    /* /!\ LES DEUX FORMATS ENTRENT : une partie ecrite avant la
+       compression se recharge exactement comme avant. */
+    const clair=decompresserSauvegarde(s);
+    if(clair===null){ console.error("chargement : sauvegarde compressee illisible"); return false; }
+    try{ chargerEtat(JSON.parse(clair)); return true; }
     catch(e){ console.error("chargement :",e); return false; }
   });
 }
@@ -8600,7 +8898,8 @@ function coffreLireSecours(){
    migration. Chaque trouvaille se charge d'un bouton (par le filet). */
 function sallesDesCoffres(){
   const trouvailles=[];
-  const lireJour=(s)=>{try{const o=JSON.parse(s);return "jour "+(o.jour!=null?o.jour:"?")+" · "+Math.round(s.length/1024)+" Ko";}catch(e){return "illisible";}};
+  const lireJour=(s)=>{try{const o=JSON.parse(decompresserSauvegarde(s));
+    return "jour "+(o.jour!=null?o.jour:"?")+" · "+Math.round(s.length/1024)+" Ko";}catch(e){return "illisible";}};
   const fini=()=>{
     $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">Récupération</div>
       <button class="f-fermer" onclick="fermerFiche()">Fermer</button></div>

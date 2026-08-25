@@ -64,12 +64,21 @@ function domVierge() {
   return { n, doc };
 }
 
-/* -- Un localStorage en memoire, avec le meme contrat que le vrai. ----- */
-function coffreMemoire() {
+/* -- Un localStorage en memoire, avec le meme contrat que le vrai. -----
+   /!\ QUOTA COMPRIS. Un stockage de banc qui accepte tout ne teste pas le
+   seul chemin qui compte vraiment : celui du jour ou le navigateur dit
+   non. C'est ce jour-la qu'une partie s'est perdue (cas 122). */
+function coffreMemoire(quota) {
   const m = new Map();
   return {
     getItem: (k) => (m.has(k) ? m.get(k) : null),
-    setItem: (k, v) => { m.set(k, String(v)); },
+    setItem: (k, v) => {
+      const s = String(v);
+      if (quota && s.length > quota) {
+        const e = new Error("QuotaExceededError"); e.name = "QuotaExceededError"; throw e;
+      }
+      m.set(k, s);
+    },
     removeItem: (k) => { m.delete(k); },
     clear: () => m.clear(),
     key: (i) => Array.from(m.keys())[i] || null,
@@ -109,12 +118,24 @@ function ouvrirPartie(o = {}) {
   bac.prompt = () => null;
   /* /!\ LES MINUTERIES NE PARTENT PAS TOUTES SEULES : on les met en file,
      le banc decide quand (et si) elles tournent. Sinon un setTimeout de
-     rendu se declencherait au milieu d'une assertion. */
-  bac.setTimeout = (fn, ms) => { minuteries.push({ fn, ms }); return minuteries.length; };
+     rendu se declencherait au milieu d'une assertion.
+     /!\ ET LA FILE EST BORNEE. Premiere version : elle grandissait sans
+     fin. Chaque fermeture retient l'etat qu'elle a capture — au jour 500
+     d'une mesure longue, le tas atteignait 2,8 Go et node mourait. Ce
+     n'etait PAS une fuite du jeu (ses tableaux, eux, restent petits) :
+     c'etait le bac. Piege a consigner, il coute une demi-heure. */
+  let poses = 0;
+  const poser = (fn, ms, boucle) => {
+    poses++;
+    minuteries.push({ fn, ms, boucle });
+    if (minuteries.length > 50) minuteries.splice(0, minuteries.length - 50);
+    return poses;
+  };
+  bac.setTimeout = (fn, ms) => poser(fn, ms, false);
   bac.clearTimeout = () => {};
-  bac.setInterval = (fn, ms) => { minuteries.push({ fn, ms, boucle: true }); return minuteries.length; };
+  bac.setInterval = (fn, ms) => poser(fn, ms, true);
   bac.clearInterval = () => {};
-  bac.requestAnimationFrame = (fn) => { minuteries.push({ fn, ms: 16 }); return minuteries.length; };
+  bac.requestAnimationFrame = (fn) => poser(fn, 16, false);
   bac.Blob = function () {}; bac.URL = { createObjectURL: () => "blob:x", revokeObjectURL() {} };
   bac.FileReader = function () {}; bac.File = function () {};
   bac.indexedDB = undefined;      /* pas de coffre : le jeu retombe sur localStorage */
@@ -138,10 +159,28 @@ function ouvrirPartie(o = {}) {
     get: (c, k, r) => (k === "now" ? () => heureFixe : Reflect.get(c, k, r)),
   });
   bac.Math = MathBac; bac.JSON = JSON;
+  /* /!\ LES VIEILLES API DE TRANSPORT EXISTENT DANS LE BAC. btoa, atob,
+     unescape : sans elles la compression de la sauvegarde echouait en
+     silence et retombait sur le format brut — le banc aurait valide un
+     chemin que le navigateur ne prend jamais. */
+  bac.btoa = (b) => Buffer.from(b, "binary").toString("base64");
+  bac.atob = (b) => Buffer.from(b, "base64").toString("binary");
+  bac.unescape = global.unescape; bac.escape = global.escape;
+  bac.encodeURIComponent = encodeURIComponent; bac.decodeURIComponent = decodeURIComponent;
   bac.addEventListener = (t, fn) => { (bac._ecoute = bac._ecoute || {}), (bac._ecoute[t] = bac._ecoute[t] || []).push(fn); };
   bac.removeEventListener = () => {};
   bac.postMessage = () => {};
-  vm.createContext(bac);
+  /* /!\ LES PROMESSES DOIVENT POUVOIR SE TERMINER. Piege paye cher, a
+     consigner : un banc qui pilote le jeu en boucle SYNCHRONE ne rend
+     jamais la main a la file de microtaches — sauvegarder() empile donc
+     une chaine de promesses par jour, chacune retenant l'etat complet
+     serialise (2 a 4 Mo). Mesure : 848 Mo de tas au jour 200, 2 Go au
+     jour 400, puis node meurt. Le JEU, LUI, EST PROPRE : sans
+     l'autosauvegarde, 19 Mo au jour 200 et 24 Mo au jour 600. Ce n'etait
+     donc pas une fuite a corriger dans la partie, mais un bac qui ne
+     respirait pas. `microtaskMode: afterEvaluate` vide la file apres
+     chaque evaluation — c'est-a-dire a chaque lecture du banc. */
+  vm.createContext(bac, { microtaskMode: "afterEvaluate" });
 
   for (const f of ["moteur.bundle.js", "ecran.gabarit.js"]) {
     const p = path.join(__dirname, f);
@@ -163,7 +202,16 @@ function ouvrirPartie(o = {}) {
    * le banc lisait `undefined` et croyait la salle vide. On evalue dans la
    * portee, c'est la seule lecture honnete.
    */
-  const lire = (expr) => vm.runInContext(`(${expr})`, bac);
+  /* /!\ LES SCRIPTS SE RECOMPILENT SINON. Les bancs lisent la meme
+     expression des milliers de fois : sans ce cache, une partie de dix ans
+     passe l'essentiel de son temps dans le compilateur de V8, pas dans le
+     jeu. Le cache est par bac, donc aucune fuite entre deux parties. */
+  const compiles = new Map();
+  const lire = (expr) => {
+    let sc = compiles.get(expr);
+    if (!sc) { sc = new vm.Script(`(${expr})`); compiles.set(expr, sc); }
+    return sc.runInContext(bac);
+  };
 
   /** Appelle une fonction du jeu comme le ferait un onclick : une erreur
    *  est COMPTEE, jamais fatale (regle du singe). */

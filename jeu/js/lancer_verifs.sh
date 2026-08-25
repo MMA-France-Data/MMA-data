@@ -38,6 +38,7 @@ node verifier_direct.js
 node gabarit.js              && node verifier_gabarit.js
 node verifier_ressenti.js
 node verifier_demandes_staff.js
+node verifier_endgame.js
 node bundler.js               && node verifier_bundle.js
 # BANC 27 — le singe : il charge demo_jeu.html et JOUE. Il vient APRES le
 # bundler, parce qu'il charge le bundle : sur un bundle perime, il mesure
