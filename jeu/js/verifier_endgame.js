@@ -243,6 +243,52 @@ console.log("BANC 30 — le mur, les objectifs, les rivalités.");
   dit("et le combat se raconte plus fort", !!paye && paye.noto > 1,
       paye ? `notoriété x${paye.noto.toFixed(2)}` : "");
 
+  /* /!\ « REVANCHE » = DEUX DEFAITES, pas « on s'est deja croises ». Un
+     homme battu PUIS vainqueur ne doit pas s'entendre dire qu'il a perdu
+     deux fois (defaut trouve en relisant le branchement). */
+  const mots = P.lire(`(function(){
+    const R={}; const cle="X";
+    MMA.endgame.nourrir(R,cle,1,"gagne",10,"Y");
+    MMA.endgame.nourrir(R,cle,1,"defaite",20,"Y");
+    const apresUneDefaite=MMA.endgame.mot(R[MMA.endgame.clefRiv(cle,1)],20);
+    MMA.endgame.nourrir(R,cle,1,"revanche",30,"Y");
+    return {une:apresUneDefaite, deux:MMA.endgame.mot(R[MMA.endgame.clefRiv(cle,1)],30)};})()`);
+  dit("une seule défaite ne se raconte pas comme deux",
+      !/deux fois/i.test(mots.une) && /deux fois/i.test(mots.deux),
+      `1 → « ${mots.une} » · 2 → « ${mots.deux} »`);
+
+  /* /!\ LE MUR A BESOIN QUE DES GENS RACCROCHENT — et une mesure sur dix
+     ans l'a laisse VIDE (le singe retient toujours ses hommes quand ils
+     annoncent). On verifie donc le chemin naturel : un homme qui vieillit
+     FINIT par en parler, et s'il part, il est accroche. */
+  const vieux = P.lire(`(function(){
+    const c=Object.keys(MESGARS).find(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite);
+    if(!c)return null;
+    const l=MESGARS[c]; l.age=38; l.arriveLe=0; l.bilan.serie=0;
+    delete l.retraiteRepoussee; l.dernierCombat=false;
+    if(FICHES[c]){FICHES[c].age=38;FICHES[c].bilan=[11,5];}
+    /* On force l'anniversaire : sur 40 passages, il doit finir par en
+       parler (22 % par an dans le jeu). */
+    /* /!\ ON CHERCHE LE JOUR OU C'EST VRAIMENT SON ANNIVERSAIRE :
+       anniversaires() compare jourDeLAnnee(jour) a son anniversaire, pas
+       le jour brut. Passer l'anniversaire tel quel ne declenchait rien —
+       et le banc accusait le jeu (une passe perdue). */
+    const anniv=jourAnniversaire(c,l);
+    let jourJ=null;
+    for(let j=0;j<800;j++)if(jourDeLAnnee(j)===anniv){jourJ=j;break;}
+    if(jourJ===null)return {parle:false,titre:"anniversaire introuvable"};
+    let parle=false, titre="";
+    for(let i=0;i<60&&!parle;i++){
+      bloque=null; l.age=37; delete l.retraiteRepoussee;
+      anniversaires(jourJ);
+      if(bloque&&/raccroch/i.test(String(bloque.titre||"")))
+        {parle=true;titre=String(bloque.titre);}
+    }
+    return {parle, titre};
+  })()`);
+  dit("un homme qui vieillit finit par parler de raccrocher",
+      !!vieux && vieux.parle, vieux ? vieux.titre : "aucun pro dans la partie");
+
   dit("aucune exception pendant tout ça", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }

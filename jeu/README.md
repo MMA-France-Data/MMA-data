@@ -17,13 +17,24 @@ il n'a rien à voir avec ce dossier.
 ## Rejouer toute la chaîne de vérification
 
 ```sh
-sh js/lancer_verifs.sh     # 27 bancs, du RNG à la partie jouée
+sh js/lancer_verifs.sh     # 30 bancs, du RNG à la partie jouée
 ```
 
-Le banc 27 (`js/verifier_partie.js`) charge `demo_jeu.html` hors navigateur
-(`js/bac_partie.js`) et **joue** : il avance les jours, tranche les blocages et
-appuie sur les écrans. C'est lui qui attrape la classe de défaut la plus chère
-du carnet — « ce qui n'est branché nulle part ne fait rien, et ne lève pas ».
+Les quatre derniers valent d'être connus :
+
+- **27 — le singe** (`js/verifier_partie.js`) charge `demo_jeu.html` hors
+  navigateur (`js/bac_partie.js`) et **joue** : il avance les jours, tranche les
+  blocages, répond aux offres et aux demandes, signe les contrats, ouvre les
+  sept onglets. C'est lui qui attrape la classe de défaut la plus chère du
+  carnet — « ce qui n'est branché nulle part ne fait rien, et ne lève pas ».
+  Il ne voit pas les pixels : une couleur fausse ou un débordement restent du
+  ressort de quelqu'un qui joue pour de vrai.
+- **28 — le ressenti** : ce que le combattant dit au coin sort du moteur, et
+  ne consomme pas une unité du hasard du combat.
+- **29 — les demandes du staff** : chaque « oui » change quelque chose de
+  mesurable dans la salle.
+- **30 — l'endgame** : le mur, les objectifs, les rivalités — et tout ça
+  traverse la sauvegarde.
 
 ## Fabriquer la page autonome
 

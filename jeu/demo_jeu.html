@@ -99,15 +99,25 @@ h2 .plus{color:var(--doux);font-weight:400;text-transform:none;letter-spacing:0;
 .puce.tri.actif{background:var(--carte2);border-color:var(--or);color:var(--or)}
 .ef-ligne{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--bord)}
 .ef-ligne:last-child{border-bottom:none}
-.ef-nom{flex:1;font-size:14px;min-width:0}
-.ef-nom .sous{color:var(--doux);font-size:11.5px;margin-top:1px}
+/* /!\ LE NOM GAGNE L'ARBITRAGE DE LARGEUR. Sur 420 px, la ligne porte
+   sept choses : groupe, nom, age, fraicheur, barre, progression. Avec
+   `min-width:0`, le nom etait le seul a ceder — "Okonkwo" touchait
+   "27 a." et sa ligne du dessous n'affichait plus rien d'utile (vu a
+   l'ecran, pas au banc). C'est LE NOM qu'on lit en premier : il garde son
+   minimum, et c'est la barre de progression, purement decorative a cote
+   du chiffre qui la suit, qui cede. */
+.ef-nom{flex:1 1 auto;font-size:14px;min-width:112px}
+.ef-nom .sous{color:var(--doux);font-size:11.5px;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ef-age{color:var(--doux);font-size:12.5px;min-width:34px;text-align:right}
 .ef-prog{font-size:13px;color:var(--vert);font-weight:700;min-width:46px;text-align:right}
-.ef-barre{height:6px;border-radius:4px;background:var(--vert);min-width:2px}
+.ef-barre{height:6px;border-radius:4px;background:var(--vert);min-width:2px;flex:0 1 auto}
 .ef-groupe{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;border-radius:5px;
   padding:2px 6px;border:1px solid var(--bord);color:var(--doux);min-width:52px;text-align:center}
 .ef-groupe.pro{color:var(--accent);border-color:rgba(217,79,61,.4)}
 .ef-groupe.amateur{color:var(--or);border-color:rgba(201,162,39,.35)}
+.jauge-obj{width:54px;flex:none;height:6px;border-radius:4px;background:var(--bord);overflow:hidden;display:block}
+.jauge-obj i{display:block;height:100%;background:var(--vert);border-radius:4px}
 .ef-contrat{font-size:10px;letter-spacing:.04em;border-radius:5px;padding:2px 6px;
   border:1px solid var(--bord);color:var(--doux);white-space:nowrap}
 .ef-contrat.echu{color:var(--accent);border-color:rgba(217,79,61,.55);background:rgba(217,79,61,.08)}
@@ -2144,10 +2154,18 @@ function remonterDansLeMonde(r){
        vient de se passer dans la cage. */
     try{
       const R=rivalitesTable();
-      const deja=Object.values(R).filter(x=>x.a===cle&&x.b===adv.id).length;
+      /* /!\ « REVANCHE » VEUT DIRE DEUX DEFAITES CONTRE LE MEME HOMME, pas
+         « on s'est deja croises ». Premiere version : on comptait
+         l'existence de la fiche de rivalite — un homme battu puis vaincu
+         s'entendait dire « il t'a battu deux fois », ce qui est faux. On
+         compte les DEFAITES deja inscrites. */
+      const ancien=R[MMA.endgame.clefRiv(cle,adv.id)];
+      const defaitesPrec=ancien
+        ? ancien.causes.filter(x=>x.cause==="defaite"||x.cause==="revanche"
+                                ||x.cause==="ceinture").length : 0;
       let cause=null;
       if(o&&o.titre&&!gagne&&!l.champion&&adv.champion)cause="ceinture";
-      else if(!gagne)cause=deja?"revanche":"defaite";
+      else if(!gagne)cause=defaitesPrec?"revanche":"defaite";
       else cause="gagne";
       MMA.endgame.nourrir(R,cle,adv.id,cause,t.jour,adv.nom);
       const r=R[MMA.endgame.clefRiv(cle,adv.id)];
@@ -2979,7 +2997,7 @@ function rendreOuTuEnEs(){
       <span class="ef-groupe">${lib}</span>
       <span class="ef-nom">${o?o.titre:"Tout est fait."}
         <div class="sous">${o?o.sous:"Il n'y a plus rien à prouver à cet étage."}</div></span>
-      <span class="ef-barre" style="width:${Math.max(2,Math.round((o?o.part:1)*54))}px"></span>
+      <span class="jauge-obj"><i style="width:${Math.round((o?o.part:1)*100)}%"></i></span>
       <span class="ef-prog" style="${faits===dedans.length?"color:var(--or)":""}">${faits}/${dedans.length}</span></div>`);
   }
   const mur=murDeLaSalle();
@@ -3000,8 +3018,7 @@ function ouvrirHeritage(){
   const an=2026+Math.floor(t.jour/365);
   $("fiche").innerHTML=
     `<div class="f-tete"><div class="f-nom">${SALLE.nomSalle||"La salle"}</div>
-       <div class="f-sous">${an} · ${Math.floor(t.jour/365)} an${Math.floor(t.jour/365)>1?"s":""} d'existence
-         · ${mur.length} au mur</div>
+       <div class="f-sous">${an} · an ${Math.floor(t.jour/365)+1} · ${mur.length} au mur</div>
        <button class="f-fermer" onclick="fermerFiche()">Fermer</button></div>
 
      <h3>Le mur</h3>
@@ -3067,8 +3084,17 @@ function rendreEffectif(){
   $("liste-effectif").innerHTML=liste.map(f=>{const fi=FICHES[f.id];
     return `<div class="ef-ligne">${suivis.has(f.id)?`<span title="suivi" style="color:var(--or)">★</span>`:""}
       <span class="ef-groupe ${f.gr}">${f.gr}</span>
-      <span class="ef-nom">${lien(f.id)}<div class="sous">${fi.style}${fi.bilan?` · ${fi.bilan[0]}-${fi.bilan[1]}`:""}</div></span>
-      ${pastilleContrat(f.id)}
+      <span class="ef-nom">${lien(f.id)}<div class="sous">${
+        /* /!\ LA MARQUE OUVRE LA LIGNE DU DESSOUS, ET CETTE LIGNE NE
+           DEBORDE PLUS. Vu a l'ecran sur 420 px : en colonne a part, la
+           pastille volait la largeur du nom ("Lutteur qui développe son
+           striking" tombait sur six lignes ecrasees). La ligne est
+           desormais tronquee proprement — et la marque passe EN TETE,
+           parce que c'est elle qui appelle une decision : ce qui compte
+           ne doit jamais etre ce qui se fait couper. */
+        (function(){const m=marqueContrat(f.id);
+          return m&&m.urgent?`<b style="color:${m.classe==="echu"?"var(--accent)":"var(--or)"}">${m.mot}</b> · `:"";})()
+        }${fi.style}${fi.bilan?` · ${fi.bilan[0]}-${fi.bilan[1]}`:""}</div></span>
       <span class="ef-age">${fi.age} a.</span>
       ${jaugeFraicheur(f)}
       <span class="ef-barre" style="width:${Math.max(2,Math.round(f.total7/max*54))}px"></span>
@@ -9510,7 +9536,10 @@ function jaugeFraicheur(f,avecMot){
   const pastille=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;
     background:${coul};vertical-align:1px"></span>`;
   return avecMot===false?pastille
-    :`${pastille}<span style="font-size:11px;color:${coul};margin-left:4px">${motFraicheur2(v)}</span>`;
+    /* /!\ LE MOT NE SE COUPE PAS EN DEUX. Dans une ligne d'effectif serree,
+       "en forme" tombait sur deux lignes et faisait grandir la ligne d'un
+       homme sur deux : la liste devenait un escalier. */
+    :`${pastille}<span style="font-size:11px;color:${coul};margin-left:4px;white-space:nowrap">${motFraicheur2(v)}</span>`;
 }
 
 /* Le texte d'une demande peut dependre de la salle (nb de pros). */

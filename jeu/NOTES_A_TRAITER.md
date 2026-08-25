@@ -11895,3 +11895,52 @@ toi. Le banc mesure la bourse avec et sans, a graine identique.
    Et la compression n'est JAMAIS utilisee a l'aveugle : la premiere de la
    session est relue avant d'etre acceptee ; si l'aller-retour ne rend pas
    exactement la meme chaine, la partie ne compresse plus jamais.
+
+## LA PASSE ECRAN — CE QUE LES BANCS NE VOIENT PAS (25/08)
+Le banc 27 ne voit pas les pixels, et il l'annonce. La page a donc ete
+ouverte pour de vrai (Chromium, 420 px, `apercu.html#demo`, douze journees
+jouees, zero erreur console) et REGARDEE. Trois defauts d'ecran, tous
+invisibles au banc :
+1. LA PASTILLE DE CONTRAT EN COLONNE VOLAIT LA LARGEUR DU NOM. Une ligne
+   d'effectif porte deja sept choses sur 420 px ; la huitieme faisait
+   tomber "Lutteur qui developpe son striking" sur six lignes ecrasees.
+   La marque est passee EN TETE DE LA LIGNE DU DESSOUS, qui se tronque
+   proprement — et elle passe en tete PARCE QUE c'est elle qui appelle une
+   decision : ce qui compte ne doit jamais etre ce qui se fait couper.
+2. `.ef-nom{min-width:0}` faisait du nom le SEUL a ceder dans le flex.
+   "Okonkwo" touchait "27 a.". Le nom garde maintenant 112 px ; c'est la
+   barre de progression — decorative, le chiffre la suit — qui cede.
+3. "en forme" tombait sur deux lignes une ligne sur deux : la liste
+   devenait un escalier. white-space:nowrap sur le mot de fraicheur.
+Et la jauge des objectifs a recu un RAIL : sans lui, un objectif a 0 %
+s'affichait comme un trait perdu au milieu de la ligne, illisible.
+
+## ETAT A LA FIN DE LA SEANCE DU 25/08
+CHAINE : 30 BANCS CONFORME (26 d'avant + 27 le singe, 28 le ressenti,
+29 les demandes du staff, 30 l'endgame).
+LES QUATRE CHANTIERS DE LA LISTE SONT FAITS : marquage des contrats echus,
+dialogue d'entre-rounds, demandes de coach, endgame.
+MESURE DE DIX ANS (partie neuve, singe, graine 11, 3 650 jours, 978 s) :
+  zero exception · tas stable ~230 Mo (aucune fuite)
+  an 1 : 32 a l'effectif, 1 pro   ...   an 10 : 69 a l'effectif, 41 pros
+  objectifs atteints : tenir · pros · classe · cent    (4 sur 12)
+  mur : VIDE — et c'est instructif, voir ci-dessous.
+
+## CE QUI RESTE OUVERT, PAR ORDRE D'INTERET
+1. /!\ LE MUR EST RESTE VIDE SUR DIX ANS. Le chemin marche (banc 30 :
+   un homme qui vieillit finit par annoncer, et s'il part il est
+   accroche) — mais le singe RETIENT toujours ses hommes, et la retraite
+   ne se propose qu'a 36 ans, serie a zero, 22 % par an. A verifier EN
+   JOUANT : est-ce que ca arrive assez pour qu'un mur se remplisse en une
+   vie de salle ? Si non, ce n'est pas le mur qu'il faut changer, c'est la
+   frequence de la retraite.
+2. LE SINGE N'EST JAMAIS SORTI DU GARAGE en dix ans (rangLocal 0), et
+   n'a jamais eu de champion. Il joue mal (au hasard) — mais ca dit qu'une
+   partie peut tourner dix ans sans que rien de grand n'arrive. A voir en
+   jouant vraiment.
+3. LES RIVALITES SONT RARES en pratique (1 vivante au bout de dix ans) :
+   il faut recroiser le meme homme, et le matchmaking envoie rarement deux
+   fois le meme. Si ca reste trop rare en jouant, la piste est le
+   MATCHMAKING (proposer la revanche), pas le refroidissement.
+4. Les chantiers concus non codes du carnet : E, F (mental.discipline),
+   et le reste de la liste historique.
