@@ -312,7 +312,7 @@
        de 30 s SUIVANTE — jamais a ce qui est deja calcule. -->
   <div id="crier">
     <div class="cr-tete"><b>CRIER DEPUIS LE COIN</b>
-      <span id="crReste">3 cris restants</span></div>
+      <span id="crReste">cris restants</span></div>
     <div class="cr-liste" id="crListe"></div>
   </div>
 
@@ -381,7 +381,7 @@ function suivreSaDemande(){
 function cloche(){
   if(FIN||fini)return;                 /* pas de coin apres la fin (15/08) */
   attenteCoin=true; enPause=true;
-  crisRestants=3; criEnAttente=null;           /* la voix revient entre les rounds */
+  crisRestants=CRIS_MAX; criEnAttente=null;     /* la voix revient entre les rounds */
   $('btnCrier').classList.remove('arme'); $('crier').classList.remove('la');
   $('btnPause').textContent='▶ REPRENDRE';
   ordre={};
@@ -597,7 +597,12 @@ function phaseVisible(){
   if(phVisible==='CLINCH')return 'clinch';
   return 'debout';
 }
-let criEnAttente=null, crisRestants=3, attenteTranche=false;
+/* /!\ TROIS CRIS PAR ROUND (regle de Mael) — SAUF SI UN SECOND EST DANS
+   LE COIN. Le budget arrive en DONNEE : un coach de competition a qui on
+   a dit oui (demandes du staff) vaut une voix de plus. L'ecran ne decide
+   pas, il lit. Absent, on retombe sur trois : l'ancien comportement. */
+const CRIS_MAX = DATA.crisMax || 3;
+let criEnAttente=null, crisRestants=CRIS_MAX, attenteTranche=false;
 function ouvrirCris(){
   if(!DIRECT||fini)return;
   const z=$('crier');

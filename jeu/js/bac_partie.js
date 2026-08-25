@@ -172,7 +172,17 @@ function ouvrirPartie(o = {}) {
             : (() => { try { return lire(nom); } catch (e) { return null; } })();
     if (typeof f !== "function") { erreurs.push(`fonction absente : ${nom}`); return undefined; }
     try { return f(...args); }
-    catch (e) { erreurs.push(`${nom} : ${e && e.message}`); return undefined; }
+    catch (e) {
+      /* /!\ ON GARDE LA PREMIERE LIGNE DE PILE. Sans elle, "id.replace is
+         not a function" n'apprend rien : l'erreur remonte de rendre(), et
+         la fonction fautive est trois etages plus bas. Une passe de
+         diagnostic perdue a le redecouvrir. */
+      const pile = String((e && e.stack) || "").split("\n")
+        .filter((x) => /demo_jeu\.html:/.test(x)).slice(0, 3)
+        .map((x) => x.trim().replace(/^at /, "")).join(" < ");
+      erreurs.push(`${nom} : ${e && e.message}${pile ? " @" + pile : ""}`);
+      return undefined;
+    }
   };
 
   /** L'ecran, tel qu'il est ECRIT — c'est ce que le joueur lit. */
@@ -181,4 +191,37 @@ function ouvrirPartie(o = {}) {
   return { ctx: bac, doc, n, stock, erreurs, minuteries, essai, lire, ecran, source: src };
 }
 
-module.exports = { ouvrirPartie, domVierge, coffreMemoire };
+/**
+ * SORTIR D'UN BLOCAGE, quelle que soit sa forme.
+ *
+ * /!\ IL VIT ICI, PAS DANS UN BANC. Le banc 29 avait recopie cette main
+ * en oubliant la visite : trancher() partait sur un blocage qui n'a ni
+ * `oui` ni `non`, 192 exceptions, et l'echec accusait le jeu. Une seule
+ * main, partagee — c'est la meme regle que le reste du projet.
+ *
+ * /!\ ET IL SIGNALE LE VERROU SANS CLEF. Un blocage qu'aucune sortie ne
+ * traite fige la journee sans lever : le cas 22, la pire panne du jeu.
+ * On rend "SANS_ISSUE" plutot que d'appuyer au hasard.
+ *
+ * @returns {string|null} ce qui a ete fait, "SANS_ISSUE:<id>", ou null
+ */
+function trancherBlocage(P, tirage = 0.5) {
+  const b = P.lire("bloque");
+  if (!b) return null;
+  /* Le soir du combat : on le simule. C'est la sortie de secours du jeu
+     (cas 22), donc un chemin de production, pas une bequille de banc. */
+  if (b.id === "combat") { P.essai("simulerCombat"); return "combat"; }
+  if (b.id === "visite") { P.essai("repondreVisite", tirage < 0.75); return "visite"; }
+  if (Array.isArray(b.choix) && b.choix.length) {
+    P.essai("choisirBloque", Math.floor(tirage * b.choix.length));
+    return "choix:" + b.id;
+  }
+  if (b.action) { P.essai("agirBloque"); return "action:" + b.id; }
+  if (b.oui !== undefined || b.non !== undefined) {
+    P.essai("trancher", tirage < 0.7);
+    return "oui_non:" + b.id;
+  }
+  return "SANS_ISSUE:" + (b.id || "?");
+}
+
+module.exports = { ouvrirPartie, domVierge, coffreMemoire, trancherBlocage };

@@ -17,7 +17,7 @@
  * CE QU'IL NE SAIT PAS VOIR : les pixels. Une couleur fausse, un
  * debordement, un bouton illisible — ca reste le terrain de Mael.
  */
-const { ouvrirPartie } = require("./bac_partie.js");
+const { ouvrirPartie, trancherBlocage } = require("./bac_partie.js");
 
 let echecs = 0;
 const dit = (n, ok, i) => { console.log(`  ${ok ? "ok  " : "ECHEC"} ${n}${i ? " — " + i : ""}`); if (!ok) echecs++; };
@@ -26,29 +26,19 @@ const dit = (n, ok, i) => { console.log(`  ${ok ? "ok  " : "ECHEC"} ${n}${i ? " 
 /* LA MAIN DU SINGE — trancher tout ce qui bloque, appuyer sur tout.     */
 /* ==================================================================== */
 
-/** Resout le blocage courant, quelle que soit sa forme. Rend ce qu'il a
- *  fait, ou null s'il n'y avait rien a trancher. */
-function trancherBlocage(P, tirage) {
-  const b = P.lire("bloque");
-  if (!b) return null;
-  /* Le soir du combat : on le simule. C'est la sortie de secours du jeu
-     (cas 22), donc un chemin de production, pas une bequille de banc. */
-  if (b.id === "combat") { P.essai("simulerCombat"); return "combat"; }
-  if (b.id === "visite") { P.essai("repondreVisite", tirage < 0.75); return "visite"; }
-  if (Array.isArray(b.choix) && b.choix.length) {
-    P.essai("choisirBloque", Math.floor(tirage * b.choix.length));
-    return "choix:" + b.id;
-  }
-  if (b.action) { P.essai("agirBloque"); return "action:" + b.id; }
-  P.essai("trancher", tirage < 0.7);
-  return "oui_non:" + b.id;
-}
-
 /** Un jour de jeu, singe compris. */
 function unJour(P, al) {
   P.essai("continuer");
   /* Un blocage peut en cacher un autre (contrat echu -> combat -> ...). */
-  for (let g = 0; g < 8 && P.lire("bloque"); g++) if (!trancherBlocage(P, al())) break;
+  for (let g = 0; g < 8 && P.lire("bloque"); g++) {
+    const fait = trancherBlocage(P, al());
+    /* /!\ UN VERROU DOIT TOUJOURS AVOIR UNE CLEF (cas 22). Un blocage
+       qu'aucune sortie ne traite fige la journee SANS LEVER : on le
+       compte comme une erreur, sinon le banc tournerait en rond en
+       silence et dirait que tout va bien. */
+    if (!fait) break;
+    if (String(fait).startsWith("SANS_ISSUE")) { P.erreurs.push("blocage sans issue : " + fait); break; }
+  }
 
   /* Les offres de combat expirent : ne pas repondre, c'est refuser sans
      le savoir. Le singe repond. */
@@ -246,6 +236,56 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       refermé === "tous", String(refermé));
 
   dit("aucune exception pendant les vérifications du marquage", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
+/* ==================================================================== */
+/* LE DIRECT DU JEU : le ressenti arrive-t-il VRAIMENT au coin ?         */
+/* /!\ CE BLOC EXISTE A CAUSE D'UN VRAI DEFAUT. ressenti.js etait ecrit, */
+/* teste (banc 28), branche dans demo_jeu.html... et MMA.ressenti        */
+/* n'existait pas : la facade du bundler est une liste ECRITE A LA MAIN. */
+/* En jeu, ca ne levait pas — le try/catch avalait, et le coin restait   */
+/* muet. Le banc 28 ne pouvait pas le voir : il teste le module et       */
+/* l'ecran, pas le chemin du JEU. Celui-ci le voit.                      */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 9 });
+  const r = P.lire(`(function(){
+    /* On monte un combat par le chemin du jeu, et on joue une tranche
+       jusqu'a la cloche — exactement ce que fait l'ecran en direct. */
+    const r=preparerCombat("Okonkwo","Renaud",3,11);
+    let tr=null, garde=0;
+    while(garde++<400){ tr=jouerTrancheDirect(r,null); r.dernierTr=tr;
+      if(!tr||tr.finRound)break; }
+    const d=donneesEcran(r);
+    return {fin:!!(tr&&tr.finRound), ressenti:tr&&tr.ressenti?
+      {etat:tr.ressenti.etat,dit:tr.ressenti.dit,signes:tr.ressenti.signes.length}:null,
+      dansEcran:!!d.ressenti, crisMax:d.crisMax};
+  })()`);
+  dit("un round joué en direct s'arrête bien à la cloche", !!(r && r.fin));
+  dit("et il en sort ce que le combattant a à dire", !!(r && r.ressenti),
+      r && r.ressenti ? `[${r.ressenti.etat}] « ${r.ressenti.dit} »` : "RIEN — MMA.ressenti manque ?");
+  dit("l'écran le reçoit dans ses données", !!(r && r.dansEcran));
+  dit("le budget de cris part du module, pas d'un 3 écrit en dur",
+      !!(r && r.crisMax >= 3), r ? `crisMax ${r.crisMax}` : "");
+  dit("aucune exception sur le chemin du direct", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
+/* ==================================================================== */
+/* LES DEMANDES DU STAFF SORTENT VRAIMENT EN JOUANT                      */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 13 });
+  jouer(P, 210, 13);
+  const vues = P.lire(`(function(){
+    return staffDe().filter(c=>!c.moi).map(c=>({
+      nom:c.nom, demandes:(c.refusees||[]).length+(c.demandeEnCours?1:0),
+      dernier:c.dernierDemande===undefined?null:c.dernierDemande}));})()`);
+  const total = vues.reduce((a, c) => a + c.demandes, 0);
+  dit("sur une saison, le staff vient te demander des choses", total > 0,
+      vues.map((c) => `${c.nom}:${c.demandes}`).join(" · "));
+  dit("aucune exception pendant la saison du staff", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 

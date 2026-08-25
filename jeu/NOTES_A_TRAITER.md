@@ -11750,3 +11750,60 @@ vraiment l'ordre envoye a coin.js.
 /!\ IL NE PARLE PLUS DU ROUND D'AVANT : reprendre() efface le ressenti.
 Sans ca la cloche suivante rouvrait le coin sur une phrase perimee tant
 que le jeu n'en avait pas renvoye une — l'ecran aurait menti d'un round.
+
+## LES DEMANDES DU STAFF (chantier de la liste — FAIT)
+Le cas 117 a donne une VOIX aux coachs : ils interpellent, ils disent ce
+qu'ils voient. Il leur manquait de pouvoir RECLAMER, et que ton oui ou
+ton non coute. Un coach qui parle sans jamais rien demander n'est pas un
+collegue, c'est un decor. Module js/demandes_staff.js, banc 29.
+DIX DEMANDES, QUATRE FAMILLES, chacune sortie de SA situation :
+  argent  — etre paye au tarif (il connait le bareme) · sa part du titre
+  charge  — un seul groupe · un seul axe · du renfort
+  salle   — du materiel · la salle est trop petite
+  hommes  — prendre un gars sous son aile · menager un crame · le coin
+/!\ LE BAREME NE SE RECALCULE PAS DANS LE MODULE. Premiere version : il
+reecrivait la formule de salaireCoach « pour rester pur ». C'est la
+DEUXIEME SOURCE que le carnet chasse depuis le 09/08 — la formule a deja
+bouge trois fois (cas 99, 114, 114 ter). Le bareme ARRIVE PAR LE
+CONTEXTE ; sans lui, la demande d'augmentation ne sort pas, point.
+/!\ CHAQUE EFFET EST REEL, ET LE BANC LE MESURE UN PAR UN : le salaire
+monte, la caisse baisse, le groupe change, l'axe se reduit, l'etoile de
+materiel s'achete, le crame passe en menage, le poulain progresse plus
+vite SUR L'AXE DE SON COACH (et moins ailleurs — le temps ne se
+dedouble pas), et le second au coin vaut UN CRI DE PLUS PAR ROUND
+(le budget de cris etait un 3 ecrit en dur dans le gabarit : il est
+devenu une donnee, sans toucher au moteur).
+/!\ UN OUI QUI NE PEUT RIEN FAIRE N'ACHETE RIEN, et c'est meme PIRE
+qu'un non : caisse vide sur une prime, materiel deja a 3 etoiles —
+l'entente BAISSE. « Il a entendu oui, et rien n'a bouge. »
+/!\ « PLUS TARD » EST UNE PROMESSE DATEE, pas un compromis mou : condition
+et echeance sont des DONNEES (regle des demandes de combattants). A
+l'echeance, tenue ou pas, il s'en souvient — non tenue coute PLUS que le
+non d'origine. Sinon « plus tard » serait la reponse gratuite a tout.
+Un seul demandeur a la fois dans toute la salle, 35 jours de delai par
+coach, et une demande refusee est retenue : les onze demandes en attente
+du 09/08 ne se reproduiront pas.
+
+## /!\ TROIS DEFAUTS TROUVES PAR LES NOUVEAUX BANCS (et pas en jouant)
+1. MMA.ressenti N'EXISTAIT PAS. Le module etait ecrit, teste (banc 28),
+   branche dans demo_jeu.html — mais LA FACADE DU BUNDLER EST UNE LISTE
+   ECRITE A LA MAIN, et le nouveau module n'y etait pas. En jeu, ca ne
+   levait meme pas : le try/catch avalait, et le coin restait muet. Le
+   banc 28 ne pouvait pas le voir (il teste le module et l'ecran, pas le
+   chemin du JEU). Le banc 27 le voit — il joue un round en direct et
+   exige qu'il en sorte quelque chose.
+   => AJOUTER UN MODULE, C'EST DEUX ENDROITS DANS bundler.js : RACINES
+      *ET* la facade MMA. Une seule des deux ne fait rien, en silence.
+2. statutPro PLANTAIT DES QU'OKONKWO COMBATTAIT LE MONDE. Vestige de la
+   demo scriptee : `lien(COMBAT1.b)` suppose une CLE DE FICHE (chaine).
+   Contre le monde, COMBAT1.b est un NOMBRE — `id.replace` levait, et
+   TOUT L'ONGLET SALLE mourait avec : plus de rendu, la partie paraissait
+   figee. Une seule porte desormais, lienCombat(r), qui aiguille vers
+   lienMonde. Jamais vu en jouant parce que la demo se joue rarement
+   au-dela du combat scripte.
+3. LE VERROU SANS CLEF SE SIGNALE. La sortie des blocages vit maintenant
+   dans bac_partie.js (main partagee) : un blocage qu'aucune sortie ne
+   traite rend "SANS_ISSUE" et le banc le compte comme une erreur — le
+   cas 22 ne pourra plus revenir en silence. La premiere version du banc
+   29 avait recopie cette main en oubliant la visite : 192 exceptions,
+   et l'echec accusait le jeu. Une main, pas deux.

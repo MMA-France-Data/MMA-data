@@ -31,7 +31,9 @@ const RACINES = ["engine.js", "generator.js", "traducteur.js", "mesure.js",
                  // le chantier G (14/08) : crier depuis le coin.
                  "cris.js",
                  // le dialogue d'entre-rounds : ce qu'il dit au coin.
-                 "ressenti.js"];
+                 "ressenti.js",
+                 // ce que le staff vient te demander.
+                 "demandes_staff.js"];
 
 const ici = __dirname;
 const RE_REQUIRE = /require\(\s*["']\.\/([\w.-]+)["']\s*\)/g;
@@ -118,6 +120,9 @@ ${morceaux.join("\n")}
     demandes:   require("./demandes.js"),
     contrats:   require("./contrats.js"),
     cris:       require("./cris.js"),
+    // la reprise du 25/08
+    ressenti:   require("./ressenti.js"),
+    demandes_staff: require("./demandes_staff.js"),
     require: require
   };
 })(typeof window !== "undefined" ? window : globalThis);
