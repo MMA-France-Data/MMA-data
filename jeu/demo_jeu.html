@@ -665,7 +665,12 @@ function appliquerTravail(cle,fam,gain){
    "choix"     : rien n'est ensemence, on affiche l'accueil.
    Le mode voyage dans le hash (#neuf) — il survit au rechargement et
    marche meme sans localStorage (file://, visionneuse). */
-const MODE=(function(){
+/* /!\ `let`, PLUS `const` (cas 126 bis) : la visionneuse sert la page en
+   blob: et le rechargement Y PERD LE FRAGMENT — le "#neuf" pose par le
+   clic s'evaporait, la page revenait a l'accueil, en boucle. Le remede
+   est de DEMARRER SUR PLACE, sans recharger : le mode doit donc pouvoir
+   changer apres le chargement. */
+let MODE=(function(){
   const h=String(location.hash||"").replace("#","");
   return ["neuf","demo","reprendre"].includes(h)?h:"choix";
 })();
@@ -673,16 +678,36 @@ let MODE_REEL=MODE;   /* en "reprendre", devient le mode de la sauvegarde */
 
 /* /!\ HORS DEMO, LES PERSONNAGES SCRIPTES N'EXISTENT PAS : ni les quatre
    nommes, ni leurs adversaires. Les coachs restent — c'est du staff. */
-if(MODE!=="demo"){
+/* /!\ TOUT L'ENSEMENCEMENT DE MODE EST EN FONCTIONS (cas 126 bis) : le
+   chargement les appelle avec le mode du hash, et l'accueil les rappelle
+   AU CLIC pour demarrer sur place — une seule source, deux entrees. Les
+   fiches scriptees sont photographiees AVANT toute suppression : un
+   demarrage demo depuis l'accueil (mode "choix", qui les a effacees)
+   doit pouvoir les remettre. */
+const FICHES_SCRIPTEES={};
+for(const k of ["Okonkwo","Kanté","Traoré","Bùi","Renaud","Vasile"])
+  if(FICHES[k])FICHES_SCRIPTEES[k]=JSON.parse(JSON.stringify(FICHES[k]));
+
+/* /!\ dejaPris EST UN ETAT DE JEU, PAS UNE VARIABLE D'AMORCAGE : le
+   recrutement, le vivier et chargerEtat s'en servent toute la partie. La
+   premiere version du refactor l'avait enferme dans la fonction —
+   ReferenceError au premier chargement de sauvegarde, attrape au banc. */
+const dejaPris=new Set();
+function ensemencerEffectif(m){
+if(m!=="demo"){
   for(const k of ["Okonkwo","Kanté","Traoré","Bùi","Renaud","Vasile"])delete FICHES[k];
+  dejaPris.clear();for(const k of Object.keys(FICHES))dejaPris.add(k);
+  return;
 }
-if(MODE==="demo"){
+for(const k of Object.keys(FICHES_SCRIPTEES))
+  if(!FICHES[k])FICHES[k]=JSON.parse(JSON.stringify(FICHES_SCRIPTEES[k]));
+{
   ajouter("Okonkwo","pro",TALENTS.Okonkwo);ajouter("Kanté","pro",TALENTS.Kanté);
   ajouter("Traoré","amateur",TALENTS.Traoré);ajouter("Bùi","loisir",TALENTS.Bùi);
 }
-const dejaPris=new Set(Object.keys(FICHES));
+dejaPris.clear();for(const k of Object.keys(FICHES))dejaPris.add(k);
 let n=0;
-while(MODE==="demo"&&EFFECTIF.length<72&&n<400){
+while(EFFECTIF.length<72&&n<400){
   n++;
   const nomC=NOMS[Math.trunc(aleaS()*NOMS.length)];
   if(dejaPris.has(nomC))continue;
@@ -703,6 +728,8 @@ while(MODE==="demo"&&EFFECTIF.length<72&&n<400){
     bilan,combats:bilan?fabriquerHistoriqueAmateur(bilan):[]};
   ajouter(nomC,gr,talent);
 }
+}
+ensemencerEffectif(MODE);
 
 /* ==== LES VISUELS (25/08) ================================================
    window.MMA_ASSETS vient de js/assets.js (genere par gen_assets.js — les
@@ -811,7 +838,8 @@ const GRILLE={
 };
 
 const t=new Temps();
-if(MODE==="demo"){
+function poserEcheancesMode(m){
+if(m==="demo"){
 t.poser(4,"pesee",{h:`Pesée officielle d'{Okonkwo}`});
 /* La graine est posee AVEC le combat, pas choisie au moment de le jouer :
    le combat existe avant d'etre regarde, et il se rejoue a l'identique
@@ -822,12 +850,18 @@ t.poser(5,"combat",{h:`COMBAT : {Okonkwo} c. {Renaud} — Lyon`,id:"combat1",
   a:"Okonkwo",b:"Renaud",rounds:3,graine:5});
 t.poser(9,"evt",{h:"Visite d'un poids plume prometteur",id:"visite"});
 }
+if(m==="neuf")t.poser(6,"evt",{h:"Visite d'un espoir",id:"visite"});
+}
+poserEcheancesMode(MODE);
+/* Les echeances communes a tous les modes — posees UNE fois, au
+   chargement : les reposer au demarrage sur place les doublerait. */
 t.poser(14,"argent",{h:"Loyer de la salle",id:"loyer"});
-if(MODE==="neuf")t.poser(6,"evt",{h:"Visite d'un espoir",id:"visite"});
 t.poser(11,"evt",{h:"Gala amateur",id:"gala"});
 t.poser(24,"evt",{h:"Vie de la salle",id:"vie_salle"});
 
-const DECISIONS=MODE!=="demo"?{}:{
+/* Toujours construites (ce ne sont que des donnees) ; la GARDE est au
+   point de lecture — le mode peut changer apres le chargement. */
+const DECISIONS={
  2:{id:"bui",qui:`{Bùi} — cours loisir`,
     quoi:`Il t'attend à l'ouverture : « Coach, je veux voir où j'en suis. Je peux faire le sparring des pros, demain soir ? »`,
     oui:`Tu acceptes. Demain soir, {Bùi} sera dans la cage avec {Okonkwo} et {Kanté}.`,
@@ -895,11 +929,13 @@ const SALLE={forfait:600,reputation:12,coachAm:38,local:"assoc",
    le garage, tout a 1 etoile, une reputation de quartier, et un forfait
    assez bas pour que l'attractivite depasse 0,95 — sinon une salle VIDE
    ne se remplit JAMAIS (forfaitReco d'un garage 1 etoile ≈ 426 €). */
-if(MODE==="neuf"){
+function reglerSalleDepart(m){
+  if(m!=="neuf")return;
   Object.assign(SALLE,{local:"garage",reputation:5,forfait:390,
     equip:{striking:1,lutte:1,physique:1},cage:false});
   argent=5500;
 }
+reglerSalleDepart(MODE);
 /* ==== LA REPUTATION, LE MEDIA ET LES RESEAUX =============================
    /!\ LA REPUTATION NE BOUGEAIT JAMAIS : initialisee a 12, aucune ligne ne
    l'incrementait, alors que l'ecran affirmait "elle monte avec les
@@ -5881,7 +5917,7 @@ function continuer(){
   }
   if(bloque){allerOnglet("salle");$("zone-attend").scrollIntoView({behavior:"smooth",block:"center"});return;}
   t.avancer(1);
-  if(DECISIONS[t.jour])bloque=DECISIONS[t.jour];
+  if(MODE==="demo"&&DECISIONS[t.jour])bloque=DECISIONS[t.jour];
   synchroniserMonde();
   rendre();
 }
@@ -8947,11 +8983,11 @@ function choisirMode(m){
          peau : un dialogue natif est un pari sur l'hote. La confirmation
          se rend DANS LA PAGE — memes mots, memes garanties. */
       if(s){confirmerNouvellePartie(m,s);return;}
-      location.hash="#"+m;location.reload();
+      demarrerEnPlace(m);
     });
     return;
   }
-  location.hash="#"+m; location.reload();
+  demarrerEnPlace(m);
 }
 
 /** La confirmation d'ecrasement, rendue dans l'accueil — aucun dialogue
@@ -8992,7 +9028,7 @@ function confirmerEffacement(){
 }
 function lancerNouvellePartie(m){
   coffreLire().then(s=>{
-    const partir=()=>{location.hash="#"+m;location.reload();};
+    const partir=()=>demarrerEnPlace(m);
     if(!s)return partir();
     /* Meme si le coffre de secours refuse d'ecrire, le choix du joueur
        est fait : on part quand meme — il a lu ce qu'il perdait. */
@@ -9675,14 +9711,7 @@ function rendrePas(){
 
 
 /* ==== DEMARRAGE PAR MODE ==== */
-if(MODE==="choix"){
-  ouvrirAccueil();
-}else if(MODE==="reprendre"){
-  chargerSauvegarde().then(ok=>{
-    if(ok)rendre();
-    else { ouvrirAccueil(); toast("Aucune sauvegarde lisible."); }
-  });
-}else{
+function lancerLeJeu(m){
   demarrerMonde();
   synchroniserMonde();
   rendre();
@@ -9695,7 +9724,45 @@ if(MODE==="choix"){
   /* /!\ LE BAPTEME (Mael, 21/08 : "le petit message, puis on choisit le
      nom de notre coach et de notre salle"). Une seule fois, en partie
      neuve. */
-  if(MODE==="neuf"&&!SALLE.nomSalle)ouvrirBapteme();
+  if(m==="neuf"&&!SALLE.nomSalle)ouvrirBapteme();
+}
+
+/**
+ * DEMARRER SUR PLACE — le remede du cas 126 bis. La visionneuse sert la
+ * page en blob: et son rechargement PERD LE FRAGMENT : "#neuf" pose par
+ * le clic s'evaporait et l'accueil revenait, en boucle. On ne recharge
+ * donc PLUS : le clic ensemence le mode et lance le jeu dans la page.
+ * Le hash est pose quand l'hote le permet (un F5 volontaire retombe sur
+ * le bon mode), mais PLUS RIEN n'en depend.
+ * /!\ AU PLUS UN DEMARRAGE PAR CHARGEMENT : l'accueil disparait au
+ * premier lancement, et le bouton Menu repasse par un vrai rechargement.
+ */
+function demarrerEnPlace(m){
+  MODE=m; MODE_REEL=m;
+  try{ location.hash="#"+m; }catch(e){}
+  const z=document.getElementById("accueil"); if(z)z.remove();
+  if(m==="reprendre"){
+    chargerSauvegarde().then(ok=>{
+      if(ok)rendre();
+      else { ouvrirAccueil(); toast("Aucune sauvegarde lisible."); }
+    });
+    return;
+  }
+  ensemencerEffectif(m);
+  poserEcheancesMode(m);
+  reglerSalleDepart(m);
+  lancerLeJeu(m);
+}
+
+if(MODE==="choix"){
+  ouvrirAccueil();
+}else if(MODE==="reprendre"){
+  chargerSauvegarde().then(ok=>{
+    if(ok)rendre();
+    else { ouvrirAccueil(); toast("Aucune sauvegarde lisible."); }
+  });
+}else{
+  lancerLeJeu(MODE);
 }
 
 function ouvrirBapteme(){

@@ -12097,3 +12097,42 @@ lui. Verifie aussi bout en bout dans Chromium reel, dialogues avales :
 /!\ PIEGE DE BANC consigne : le bac ne vide ses microtaches QU'ENTRE deux
 evaluations — lire le resultat d'une promesse dans la MEME evaluation
 voit toujours zero, et le banc accuse le jeu.
+
+## CAS 126 bis — LA VISIONNEUSE : ON NE RECHARGE PLUS, ON DEMARRE SUR PLACE
+Mael, apres le cas 126 : « ca marche quand j'ouvre en conversation, mais
+pas sur Claude Code ». REPRODUIT : la visionneuse de claude.ai/code sert
+la page dans un iframe sandbox EN blob:. Trois poisons a la fois —
+localStorage ET indexedDB JETTENT (SecurityError), les dialogues natifs
+sont avales (cas 126), et surtout : LE RECHARGEMENT D'UNE PAGE blob: PERD
+LE FRAGMENT. Le « #neuf » pose par le clic s'evaporait au reload, MODE
+retombait sur "choix", l'accueil revenait — en boucle. Boutons « morts »,
+zero erreur nulle part.
+LE REMEDE EST DE FOND : LE JEU NE SE RECHARGE PLUS ENTRE L'ACCUEIL ET LA
+PARTIE. Tout l'amorcage de mode est passe en FONCTIONS — une seule
+source, deux entrees (le chargement par hash, et le clic) :
+  ensemencerEffectif(m)   les fiches scriptees (photographiees AVANT
+                          toute suppression : FICHES_SCRIPTEES), le
+                          vivier demo
+  poserEcheancesMode(m)   pesee/combat1/visites — les echeances COMMUNES
+                          (loyer, gala, vie) restent posees UNE fois au
+                          chargement, sinon elles se doublent
+  reglerSalleDepart(m)    le garage de la partie neuve
+  lancerLeJeu(m)          monde, rendu, autosauvegarde, bapteme
+  demarrerEnPlace(m)      MODE=m (donc `let`, plus `const`), hash pose
+                          quand l'hote le permet — PLUS RIEN n'en depend
+DECISIONS : toujours construites (des donnees), GARDE au point de lecture
+(MODE==="demo").
+/!\ DEUX PIEGES PAYES PENDANT LE REFACTOR, consignes :
+ 1. dejaPris est un ETAT DE JEU (recrutement, vivier, chargerEtat), pas
+    une variable d'amorcage — l'enfermer dans la fonction a casse le
+    chargement de sauvegarde (ReferenceError, attrape au banc).
+ 2. Le DOM du bac RECREE tout element demande : « l'accueil n'existe
+    plus » y est inverifiable — on verifie qu'il est VIDE.
+VERIFIE : banc 27 (hote hostile : confirm() empoisonne, zero reload
+exige, demo sur place avec le retour des scriptes, loyer non double) ET
+Chromium reel en iframe sandbox+blob — partie neuve jouee 5 journees dans
+la visionneuse simulee, zero exception. Le chemin normal (#demo direct)
+est inchange : effectif 38, Okonkwo, combat de Lyon.
+DANS LA VISIONNEUSE LA SAUVEGARDE RESTE IMPOSSIBLE (stockage bloque par
+la sandbox — cas 122 sexies) : on peut y JOUER, pas y VIVRE. Le telephone
+et le navigateur restent la maison du jeu.

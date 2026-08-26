@@ -462,9 +462,40 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
      deux evaluations (microtaskMode). Lire le resultat dans la meme
      evaluation voyait toujours zero — le banc accusait le jeu. */
   P.lire(`(lancerNouvellePartie("neuf"), true)`);
-  dit("démarrer recharge vraiment la page sur le bon mode",
-      P.lire(`location._recharges>=1&&location.hash==="#neuf"`),
-      "hash posé + reload appelé");
+  /* /!\ LE CONTRAT A CHANGE (cas 126 bis) : on ne RECHARGE PLUS — la
+     visionneuse sert la page en blob: et son rechargement perd le
+     fragment. Le demarrage se fait SUR PLACE : zero reload, l'accueil
+     s'en va, le mode est ensemence, le monde existe. Un reload qui
+     reapparaitrait ici est une regression. */
+  /* /!\ Le DOM du bac RECREE tout element demande : "l'accueil n'existe
+     plus" y est invérifiable. On verifie qu'il est VIDE — un accueil
+     retire puis recree par le bac n'a plus une ligne de HTML. */
+  dit("démarrer lance la partie SUR PLACE, sans recharger",
+      P.lire(`location._recharges===0&&MODE==="neuf"
+        &&document.getElementById("accueil").innerHTML===""&&t.jour===0
+        &&typeof MONDE==="object"&&MONDE!==null`),
+      "zéro reload · accueil retiré · monde né");
+  dit("le hash est posé quand l'hôte le permet — sans que rien n'en dépende",
+      P.lire(`location.hash==="#neuf"`));
+
+  /* La DEMO sur place, depuis un chargement "choix" qui avait efface les
+     fiches scriptees : elles doivent REVENIR (la photographie
+     FICHES_SCRIPTEES), avec l'echeance du combat de Lyon, et le loyer ne
+     doit pas se doubler. */
+  {
+    const D = ouvrirPartie({ mode: "choix", graine: 5 });
+    D.lire(`(ouvrirAccueil(), demarrerEnPlace("demo"), true)`);
+    dit("la démo démarre sur place — les hommes scriptés reviennent",
+        D.lire(`!!FICHES["Okonkwo"]&&!!FICHES["Kanté"]&&EFFECTIF.length>30&&MODE==="demo"`),
+        D.lire(`"effectif "+EFFECTIF.length`));
+    dit("le combat de Lyon est à l'affiche",
+        D.lire(`t.echeances.some(e=>e.donnees&&e.donnees.id==="combat1")`));
+    dit("et les échéances communes ne se doublent pas",
+        D.lire(`t.echeances.filter(e=>e.donnees&&e.donnees.id==="loyer").length===1`),
+        "un seul loyer");
+    dit("aucune exception au démarrage sur place", D.erreurs.length === 0,
+        [...new Set(D.erreurs)].slice(0, 3).join(" | "));
+  }
 
   dit("l'effacement aussi se confirme dans la page",
       P.lire(`(function(){ouvrirAccueil();confirmerEffacement();
