@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 760">
+  <defs>
+    <linearGradient id="ciel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0C1017"/><stop offset=".55" stop-color="#12151A"/>
+      <stop offset="1" stop-color="#191410"/>
+    </linearGradient>
+    <radialGradient id="lampe" cx=".5" cy=".18" r=".65">
+      <stop offset="0" stop-color="#C9A227" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#C9A227" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="420" height="760" fill="url(#ciel)"/>
+  <rect width="420" height="760" fill="url(#lampe)"/>
+  <g opacity=".5" stroke="#2C3542" stroke-width="3" fill="none">
+    <polygon points="210,330 330,378 330,470 210,518 90,470 90,378"/>
+    <polygon points="210,346 312,386 312,462 210,502 108,462 108,386" stroke-width="1.6"/>
+  </g>
+  <g opacity=".55">
+    <line x1="120" y1="60" x2="120" y2="150" stroke="#20262F" stroke-width="4"/>
+    <rect x="104" y="150" width="32" height="86" rx="13" fill="#1A1F26"/>
+    <line x1="322" y1="60" x2="322" y2="132" stroke="#20262F" stroke-width="4"/>
+    <rect x="306" y="132" width="32" height="86" rx="13" fill="#1A1F26"/>
+  </g>
+  <g opacity=".35" fill="#1A1F26" stroke="#2C3542" stroke-width="1.4">
+    <rect x="36" y="580" width="70" height="52" rx="4"/><rect x="120" y="580" width="70" height="52" rx="4"/>
+    <rect x="204" y="580" width="70" height="52" rx="4"/><rect x="288" y="580" width="70" height="52" rx="4"/>
+  </g>
+</svg>

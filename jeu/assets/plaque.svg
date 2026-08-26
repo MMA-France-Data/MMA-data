@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220">
+  <defs>
+    <linearGradient id="bois" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17120C"/><stop offset="1" stop-color="#0F0C08"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="220" rx="10" fill="url(#bois)"/>
+  <rect x="8" y="8" width="464" height="204" rx="7" fill="none" stroke="#C9A227" stroke-width="2.4"/>
+  <rect x="17" y="17" width="446" height="186" rx="5" fill="none" stroke="#7A6318" stroke-width="1.2"/>
+  <g stroke="#C9A227" stroke-width="1.6" fill="none" opacity=".8">
+    <path d="M34 110 q10 -26 30 -34 M34 110 q10 26 30 34 M40 96 q7 -6 15 -7 M40 124 q7 6 15 7 M50 84 q6 -4 12 -4 M50 136 q6 4 12 4"/>
+    <path d="M446 110 q-10 -26 -30 -34 M446 110 q-10 26 -30 34 M440 96 q-7 -6 -15 -7 M440 124 q-7 6 -15 7 M430 84 q-6 -4 -12 -4 M430 136 q-6 4 -12 4"/>
+  </g>
+</svg>

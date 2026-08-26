@@ -11998,3 +11998,76 @@ etait vert.
 => A RETENIR POUR LA PROCHAINE MESURE : quand un chiffre est a ZERO,
    soupconner d'abord l'instrument. Les deux fois ou ca m'est arrive
    aujourd'hui (la fuite de memoire, ce demarchage), le jeu etait sain.
+
+===========================================================================
+## CAS 125 — LES VISUELS : CANVA + LA CHAINE D'ASSETS (Mael, 26/08 : « le tout »)
+Demande : brancher des designs Canva dans le jeu — logos d'orgas, fond
+d'accueil, cadre d'affiche, plaque du mur.
+
+## LA CONTRAINTE QUI A DECIDE DE L'ARCHITECTURE
+Le connecteur Canva de la session PEUT creer des designs dans le compte de
+Mael, mais PAS en extraire les pixels : l'export est refuse (verifie sur un
+vieux design possede — c'est un droit manquant du connecteur, pas un bug),
+et le reseau bloque design.canva.ai. Le raccord est donc UN DEPOT DE
+FICHIER, et c'est finalement la bonne architecture :
+ - assets/ porte les VISUELS DE SECOURS (SVG dessines main, 8 Ko en tout) ;
+ - les 8 designs Canva vivent dans le compte de Mael (liens ci-dessous) ;
+ - un PNG telecharge depuis Canva, depose dans assets/ sous le MEME NOM DE
+   BASE (logo_HEX.png a cote de logo_HEX.svg), ECLIPSE le secours au
+   prochain `node js/gen_assets.js`. Le PNG s'en va, le secours reprend.
+   Zero ligne de code a toucher — le banc 31 le prouve avec un vrai PNG.
+
+## LA CHAINE (meme famille que gabarit.js / bundler.js)
+assets/* -> node js/gen_assets.js -> js/assets.js (window.MMA_ASSETS,
+genere, jamais edite) -> <script> dans demo_jeu.html -> inline par
+apercu.js (aInliner). bac_partie.js le charge aussi (optionnel).
+/!\ LE POIDS EST UN CONTRAT : 120 Ko par visuel, 400 Ko au total,
+ENCODES. Au-dela le generateur REFUSE de construire (pas un warning) —
+le cas 122 a appris ce que coute un poids qui grossit en silence. Un PNG
+Canva trop lourd se reexporte plus petit (l'export prend une largeur en
+pixels), on ne releve pas le plafond.
+
+## LES BRANCHEMENTS (tous gardes contre l'absence d'assets.js)
+ - logoOrga(cle,px) : liste des orgas (Monde), tete de classement, bulle
+   d'offre a l'accueil ;
+ - fond d'accueil + bapteme (degrade par-dessus : les boutons restent
+   lisibles quel que soit le design depose) ;
+ - l'affiche N'HABILLE QUE LE SOIR DU COMBAT (bloque.id==="combat") — une
+   affiche de gala derriere « le loyer est du » mentirait ;
+ - la plaque doree n'habille QUE les legendes du mur — un mur ou tout
+   brille ne distingue rien (meme regle que le marquage des contrats).
+
+## /!\ SEIZE ORGAS, CINQ VISUELS — APPRIS A L'ECRAN, PAS AU BANC
+Le premier passage Chromium a montre Frontier, Bandeira, Taïga, Albion…
+sans logo : vivier.js INJECTE ONZE NATIONALES dans classement.ORGS a
+l'ouverture du monde (enregistrerOrgs). Une liste a moitie habillee a
+l'air cassee. Le repli est un MONOGRAMME DERIVE de la cle — du RENDU, pas
+un asset (meme famille qu'etoiles()) : couleur stable par hachage FNV,
+initiales du nom. Les cinq grandes portent leurs visuels ; les onze
+autres leur monogramme ; un logo_USA_N.png depose dans assets/ habillera
+Frontier comme les grandes. Le banc compte contre LA TABLE DU MONDE
+VIVANT (16), plus jamais contre les cinq du fichier.
+
+## BANC 31 (verifier_assets.js) — 18 assertions
+generation au meme octet · eclipse PNG>SVG prouvee avec un vrai PNG ·
+plafonds tenus ET refus prouve (fichier de 150 Ko injecte, generateur
+DOIT echouer) · 16 pastilles pour 16 orgas · les 5 grandes en assets ·
+accueil/plaque/affiche visibles · l'affiche seulement le soir du combat ·
+et TOUT TIENT SANS assets.js (monogrammes compris, zero exception).
+
+## LES 8 DESIGNS CANVA (a retoucher la-bas, puis PNG -> assets/)
+    logo_HEX    https://www.canva.com/d/E9M67tlvZY2HBbx
+    logo_TRI    https://www.canva.com/d/Qv0VKFIXW2TfCIv
+    logo_SOK    https://www.canva.com/d/EKUBq3XxVNZwqcK
+    logo_GFL    https://www.canva.com/d/od0I4Fjkyothxqy
+    logo_AFC    https://www.canva.com/d/hCPS8opH6GWJshh   (v2 lettrage, demande
+                de Mael : "plus inspire de l'UFC" — lettermark massif italique
+                or sur noir, octogone en filigrane. Le SVG de secours suit le
+                meme parti. v1 emblème triangulaire, gardee :
+                https://www.canva.com/d/HosWuK39Y4k06-s)
+    accueil     https://www.canva.com/d/9is1GH34M2Oo2jh
+    affiche     https://www.canva.com/d/BbolqaZ_DMZ3rrv   (fond sans texte)
+    plaque      https://www.canva.com/d/VMFYotVFSc6gif9   (fond sans texte)
+Tailles d'export conseillees (le plafond fait loi) : logos 256 px,
+accueil 840 px de large (JPG), affiche 840 px (JPG), plaque 640 px.
+/!\ affiche et plaque doivent rester SANS TEXTE : le jeu ecrit dessus.

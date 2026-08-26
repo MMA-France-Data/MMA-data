@@ -188,6 +188,12 @@ function ouvrirPartie(o = {}) {
       throw new Error(`${f} absent — lancer d'abord : node js/bundler.js && node js/gabarit.js`);
     new vm.Script(fs.readFileSync(p, "utf8"), { filename: f }).runInContext(bac);
   }
+  /* Les visuels : OPTIONNELS ici comme au navigateur — le jeu doit tenir
+     sans eux, et le banc 31 verifie justement les deux etats. `sans`
+     permet de jouer une partie volontairement depouillee. */
+  const pa = path.join(__dirname, "assets.js");
+  if (!o.sansAssets && fs.existsSync(pa))
+    new vm.Script(fs.readFileSync(pa, "utf8"), { filename: "assets.js" }).runInContext(bac);
 
   const page = fs.readFileSync(path.join(R, "demo_jeu.html"), "utf8");
   const bouts = page.split(/<script>/);

@@ -455,6 +455,8 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
      par `node js/gabarit.js`. Meme raison que ci-dessus : une seule source,
      et surtout pas une copie du gabarit recollee dans cette page. -->
 <script src="js/ecran.gabarit.js"></script>
+<!-- Les visuels (Canva / secours SVG), embarques par js/gen_assets.js. -->
+<script src="js/assets.js"></script>
 
 <script>
 /* ==== temps.js inline, INCHANGE ==== */
@@ -700,6 +702,37 @@ while(MODE==="demo"&&EFFECTIF.length<72&&n<400){
        COMBATS, victoires puis defaites, avec une methode plausible. */
     bilan,combats:bilan?fabriquerHistoriqueAmateur(bilan):[]};
   ajouter(nomC,gr,talent);
+}
+
+/* ==== LES VISUELS (25/08) ================================================
+   window.MMA_ASSETS vient de js/assets.js (genere par gen_assets.js — les
+   sources vivent dans assets/, les designs Canva de Mael les remplacent
+   par simple depot de fichier). /!\ TOUT L'ECRAN DOIT TENIR SANS EUX : un
+   assets.js absent ou vide ne casse RIEN, il enleve juste l'image. Chaque
+   usage passe par asset() et se garde contre null. */
+const asset=n=>(typeof MMA_ASSETS!=="undefined"&&MMA_ASSETS&&MMA_ASSETS[n])?MMA_ASSETS[n]:null;
+/* Le logo d'une organisation, en pastille.
+   /!\ SEIZE ORGAS, CINQ VISUELS (vu A L'ECRAN, pas au banc) : les onze
+   nationales injectees par vivier.js n'ont pas d'asset, et une liste a
+   moitie habillee a l'air cassee. Le repli est un MONOGRAMME DERIVE de
+   la cle — du rendu, pas un asset (meme famille qu'etoiles()) : couleur
+   stable par hachage, initiales du nom. Un logo_<CLE>.png depose dans
+   assets/ l'eclipse automatiquement, onze fois comme cinq. */
+function logoOrga(cle,px){
+  const t=px||34;
+  const u=asset("logo_"+cle);
+  if(u)return `<img src="${u}" alt="" style="width:${t}px;height:${t}px;`
+    +`border-radius:8px;vertical-align:middle;flex:none">`;
+  const o=(MMA.classement.ORGS||{})[cle]; if(!o)return "";
+  let h=2166136261>>>0; for(let i=0;i<cle.length;i++){h^=cle.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}
+  const teinte=h%360;
+  const ini=String(o.nom||cle).split(/\s+/).map(m=>m[0]).join("").slice(0,3).toUpperCase();
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">`
+    +`<rect width="40" height="40" rx="9" fill="hsl(${teinte},32%,15%)"/>`
+    +`<rect x="2.2" y="2.2" width="35.6" height="35.6" rx="7.4" fill="none" stroke="hsl(${teinte},55%,52%)" stroke-width="2"/>`
+    +`<text x="20" y="26" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="800" fill="hsl(${teinte},60%,78%)">${ini}</text></svg>`;
+  return `<img src="data:image/svg+xml;utf8,${encodeURIComponent(svg)}" alt="" `
+    +`style="width:${t}px;height:${t}px;border-radius:8px;vertical-align:middle;flex:none">`;
 }
 
 const lien=id=>`<span class="lien" onclick="ouvrirFiche('${id.replace(/'/g,"\\'")}')">${id}</span>`;
@@ -2884,8 +2917,12 @@ function rendreSalle(){
         </div></div>`;
       return;
     }
+    /* /!\ L'AFFICHE HABILLE LE SOIR DU COMBAT, ET LUI SEUL. Les autres
+       bloquants a action (visite, echeances) restent sobres : une affiche
+       de gala derriere "le loyer est du" mentirait sur l'importance. */
+    const fondAff=bloque.id==="combat"?asset("affiche"):null;
     $("zone-attend").innerHTML=bloque.action
-      ? `<div class="attend"><div class="qui">🥊 ${texte(bloque.titre)}</div>
+      ? `<div class="attend" style="${fondAff?`background:linear-gradient(rgba(18,21,26,.55),rgba(18,21,26,.82)),url('${fondAff}') center/cover no-repeat;`:""}"><div class="qui">🥊 ${texte(bloque.titre)}</div>
          <div class="quoi">${texte(bloque.texte)}</div>
          <div class="choix"><button class="oui" onclick="agirBloque()">${bloque.action}</button>
          ${bloque.id==="combat"?`<button onclick="simulerCombat()">⏭ Simuler</button>`:""}</div></div>`
@@ -2903,7 +2940,7 @@ function rendreSalle(){
     if(of){
       const b=of.trace, reste=of.expire-t.jour;
       $("zone-attend").innerHTML=`<div class="attend">
-        <div class="qui">🥊 ${of.org} — offre de combat
+        <div class="qui">${logoOrga(of.org,22)||"🥊"} ${of.org} — offre de combat
           <span style="color:${reste<=2?"var(--accent)":"var(--doux)"};font-size:12px">
           · ${reste<=0?"dernier jour":"réponse sous "+reste+" j"}</span></div>
         <div class="quoi"><b>${of.nomGars} c. ${lienMonde(of.adversaire,b.nom)}</b>
@@ -3023,7 +3060,12 @@ function ouvrirHeritage(){
 
      <h3>Le mur</h3>
      ${mur.length?mur.map(p=>`<div class="f-statut" style="margin-top:8px;border-color:${
-         p.rang==="legende"?"var(--or)":"var(--bord)"}">
+         p.rang==="legende"?"var(--or)":"var(--bord)"};${
+         (function(){const u=asset("plaque");
+           /* La plaque doree habille LES LEGENDES ; les autres rangs
+              restent sobres — un mur ou tout brille ne distingue rien. */
+           return u&&p.rang==="legende"
+             ?`background:linear-gradient(rgba(18,21,26,.35),rgba(18,21,26,.72)),url('${u}') center/cover no-repeat;`:"";})()}">
          <div style="display:flex;justify-content:space-between;align-items:baseline">
            <b>${FICHES[p.cle]?lien(p.cle):texte(p.nom)}</b>
            <span class="f-sous" style="color:${p.rang==="legende"?"var(--or)":"var(--doux)"}">${p.mot}</span></div>
@@ -7450,10 +7492,11 @@ function rendreMonde(){
     const n=Object.values(MONDE.rosters[c]||{}).reduce((a,r)=>a+r.length,0);
     const champs=Object.keys(MONDE.rosters[c]||{}).filter(d=>
       MMA.classement.echelleDe(MONDE,c,d).some(id=>{const x=MONDE.pros.get(id);return x&&x.champion;})).length;
-    return `<div class="carte-combat cliquable" onclick="ouvrirOrga('${c}')">
+    return `<div class="carte-combat cliquable" onclick="ouvrirOrga('${c}')" style="display:flex;gap:11px;align-items:center">
+      ${logoOrga(c,40)}<div style="flex:1;min-width:0">
       <div class="cc-quand">${o.pays||"—"} · portée ${o.portee}${miennes.has(c)?" · <b>ta salle y est</b>":""}</div>
       <div class="cc-affiche">${o.nom} <span class="cc-fleche">›</span></div>
-      <div class="cc-sous">${n} combattants · ${champs} ceinture${champs>1?"s":""}</div></div>`;
+      <div class="cc-sous">${n} combattants · ${champs} ceinture${champs>1?"s":""}</div></div></div>`;
   }).join("");
   const zd=$("mo-depeches");
   if(zd)zd.innerHTML=DEPECHES.length
@@ -7496,8 +7539,9 @@ function ouvrirClassement(org,div){
   if(!MONDE)return;
   const cl=MMA.salle.classement(MONDE,org,div);
   $("fiche").innerHTML=
-    `<div class="f-tete"><div class="f-nom">${org}</div>
-       <div class="f-sous">${div.replace(/_/g," ")} — top 15</div></div>`
+    `<div class="f-tete" style="display:flex;gap:10px;align-items:center">${logoOrga(org,38)}<div>
+       <div class="f-nom">${org}</div>
+       <div class="f-sous">${div.replace(/_/g," ")} — top 15</div></div></div>`
     /* /!\ LES NOMS SONT CLIQUABLES (Mael, en jouant) : un classement ou
        on ne peut pas ouvrir un adversaire ne sert a rien — c'est la
        porte d'entree du scouting. */
@@ -8855,7 +8899,13 @@ function validerImport(){
 function ouvrirAccueil(){
   let z=document.getElementById("accueil");
   if(!z){z=document.createElement("div");z.id="accueil";document.body.appendChild(z);}
-  z.style.cssText="position:fixed;inset:0;z-index:200;background:var(--fond);"
+  /* Le fond vient des visuels ; sans lui, la couleur de toujours. Le
+     degrade au-dessus garantit que les boutons restent lisibles quel que
+     soit le design pose dans assets/. */
+  const fondAcc=asset("accueil");
+  z.style.cssText="position:fixed;inset:0;z-index:200;"
+    +(fondAcc?`background:linear-gradient(rgba(18,21,26,.45),rgba(18,21,26,.88)),url('${fondAcc}') center/cover no-repeat var(--fond);`
+             :"background:var(--fond);")
     +"display:flex;flex-direction:column;justify-content:center;padding:26px;gap:11px";
   /* Le marqueur leger (le jour) vit en localStorage : il dit qu'une
      partie existe sans avoir a ouvrir le coffre. */
@@ -9605,7 +9655,10 @@ if(MODE==="choix"){
 function ouvrirBapteme(){
   let z=document.getElementById("bapteme");
   if(!z){z=document.createElement("div");z.id="bapteme";document.body.appendChild(z);}
-  z.style.cssText="position:fixed;inset:0;z-index:210;background:var(--fond);"
+  const fondBap=asset("accueil");
+  z.style.cssText="position:fixed;inset:0;z-index:210;"
+    +(fondBap?`background:linear-gradient(rgba(18,21,26,.5),rgba(18,21,26,.9)),url('${fondBap}') center/cover no-repeat var(--fond);`
+             :"background:var(--fond);")
     +"display:flex;flex-direction:column;justify-content:center;padding:26px;gap:12px";
   const inp="width:100%;padding:13px 14px;border-radius:11px;border:1px solid var(--bord);"
     +"background:var(--carte);color:var(--texte);font:inherit;font-size:15px";
