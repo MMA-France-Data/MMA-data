@@ -78,7 +78,15 @@ function unJour(P, al) {
   }
   if (al() < 0.3) {
     const libres = P.lire('Object.entries(MESGARS).filter(([,l])=>!l.amateur&&!l.retraite&&!l.org).map(([c])=>c)');
-    const orgs = P.lire("Object.keys(MONDE.orgas||{})");
+    /* /!\ MONDE.orgas N'EXISTE PAS. Le singe "demarchait" depuis le
+       premier jour — sur une liste TOUJOURS VIDE. Resultat : en 900 jours
+       de mesure, zero homme signe en organisation, zero combat pro, zero
+       classement, zero interview. TOUT LE METIER DU JEU passait a cote du
+       banc, et le banc disait que tout allait bien. C'est la lecon du
+       carnet retournee contre le banc lui-meme : une boucle branchee
+       nulle part ne fait rien, ET NE LEVE PAS. Les organisations vivent
+       dans classement.ORGS, comme demarcherOrga les lit lui-meme. */
+    const orgs = P.lire("Object.keys(MMA.classement.ORGS)");
     if (libres.length && orgs.length)
       P.essai("demarcherOrga", libres[Math.floor(al() * libres.length)],
               orgs[Math.floor(al() * orgs.length)]);
@@ -286,6 +294,72 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
   dit("sur une saison, le staff vient te demander des choses", total > 0,
       vues.map((c) => `${c.nom}:${c.demandes}`).join(" · "));
   dit("aucune exception pendant la saison du staff", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
+/* ==================================================================== */
+/* LE METIER EXISTE-T-IL ? (signature d'organisation -> combats pro)      */
+/* /!\ CE BLOC NAIT D'UN TROU DE BANC, PAS D'UN BUG DU JEU. Le singe      */
+/* "demarchait" depuis toujours sur une liste vide (MONDE.orgas n'existe  */
+/* pas) : zero signature, zero combat pro, zero classement, zero          */
+/* interview — et le banc etait vert. Tout le metier du jeu passait a     */
+/* cote. On l'exige maintenant, et on le CHIFFRE.                         */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "neuf", graine: 7 });
+  jouer(P, 300, 7);
+  const org = P.lire('Object.entries(MESGARS).filter(([,l])=>!l.amateur&&!l.retraite&&l.org).map(([c,l])=>c+":"+l.org)');
+  dit("un homme de la salle finit par signer en organisation", org.length > 0,
+      org.slice(0, 4).join(" · ") || "personne sous contrat d'organisation");
+  const combats = P.lire("RESULTATS.length");
+  dit("et il combat vraiment chez elle", combats > 0, `${combats} combat(s) pro`);
+
+  /* L'INTERVIEW DE FIGHT WEEK. /!\ ELLE NE SE DECLENCHE PAS A TOUS LES
+     COMBATS, ET C'EST LA REGLE (arbitrage de Mael, 25/08 : on ne change
+     rien) : il faut un combat QUI COMPTE — titre, homme classe, ou orga
+     au-dessus de nationale. Mesure : graine 11, premiere interview au
+     jour 389 ; graine 7, aucune en 460 jours malgre 7 combats, tous a
+     Hexagone avec un homme non classe.
+     Le banc ne peut donc pas exiger qu'elle tombe toute seule — il exige
+     que LE CHEMIN EXISTE : on pose un cas qui remplit la condition, et
+     la presse doit appeler. */
+  const presse = P.lire(`(function(){
+    const e=Object.entries(MESGARS).find(([,l])=>!l.amateur&&!l.retraite&&l.org);
+    if(!e)return null;
+    const [cle,l]=e;
+    l.rang=8;                                   /* il est classe : ca compte */
+    l.combatPrevu={jourCombat:t.jour+3,org:l.org,adversaire:1,
+                   trace:{nom:"Un Adversaire",rang:5},itw:false};
+    bloque=null;
+    const parti=interviewFightWeek();
+    return {parti, id:bloque?bloque.id:null, titre:bloque?String(bloque.titre||""):"",
+            marque:!!l.combatPrevu.itw,
+            choix:bloque&&bloque.choix?bloque.choix.length:0};
+  })()`);
+  dit("sur un combat qui compte, la presse tend le micro au patron",
+      !!presse && presse.parti === true && presse.id === "itw",
+      presse ? presse.titre : "aucun homme en organisation");
+  dit("elle pose de vraies questions à choix", !!presse && presse.choix >= 2,
+      presse ? `${presse.choix} réponses possibles` : "");
+  dit("et une seule interview par combat", !!presse && presse.marque === true,
+      "o.itw posé");
+
+  /* Et la porte reste FERMEE sur un combat qui ne compte pas — sinon la
+     regle ci-dessus ne veut plus rien dire. */
+  const fermee = P.lire(`(function(){
+    const e=Object.entries(MESGARS).find(([,l])=>!l.amateur&&!l.retraite&&l.org);
+    if(!e)return null;
+    const [,l]=e; l.rang=null; l.org="HEX";
+    l.combatPrevu={jourCombat:t.jour+3,org:"HEX",adversaire:1,
+                   trace:{nom:"Un Local",rang:null},itw:false,titre:false};
+    bloque=null;
+    return {parti:interviewFightWeek(), id:bloque?bloque.id:null};
+  })()`);
+  dit("mais pas sur un combat local d'un homme non classé",
+      !!fermee && fermee.parti === false && fermee.id === null,
+      fermee ? `retour ${fermee.parti}` : "");
+
+  dit("aucune exception sur le chemin du métier", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 

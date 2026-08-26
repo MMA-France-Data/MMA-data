@@ -11944,3 +11944,57 @@ MESURE DE DIX ANS (partie neuve, singe, graine 11, 3 650 jours, 978 s) :
    MATCHMAKING (proposer la revanche), pas le refroidissement.
 4. Les chantiers concus non codes du carnet : E, F (mental.discipline),
    et le reste de la liste historique.
+
+===========================================================================
+## CAS 124 — « POURQUOI L'INTERVIEW DE COACH N'ARRIVE JAMAIS » (Mael, 25/08)
+QUATRIEME fois que la question revient (cas 120 bis, 120 ter, et ici).
+Elle ne reviendra plus : LA REGLE EST GRAVEE, ET CHIFFREE.
+
+L'INTERVIEW EXISTE ET ELLE MARCHE. Mesure au singe, partie neuve :
+    graine 11 : 1re signature orga j.173 · 1er combat pro j.251
+                1re INTERVIEW j.389 — puis a chaque combat :
+                389 · 461 · 587 · 659 · 731 · 803 · 875
+    graine  7 : 1re signature orga j.122 · 1er combat pro j.175
+                AUCUNE interview en 460 jours, malgre SEPT combats pro
+Sur 900 jours (graine 11) : 14 combats programmes, 8 passent la porte,
+7 interviews jouees (21 questions). Le systeme tourne.
+
+POURQUOI ON NE LA VOIT PAS. La porte d'interviewFightWeek :
+    s'ouvre si  titre  OU  orga au-dessus de "nationale"  OU  homme CLASSE
+    reste close si  HEX (ou aucune orga)  ET  non classe  ET  pas de titre
+Autrement dit : tant que tes hommes combattent a Hexagone sans etre
+classes, la presse ne t'appelle pas. C'est un an et demi de jeu, et
+plusieurs combats pro, avant le premier micro. Les six combats fermes de
+la mesure ont TOUS la meme raison : "org HEX (nationale), non classe".
+/!\ ET HEX EST LA SEULE ORGA DE NIVEAU "nationale" : des que l'homme
+signe a Trident (nationale +), Sokol, GFL ou AFC, la porte s'ouvre sans
+condition de classement. C'est donc autant une question d'ORGA que de
+rang.
+
+ARBITRAGE DE MAEL (25/08) : ON NE CHANGE RIEN. Le silence de la presse
+est un palier a franchir — elle ne s'interesse a toi que quand ton homme
+est classe ou signe plus haut. Trois autres options avaient ete posees
+(petite interview d'une question des le 1er combat pro · ouvrir a tous
+les combats · baisser le seuil a 3 combats ou 2 victoires de suite) :
+TOUTES ECARTEES. Ne pas les reintroduire sans son accord.
+
+## /!\ LE TROU DE BANC QUE CE DIAGNOSTIC A OUVERT (et c'est le vrai sujet)
+Le singe (banc 27) "demarchait" depuis sa premiere ligne — sur
+`Object.keys(MONDE.orgas||{})`. MONDE.orgas N'EXISTE PAS : les
+organisations vivent dans classement.ORGS, comme demarcherOrga les lit
+lui-meme. La liste etait donc TOUJOURS VIDE.
+CONSEQUENCE, mesuree : 900 jours de partie neuve -> 5 pros a la salle,
+ZERO signature d'organisation, ZERO combat pro, ZERO classement, ZERO
+interview. TOUT LE METIER DU JEU passait a cote du banc — et le banc
+etait vert.
+=> C'EST LA LECON DU CARNET RETOURNEE CONTRE LE BANC LUI-MEME : une
+   boucle branchee nulle part ne fait rien, ET NE LEVE PAS. Un banc n'est
+   pas au-dessus de sa propre regle.
+=> CORRIGE, et le banc 27 EXIGE desormais le metier : un homme signe en
+   organisation, il combat vraiment chez elle, la presse tend le micro
+   sur un combat qui compte, et elle NE le tend PAS sur un combat local
+   d'un homme non classe (sinon la regle ci-dessus ne veut plus rien
+   dire). Six assertions de plus.
+=> A RETENIR POUR LA PROCHAINE MESURE : quand un chiffre est a ZERO,
+   soupconner d'abord l'instrument. Les deux fois ou ca m'est arrive
+   aujourd'hui (la fuite de memoire, ce demarchage), le jeu etait sain.
