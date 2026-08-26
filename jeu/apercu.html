@@ -9878,7 +9878,7 @@ const FAMILLE_COMBAT = {
        permettre de viser la double ceinture". On ne demande pas a monter
        parce qu'on a gagne deux fois — on le demande quand on a fait le
        tour de sa categorie. */
-    probable: (f, ctx) => !!ctx.champion
+    probable: (f, ctx) => !ctx.combatPrevu && !!ctx.champion
       || (ctx.rang !== null && ctx.rang !== undefined && ctx.rang <= 3
           && (ctx.serie || 0) >= 3 && f.mental.aggression >= 62),
     oui: {
@@ -9913,7 +9913,7 @@ const FAMILLE_COMBAT = {
     titre: "Il veut un adversaire précis",
     dit: "Celui-là, ça fait deux ans qu'il raconte n'importe quoi sur moi. " +
          "Trouve-le-moi. Je m'en occupe.",
-    probable: (f, ctx) => f.mental.aggression >= 68 && !!ctx.rival,
+    probable: (f, ctx) => !ctx.combatPrevu && f.mental.aggression >= 68 && !!ctx.rival,
     oui: {
       effet: "cible_adversaire",
       dit_coach: "Tu vas voir le matchmaker pour lui décrocher ce combat-là.",
@@ -9962,6 +9962,29 @@ const FAMILLE_COMBAT = {
     oui_mais: null,   // on ne marchande pas ca : oui ou non.
   },
 
+  veut_revanche: {
+    famille: "combat",
+    titre: "Il veut sa revanche",
+    /* /!\ ELLE NE SORT QUE S'IL Y A UN VRAI COMPTE A REGLER : le contexte
+       porte ctx.revanche quand une rivalite VIVANTE nee d'une DEFAITE
+       existe (endgame.js) — jamais un caprice sorti d'un chapeau. */
+    dit: "Celui qui m'a battu — il dort tranquille et moi je me réveille " +
+         "avec son nom. Rends-le-moi. Je ne demande rien d'autre.",
+    probable: (f, ctx) => !ctx.combatPrevu && !!ctx.revanche,
+    oui: {
+      effet: "vouloir_revanche",
+      dit_coach: "Tu diras au matchmaker que ce combat-là passe devant.",
+      cout: "Le matchmaker entend — la revanche viendra plus vite, aux conditions du moment.",
+      entente: "affiche_voulue",
+    },
+    non: {
+      dit_coach: "Pas maintenant. La route d'abord, la vengeance ensuite.",
+      entente: "offre_refusee",
+      reaction: "Il ne discute pas. Mais le nom reste sur le mur de son vestiaire.",
+    },
+    oui_mais: null,   // une revanche ne se marchande pas : oui ou non.
+  },
+
   striker_pas_lutter: {
     famille: "combat",
     titre: "Il veut combattre debout",
@@ -10003,7 +10026,13 @@ const FAMILLE_CALENDRIER = {
     titre: "Il veut enchaîner",
     dit: "Je suis dedans, là. Trois mois à attendre et je repars de zéro. " +
          "Trouve-moi quelque chose vite, même pas énorme.",
-    probable: (f, ctx) => (ctx.derniers || []).slice(-1)[0] === "V"
+    /* /!\ PAS QUAND IL A DEJA SA DATE (Mael, 26/08 : "il me dit camp
+       court alors qu'il a deja un combat prevu"). Reclamer un combat
+       avec un combat au calendrier, c'est une demande perimee a la
+       naissance. Meme garde sur toutes les demandes qui VEULENT une
+       date : cet_adversaire, souffler, main_event, monter_categorie. */
+    probable: (f, ctx) => !ctx.combatPrevu
+      && (ctx.derniers || []).slice(-1)[0] === "V"
       && f.mental.aggression >= 58 && (ctx.fraicheur === undefined || ctx.fraicheur >= 0.85),
     oui: {
       effet: "chercher_vite",
@@ -10032,7 +10061,7 @@ const FAMILLE_CALENDRIER = {
          "Je reviens et je suis à toi.",
     // /!\ CELUI QUI DEMANDE CA A SOUVENT RAISON AUSSI : il sort d'un camp
     // ou il enchaine depuis longtemps. Refuser systematiquement casse.
-    probable: (f, ctx) => !ctx.amateur
+    probable: (f, ctx) => !ctx.amateur && !ctx.combatPrevu
       && ((ctx.fraicheur !== undefined && ctx.fraicheur < 0.8)
           || (ctx.moisSansPause !== undefined && ctx.moisSansPause >= 8)),
     oui: {
@@ -10193,6 +10222,27 @@ const FAMILLE_PREPARATION = {
 /* QU'IL LUI RESTE : bourse − frais de deplacement − ta part.          */
 /* ================================================================== */
 const FAMILLE_ARGENT = {
+
+  partenaire_dedie: {
+    famille: "preparation",
+    titre: "Il veut un partenaire dédié pour son camp",
+    dit: "Le groupe c'est bien, mais là j'ai besoin d'un gars payé pour " +
+         "prendre mes rounds, tous les jours, au rythme de l'autre. Ça se trouve.",
+    /* Elle n'a de sens QU'EN CAMP : c'est le contexte qui le dit. */
+    probable: (f, ctx) => !!ctx.combatPrevu && !!ctx.enCamp,
+    oui: {
+      effet: "partenaire_dedie",
+      dit_coach: "Tu paies un partenaire d'entraînement pour la fin du camp.",
+      cout: "600 € — et le reste du groupe s'entraîne sans lui.",
+      entente: "affiche_voulue",
+    },
+    non: {
+      dit_coach: "Le groupe suffira.",
+      entente: "offre_refusee",
+      reaction: "Il fait avec. Les rounds ne ressemblent pas à ce qui l'attend.",
+    },
+    oui_mais: null,
+  },
 
   renegocier_part: {
     famille: "argent",
@@ -10409,7 +10459,7 @@ const FAMILLE_EGO = {
     titre: "Il veut être tête d'affiche",
     dit: "Je remplis autant qu'eux et je passe en ouverture. La prochaine, " +
          "c'est moi en dernier, ou alors explique-moi.",
-    probable: (f, ctx) => (ctx.notoriete || 0) >= 35 && f.mental.aggression >= 60,
+    probable: (f, ctx) => !ctx.combatPrevu && (ctx.notoriete || 0) >= 35 && f.mental.aggression >= 60,
     oui: {
       effet: "demander_main_event",
       dit_coach: "Tu iras le demander au matchmaker.",
@@ -10523,6 +10573,30 @@ const FAMILLE_AMATEUR = {
 };
 
 const FAMILLE_PERSONNEL = {
+
+  fight_week_calme: {
+    famille: "personnel",
+    titre: "Il veut une fight week sans micro",
+    dit: "Les interviews, les photos, les pronostics — ça me bouffe. " +
+         "Cette semaine je veux juste m'entraîner et me taire. Gère-les pour moi.",
+    /* Elle ne sort que si LA PRESSION EST REELLE — la jauge de fight week
+       (imageDe) qui ronge deja fight_iq et cardio le jour J. */
+    probable: (f, ctx) => !!ctx.combatPrevu
+      && (ctx.joursAvantCombat === undefined || ctx.joursAvantCombat <= 10)
+      && (ctx.pression || 0) >= 0.03,
+    oui: {
+      effet: "couper_presse",
+      dit_coach: "Tu prends les micros à sa place cette semaine.",
+      cout: "Sa notoriété n'en profitera pas — un combat sans bruit se vend moins.",
+      entente: "refus_accepte",
+    },
+    non: {
+      dit_coach: "Il fera la presse comme tout le monde.",
+      entente: "combat_trop_tot",
+      reaction: "Il répond aux questions. Les yeux sont déjà ailleurs.",
+    },
+    oui_mais: null,
+  },
 
   souci_familial: {
     famille: "personnel",
@@ -12850,6 +12924,19 @@ let publieAujourdhui=false;
 
 function bougerReputation(delta,raison,jour){
   const av=SALLE.reputation;
+  /* /!\ ELLE FREINE EN HAUT (Mael, 26/08 : "la repute monte trop vite,
+     a 2 ans des combattants UFC veulent signer chez moi"). Chaque
+     victoire pro rapportait son poids PLEIN quelle que soit la hauteur :
+     de 5 a 40 comme de 60 a 95, le meme prix. Or passer de "salle de
+     quartier" a "salle connue" et de "salle connue" a "salle mondiale",
+     ce n'est pas le meme chemin. Les GAINS retrecissent avec l'altitude ;
+     les PERTES restent pleines — une reputation se perd plus vite
+     qu'elle ne se gagne, comme en vrai.
+         < 40 : plein   · 40-60 : x0,7 · 60-75 : x0,45 · 75+ : x0,25 */
+  if(delta>0){
+    const r=SALLE.reputation;
+    delta*=r<40?1:r<60?0.7:r<75?0.45:0.25;
+  }
   SALLE.reputation=Math.max(0,Math.min(100,Math.round((SALLE.reputation+delta)*10)/10));
   if(SALLE.reputation!==av&&raison)
     depeche(jour!==undefined?jour:t.jour,SALLE.reputation>av?"hausse":"baisse",raison,
@@ -17305,7 +17392,7 @@ function proposerOffres(){
         const rv=MMA.endgame.rivalitesDe(rivalitesTable(),cle,t.jour)
           .find(r=>{const b=MONDE.pros.get(r.b);
             return b&&b.org===l.org&&b.division===l.division
-              &&t.jour-r.dernier>=45;});
+              &&t.jour-r.dernier>=(l.veutRevanche?10:45);});
         if(rv)cibleOffre=rv.b;
       }
     }catch(e){ console.error("revanche :",e); }
@@ -19527,13 +19614,16 @@ function demarcherOrga(cle,org){
   (l.demarchages=l.demarchages||[]).push({org,jour:t.jour});
   const avOrg=l.org;
   const r=MMA.contrats.demarcher(MONDE,l,org,t.jour);
-  if(r&&r.pris){
-    if(avOrg&&avOrg!==org)ecrireArticle("changeOrga",l,{ancien:(MMA.classement.ORGS[avOrg]||{}).nom||avOrg});
-    else ecrireArticle("signeOrga",l);
-    (SALLE.annee=SALLE.annee||{v:0,d:0,faits:[]}).faits.push(`${l.nom} signe chez ${(MMA.classement.ORGS[org]||{}).nom||org}`);
-  }
   if(!r.pris){ raconter(t.jour,[`📄 ${r.mot}`],false); toast(r.mot); ouvrirContrat(cle); return; }
   MMA.contrats.signer(MONDE,l,{org,bourse:r.bourse,combats:r.combats},t.jour);
+  /* /!\ L'ARTICLE S'ECRIT APRES LA SIGNATURE (Mael, 26/08 : "ca me dit
+     pas chez qui il signe"). Il partait AVANT contrats.signer : l.org
+     etait encore vide, orgNom retombait sur "le circuit" — le journal
+     annoncait une signature chez personne. L'ecran ne ment jamais, et le
+     journal non plus : on ecrit une fois le fait ACCOMPLI. */
+  if(avOrg&&avOrg!==org)ecrireArticle("changeOrga",l,{ancien:(MMA.classement.ORGS[avOrg]||{}).nom||avOrg});
+  else ecrireArticle("signeOrga",l);
+  (SALLE.annee=SALLE.annee||{v:0,d:0,faits:[]}).faits.push(`${l.nom} signe chez ${(MMA.classement.ORGS[org]||{}).nom||org}`);
   l.demarchages=[];
   raconter(t.jour,[`📄 ${r.mot}`],true);
   toast(r.mot);
@@ -19884,6 +19974,22 @@ function contexteDe(l){
       if(!cle)return null;
       const R=MMA.endgame.rivalitesDe(rivalitesTable(),cle,t.jour);
       return R.length?R[0].nomB:null;
+    }catch(e){return null;}})(),
+    /* /!\ LE CALENDRIER ENTRE AU CONTEXTE (Mael, 26/08 : "il me dit camp
+       court alors qu'il a deja une date") : une demande qui veut une date
+       doit SAVOIR s'il en a une. */
+    combatPrevu:!!l.combatPrevu,
+    joursAvantCombat:l.combatPrevu?l.combatPrevu.jourCombat-t.jour:undefined,
+    enCamp:!!l.camp,
+    pression:(function(){try{const c=Object.keys(MESGARS).find(k=>MESGARS[k]===l);
+      return c?imageDe(c).pression||0:0;}catch(e){return 0;}})(),
+    /* La revanche : une rivalite VIVANTE nee d'une DEFAITE (endgame). */
+    revanche:(function(){try{
+      const cle=Object.keys(MESGARS).find(k=>MESGARS[k]===l);
+      if(!cle)return null;
+      const R=MMA.endgame.rivalitesDe(rivalitesTable(),cle,t.jour)
+        .find(r=>r.causes.some(x=>["defaite","revanche","ceinture","vole"].includes(x.cause)));
+      return R?R.nomB:null;
     }catch(e){return null;}})()};
 }
 
@@ -19909,7 +20015,32 @@ function ouvrirDemande(cle){
 /* /!\ C'EST LUI QUI VIENT TE VOIR. Une demande se POSE — rarement, une
    par homme a la fois, et jamais deux fois la meme trop vite. Appele une
    fois par jour depuis synchroniserMonde(). */
+/* /!\ UNE DEMANDE EN COURS PEUT SE PERIMER (Mael, 26/08 : "les demandes
+   sont parfois obsoletes"). Elle a ete posee dans UN etat ; l'etat bouge.
+   Quand son objet disparait, l'homme la RANGE lui-meme — sans rancune,
+   sans reponse a donner : le monde a repondu a sa place. */
+function perimerDemandes(){
+  const VEUT_UNE_DATE=new Set(["enchainer","cet_adversaire","main_event",
+    "souffler","monter_categorie","veut_revanche"]);
+  for(const [cle,l] of Object.entries(MESGARS)){
+    const d=l.demandeEnCours; if(!d)continue;
+    let mot=null;
+    if(VEUT_UNE_DATE.has(d)&&l.combatPrevu)
+      mot=`◆ ${lienGars(cle)} range sa demande — il a sa date, le reste attendra.`;
+    else if((d==="partenaire_dedie"||d==="fight_week_calme")&&!l.combatPrevu)
+      mot=`◆ ${lienGars(cle)} n'en reparle pas — le combat est derrière.`;
+    else if(d==="refuser_celui_ci"&&!l.combatPrevu&&!OFFRES.some(o=>o.cle===cle))
+      mot=`◆ ${lienGars(cle)} laisse tomber — l'affiche dont il ne voulait pas n'existe plus.`;
+    if(mot){
+      (l.dejaDemande=l.dejaDemande||[]).push(d);
+      l.demandeEnCours=null;
+      raconter(t.jour,[mot],false);
+    }
+  }
+}
+
 function poserDemandes(){
+  perimerDemandes();
   if(!MONDE)return;
   /* /!\ UNE SEULE DEMANDE EN ATTENTE DANS TOUTE LA SALLE. Avec 38
      membres, meme espacees, elles arrivaient en paquet — d'ou le
@@ -20145,6 +20276,30 @@ function appliquerEffet(cle,effet){
     l.gameplan="frappe";
     out.push("Le plan change : on ira chercher le KO.");
     out.push("Contre un lutteur, ça se paiera cash.");
+    break;}
+
+  case "vouloir_revanche":{
+    /* Le matchmaker entend : le delai de la revanche (cas 128) tombe de
+       45 a 10 jours POUR LUI. Rien d'autre ne bouge — les conditions du
+       marche restent celles du moment. */
+    l.veutRevanche=true;
+    out.push("Le matchmaker est prévenu : la revanche passe devant.");
+    break;}
+
+  case "partenaire_dedie":{
+    if(!l.camp){out.push("Le camp est terminé — l'idée tombe avec.");break;}
+    if(argent<600){out.push("La caisse ne suit pas — il s'entraînera avec le groupe.");break;}
+    argent-=600;
+    l.camp.qualite=Math.round(Math.min(1.6,(l.camp.qualite||1)+0.12)*100)/100;
+    out.push("Un partenaire payé prend ses rounds jusqu'au combat — le camp rend plus.");
+    out.push("−600 € · le groupe s'entraîne sans lui.");
+    break;}
+
+  case "couper_presse":{
+    const im=imageDe(cle);
+    if(im.pression>0){im.pression=0;out.push("Tu prends les micros. Il souffle — la pression retombe.");}
+    else out.push("Il n'y avait pas grand-chose à couper — mais il apprécie le geste.");
+    im.notoriete=bornes(im.notoriete-2);
     break;}
 
   case "cible_adversaire":{
@@ -21676,8 +21831,18 @@ function proQuiFrappe(){
      roster, son echelle — seule sa PREPARATION change de maison. */
   const rep=SALLE.reputation;
   const maxN=(rep-40)*1.1, minN=Math.max(0,maxN*0.3);
+  /* /!\ LA PORTEE DE SON ORGANISATION AUSSI (Mael, 26/08 : "des
+     combattants UFC veulent deja signer chez moi") : la fenetre de
+     notoriete laissait passer un sous-carte des internationales — un
+     homme peu connu MAIS sous contrat AFC. Or c'est l'ORGA qui dit le
+     standing du telephone : un contracte GFL/AFC ne prepare pas ses
+     combats dans un garage repute 60. La porte s'ouvre orga par orga :
+         rep 55+ : nationales (portee <= 65)
+         rep 70+ : les europeennes    rep 90+ : les internationales */
+  const porteeMax=rep+10;
   const cands=[...MONDE.pros.values()].filter(p=>
     !p.salle&&!p.retraite&&p.org&&!p.champion
+    &&((MMA.classement.ORGS[p.org]||{}).portee||40)<=porteeMax
     &&p.age>=22&&p.age<=31
     &&(p.notoriete||0)>=minN&&(p.notoriete||0)<=maxN
     &&(p.bilan.v||0)>=3);

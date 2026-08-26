@@ -88,7 +88,7 @@ const FAMILLE_COMBAT = {
        permettre de viser la double ceinture". On ne demande pas a monter
        parce qu'on a gagne deux fois — on le demande quand on a fait le
        tour de sa categorie. */
-    probable: (f, ctx) => !!ctx.champion
+    probable: (f, ctx) => !ctx.combatPrevu && !!ctx.champion
       || (ctx.rang !== null && ctx.rang !== undefined && ctx.rang <= 3
           && (ctx.serie || 0) >= 3 && f.mental.aggression >= 62),
     oui: {
@@ -123,7 +123,7 @@ const FAMILLE_COMBAT = {
     titre: "Il veut un adversaire précis",
     dit: "Celui-là, ça fait deux ans qu'il raconte n'importe quoi sur moi. " +
          "Trouve-le-moi. Je m'en occupe.",
-    probable: (f, ctx) => f.mental.aggression >= 68 && !!ctx.rival,
+    probable: (f, ctx) => !ctx.combatPrevu && f.mental.aggression >= 68 && !!ctx.rival,
     oui: {
       effet: "cible_adversaire",
       dit_coach: "Tu vas voir le matchmaker pour lui décrocher ce combat-là.",
@@ -172,6 +172,29 @@ const FAMILLE_COMBAT = {
     oui_mais: null,   // on ne marchande pas ca : oui ou non.
   },
 
+  veut_revanche: {
+    famille: "combat",
+    titre: "Il veut sa revanche",
+    /* /!\ ELLE NE SORT QUE S'IL Y A UN VRAI COMPTE A REGLER : le contexte
+       porte ctx.revanche quand une rivalite VIVANTE nee d'une DEFAITE
+       existe (endgame.js) — jamais un caprice sorti d'un chapeau. */
+    dit: "Celui qui m'a battu — il dort tranquille et moi je me réveille " +
+         "avec son nom. Rends-le-moi. Je ne demande rien d'autre.",
+    probable: (f, ctx) => !ctx.combatPrevu && !!ctx.revanche,
+    oui: {
+      effet: "vouloir_revanche",
+      dit_coach: "Tu diras au matchmaker que ce combat-là passe devant.",
+      cout: "Le matchmaker entend — la revanche viendra plus vite, aux conditions du moment.",
+      entente: "affiche_voulue",
+    },
+    non: {
+      dit_coach: "Pas maintenant. La route d'abord, la vengeance ensuite.",
+      entente: "offre_refusee",
+      reaction: "Il ne discute pas. Mais le nom reste sur le mur de son vestiaire.",
+    },
+    oui_mais: null,   // une revanche ne se marchande pas : oui ou non.
+  },
+
   striker_pas_lutter: {
     famille: "combat",
     titre: "Il veut combattre debout",
@@ -213,7 +236,13 @@ const FAMILLE_CALENDRIER = {
     titre: "Il veut enchaîner",
     dit: "Je suis dedans, là. Trois mois à attendre et je repars de zéro. " +
          "Trouve-moi quelque chose vite, même pas énorme.",
-    probable: (f, ctx) => (ctx.derniers || []).slice(-1)[0] === "V"
+    /* /!\ PAS QUAND IL A DEJA SA DATE (Mael, 26/08 : "il me dit camp
+       court alors qu'il a deja un combat prevu"). Reclamer un combat
+       avec un combat au calendrier, c'est une demande perimee a la
+       naissance. Meme garde sur toutes les demandes qui VEULENT une
+       date : cet_adversaire, souffler, main_event, monter_categorie. */
+    probable: (f, ctx) => !ctx.combatPrevu
+      && (ctx.derniers || []).slice(-1)[0] === "V"
       && f.mental.aggression >= 58 && (ctx.fraicheur === undefined || ctx.fraicheur >= 0.85),
     oui: {
       effet: "chercher_vite",
@@ -242,7 +271,7 @@ const FAMILLE_CALENDRIER = {
          "Je reviens et je suis à toi.",
     // /!\ CELUI QUI DEMANDE CA A SOUVENT RAISON AUSSI : il sort d'un camp
     // ou il enchaine depuis longtemps. Refuser systematiquement casse.
-    probable: (f, ctx) => !ctx.amateur
+    probable: (f, ctx) => !ctx.amateur && !ctx.combatPrevu
       && ((ctx.fraicheur !== undefined && ctx.fraicheur < 0.8)
           || (ctx.moisSansPause !== undefined && ctx.moisSansPause >= 8)),
     oui: {
@@ -403,6 +432,27 @@ const FAMILLE_PREPARATION = {
 /* QU'IL LUI RESTE : bourse − frais de deplacement − ta part.          */
 /* ================================================================== */
 const FAMILLE_ARGENT = {
+
+  partenaire_dedie: {
+    famille: "preparation",
+    titre: "Il veut un partenaire dédié pour son camp",
+    dit: "Le groupe c'est bien, mais là j'ai besoin d'un gars payé pour " +
+         "prendre mes rounds, tous les jours, au rythme de l'autre. Ça se trouve.",
+    /* Elle n'a de sens QU'EN CAMP : c'est le contexte qui le dit. */
+    probable: (f, ctx) => !!ctx.combatPrevu && !!ctx.enCamp,
+    oui: {
+      effet: "partenaire_dedie",
+      dit_coach: "Tu paies un partenaire d'entraînement pour la fin du camp.",
+      cout: "600 € — et le reste du groupe s'entraîne sans lui.",
+      entente: "affiche_voulue",
+    },
+    non: {
+      dit_coach: "Le groupe suffira.",
+      entente: "offre_refusee",
+      reaction: "Il fait avec. Les rounds ne ressemblent pas à ce qui l'attend.",
+    },
+    oui_mais: null,
+  },
 
   renegocier_part: {
     famille: "argent",
@@ -619,7 +669,7 @@ const FAMILLE_EGO = {
     titre: "Il veut être tête d'affiche",
     dit: "Je remplis autant qu'eux et je passe en ouverture. La prochaine, " +
          "c'est moi en dernier, ou alors explique-moi.",
-    probable: (f, ctx) => (ctx.notoriete || 0) >= 35 && f.mental.aggression >= 60,
+    probable: (f, ctx) => !ctx.combatPrevu && (ctx.notoriete || 0) >= 35 && f.mental.aggression >= 60,
     oui: {
       effet: "demander_main_event",
       dit_coach: "Tu iras le demander au matchmaker.",
@@ -733,6 +783,30 @@ const FAMILLE_AMATEUR = {
 };
 
 const FAMILLE_PERSONNEL = {
+
+  fight_week_calme: {
+    famille: "personnel",
+    titre: "Il veut une fight week sans micro",
+    dit: "Les interviews, les photos, les pronostics — ça me bouffe. " +
+         "Cette semaine je veux juste m'entraîner et me taire. Gère-les pour moi.",
+    /* Elle ne sort que si LA PRESSION EST REELLE — la jauge de fight week
+       (imageDe) qui ronge deja fight_iq et cardio le jour J. */
+    probable: (f, ctx) => !!ctx.combatPrevu
+      && (ctx.joursAvantCombat === undefined || ctx.joursAvantCombat <= 10)
+      && (ctx.pression || 0) >= 0.03,
+    oui: {
+      effet: "couper_presse",
+      dit_coach: "Tu prends les micros à sa place cette semaine.",
+      cout: "Sa notoriété n'en profitera pas — un combat sans bruit se vend moins.",
+      entente: "refus_accepte",
+    },
+    non: {
+      dit_coach: "Il fera la presse comme tout le monde.",
+      entente: "combat_trop_tot",
+      reaction: "Il répond aux questions. Les yeux sont déjà ailleurs.",
+    },
+    oui_mais: null,
+  },
 
   souci_familial: {
     famille: "personnel",

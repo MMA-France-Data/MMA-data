@@ -316,9 +316,36 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
 {
   const P = ouvrirPartie({ mode: "neuf", graine: 7 });
   jouer(P, 300, 7);
+  /* /!\ LE CHEMIN, PAS LA CHANCE (26/08) : ce bloc comptait sur le
+     hasard du singe pour qu'une signature tombe en 300 jours — et CHAQUE
+     nouvelle mecanique decale le flux d'alea et le cassait. Si le singe
+     n'a signe personne, le banc demarche LUI-MEME : ce qu'on tient ici,
+     c'est que la porte S'OUVRE, pas que le singe a eu de la chance. */
+  P.lire(`(function(){let garde=0;
+    while(!Object.values(MESGARS).some(l=>!l.amateur&&!l.retraite&&l.org)&&garde++<60){
+      for(const [c,l] of Object.entries(MESGARS)){
+        if(l.amateur||l.retraite||l.org)continue;
+        if(!MMA.contrats.contratSalle(l))MMA.contrats.signerSalle(l,0.2,3,t.jour);
+        l.demarchages=[];
+        for(const o of Object.keys(MMA.classement.ORGS)){demarcherOrga(c,o);if(l.org)break;}
+      }}
+    return true;})()`);
   const org = P.lire('Object.entries(MESGARS).filter(([,l])=>!l.amateur&&!l.retraite&&l.org).map(([c,l])=>c+":"+l.org)');
   dit("un homme de la salle finit par signer en organisation", org.length > 0,
       org.slice(0, 4).join(" · ") || "personne sous contrat d'organisation");
+  /* Et il combat vraiment : on pousse les jours jusqu'au premier
+     resultat, offres acceptees en route. Bornage large — une offre met
+     ~2-6 semaines a venir, le combat 6 de plus. */
+  /* /!\ TIRAGE VARIE, PAS CONSTANT (paye une passe) : avec 0.4 fixe, le
+     blocage gala_maison retombait sur la meme option morte huit fois par
+     jour et le calendrier ne bougeait plus. */
+  let gCombat = 0, sC = 4242;
+  const alC = () => ((sC = (sC * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  while (P.lire("RESULTATS.length") === 0 && gCombat++ < 220) {
+    P.essai("continuer");
+    for (let k = 0; k < 8 && trancherBlocage(P, alC()); k++);
+    for (const cle of P.lire("OFFRES.map(o=>o.cle)")) P.essai("repondreOffre", cle, true);
+  }
   const combats = P.lire("RESULTATS.length");
   dit("et il combat vraiment chez elle", combats > 0, `${combats} combat(s) pro`);
 
@@ -618,6 +645,109 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       !!cau3 && cau3.aucunPietinage && cau3.juste === true);
 
   dit("aucune exception sur les trois mécaniques", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
+/* ==================================================================== */
+/* LES QUATRE RAPPORTS DE MAEL DU 26/08 AU SOIR                          */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 17 });
+  jouer(P, 40, 17);
+
+  /* 1. L'ARTICLE DE SIGNATURE NOMME L'ORGANISATION. */
+  const art = P.lire(`(function(){
+    const c=Object.keys(MESGARS).find(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite);
+    if(!c)return null;
+    const l=MESGARS[c]; l.org=null;l.rang=null;l.champion=false;l.demarchages=[];
+    MMA.contrats.signerSalle(l,0.2,3,t.jour);
+    for(let k=0;k<40&&!l.org;k++){l.demarchages=[];
+      for(const o of Object.keys(MMA.classement.ORGS)){demarcherOrga(c,o);if(l.org)break;}}
+    if(!l.org)return {raison:"aucune signature en 40 essais"};
+    const a=articlesDe().find(x=>x.type==="signeOrga"||x.type==="changeOrga");
+    return a?{titre:a.titre,nomme:a.titre.includes(MMA.classement.ORGS[l.org].nom)}
+            :{raison:"pas d'article"};
+  })()`);
+  dit("l'article de signature nomme l'organisation, pas « le circuit »",
+      !!art && art.nomme === true, art ? (art.titre || art.raison) : "");
+
+  /* 2. UNE DEMANDE QUI VEUT UNE DATE NE SORT PAS QUAND IL EN A UNE —
+     et si elle etait DEJA posee, elle se range toute seule. */
+  const dem = P.lire(`(function(){
+    const c=Object.keys(MESGARS).find(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite&&MESGARS[k].org);
+    if(!c)return null;
+    const l=MESGARS[c];
+    l.combatPrevu={jourCombat:t.jour+30,org:l.org,adversaire:1,trace:{nom:"X"}};
+    const f=MMA.salle.ficheDe(MONDE,l.id);
+    const sort=MMA.demandes.possibles(f,contexteDe(l)).map(d=>d.cle);
+    const interdits=["enchainer","cet_adversaire","souffler","main_event",
+      "monter_categorie","veut_revanche"].filter(k=>sort.includes(k));
+    l.demandeEnCours="enchainer";
+    perimerDemandes();
+    const rangee=l.demandeEnCours===null;
+    l.combatPrevu=null;
+    return {interdits,rangee};
+  })()`);
+  dit("avec une date au calendrier, aucune demande ne réclame un combat",
+      !!dem && dem.interdits.length === 0, dem ? (dem.interdits.join(",") || "les six sont muettes") : "");
+  dit("et la demande déjà posée se range d'elle-même quand la date tombe",
+      !!dem && dem.rangee === true, "« il a sa date, le reste attendra »");
+
+  /* 3. LES TROIS NOUVELLES DEMANDES ONT DES EFFETS REELS. */
+  const nv = P.lire(`(function(){
+    const c=Object.keys(MESGARS).find(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite);
+    const l=MESGARS[c]; const r={};
+    l.veutRevanche=false; appliquerEffet(c,"vouloir_revanche");
+    r.revanche=l.veutRevanche===true;
+    l.camp={qualite:1,axe:"striking"}; argent=5000;
+    appliquerEffet(c,"partenaire_dedie");
+    r.partenaire=l.camp.qualite>1&&argent===4400;
+    const im=imageDe(c); im.pression=0.08; const n0=im.notoriete;
+    appliquerEffet(c,"couper_presse");
+    r.presse=im.pression===0&&im.notoriete<n0;
+    l.camp=null; l.veutRevanche=false;
+    return r;
+  })()`);
+  dit("« vouloir la revanche » raccourcit vraiment l'attente du matchmaker", !!nv && nv.revanche);
+  dit("« un partenaire dédié » améliore le camp et coûte 600 €", !!nv && nv.partenaire);
+  dit("« couper la presse » vide la pression et se paie en notoriété", !!nv && nv.presse);
+
+  /* 4. LA REPUTATION FREINE EN HAUT, ET LE PRO QUI FRAPPE RESTE A SA
+     PORTE. */
+  const rep = P.lire(`(function(){
+    SALLE.reputation=20; bougerReputation(3,null); const bas=SALLE.reputation-20;
+    SALLE.reputation=80; bougerReputation(3,null); const haut=Math.round((SALLE.reputation-80)*100)/100;
+    SALLE.reputation=80; bougerReputation(-3,null); const perte=SALLE.reputation-80;
+    SALLE.reputation=20;
+    return {bas,haut,perte};
+  })()`);
+  dit("un même succès rapporte plein en bas, peu en haut",
+      !!rep && rep.bas === 3 && rep.haut <= 1 && rep.haut > 0,
+      rep ? `+${rep.bas} à 20 de réputation · +${rep.haut} à 80` : "");
+  dit("mais une perte reste pleine, quelle que soit la hauteur",
+      !!rep && rep.perte === -3, "une réputation se perd plus vite qu'elle ne se gagne");
+
+  const frappe = P.lire(`(function(){
+    SALLE.reputation=60;
+    const orgs=new Set();
+    for(let i=0;i<4000;i++){ bloque=null; proQuiFrappe();
+      if(bloque&&bloque.id==="frappe"){
+        /* pas de regex ici : la cuisson du gabarit mange les \/ — on
+           decoupe la chaine a la main. */
+        const t=String(bloque.texte), i=t.indexOf("chez");
+        if(i>=0){const a=t.indexOf("<b>",i), b=t.indexOf("</b>",a);
+          if(a>=0&&b>a)orgs.add(t.slice(a+3,b).trim());}
+        bloque=null; } }
+    SALLE.reputation=20; bloque=null;
+    const hautes=[...orgs].filter(n=>{const o=Object.values(MMA.classement.ORGS).find(x=>x.nom===n);
+      return o&&o.portee>70;});
+    return {vus:[...orgs],hautes};
+  })()`);
+  dit("à réputation 60, aucun contracté d'une grande organisation ne frappe",
+      !!frappe && frappe.hautes.length === 0 && frappe.vus.length > 0,
+      frappe ? (frappe.hautes.join(",") || frappe.vus.slice(0, 4).join(" · ")) : "");
+
+  dit("aucune exception sur les quatre rapports", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 

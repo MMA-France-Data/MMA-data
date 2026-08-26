@@ -12337,3 +12337,67 @@ ECARTES. Ne pas les reintroduire sans son accord.
 CE QUI ROUVRIRAIT LA QUESTION, grave d'avance : si en JOUANT une longue
 partie la frustration confirme (le mur vide et le local fige y sont
 lies), on ressort ces trois remedes — avec cette mesure comme temoin.
+
+===========================================================================
+QUATRE RAPPORTS DE MAEL DU 26/08 AU SOIR (« allez je go dormir, regle tout ca »)
+===========================================================================
+
+## CAS 132 — L'ARTICLE « IL SIGNE CHEZ LA SALLE » (corrige)
+L'article de signature partait AVANT contrats.signer : l.org etait encore
+vide, orgNom retombait sur « le circuit » — le journal annoncait une
+signature chez personne. L'article s'ecrit maintenant APRES la signature
+(« Okonkwo signe chez Hexagone FC »), et le changeOrga suit la meme regle.
+On ecrit une fois le fait ACCOMPLI — le journal ne ment jamais.
+
+## CAS 133 — LES DEMANDES OBSOLETES (corrige, deux etages)
+« Il me dit camp court alors qu'il a deja une date. » Deux trous :
+1. A LA NAISSANCE : les demandes qui VEULENT une date (enchainer,
+   cet_adversaire, souffler, main_event, monter_categorie) ne
+   regardaient pas le calendrier. ctx.combatPrevu, joursAvantCombat,
+   enCamp et pression ENTRENT AU CONTEXTE, et chacune se garde.
+2. EN COURS DE VIE : une demande posee dans UN etat survivait au
+   changement d'etat. perimerDemandes() (quotidien) : quand son objet
+   disparait, L'HOMME LA RANGE LUI-MEME — « il a sa date, le reste
+   attendra » — sans rancune, sans reponse a donner : le monde a repondu
+   a sa place. Sens inverse aussi : partenaire_dedie / fight_week_calme
+   se rangent quand le combat est derriere.
+/!\ PIEGE REPAYE, TROISIEME FOIS : demandes.js modifie SANS relancer le
+bundler — le banc verifiait l'ancien monde. LE BUNDLE NE SE REGENERE PAS
+TOUT SEUL (lecon du 09/08, gravee en tete de carnet, repayee quand meme).
+
+## CAS 134 — TROIS DEMANDES DE PLUS (« ameliore, rajoutes-en s'il faut »)
+27 demandes desormais. Les trois neuves, chacune avec un effet REEL :
+ - veut_revanche (combat) : ne sort QUE si une rivalite VIVANTE nee
+   d'une DEFAITE existe (ctx.revanche, endgame). OUI -> le delai de la
+   revanche du matchmaker (cas 128) tombe de 45 a 10 jours pour lui.
+   Ne se marchande pas.
+ - partenaire_dedie (preparation) : seulement EN CAMP. OUI -> 600 € et
+   camp.qualite +0,12 (le canal qui multiplie deja les gains). La caisse
+   vide = l'effet ne s'applique pas, et on le dit.
+ - fight_week_calme (personnel) : seulement si LA PRESSION EST REELLE
+   (imageDe >= 0.03, a J-10). OUI -> pression a zero, notoriete -2 :
+   un combat sans bruit se vend moins.
+
+## CAS 135 — LA REPUTATION MONTAIT TROP VITE (calibre)
+« A 2 ans, des combattants UFC veulent deja signer chez moi. » Deux
+moteurs, deux freins :
+1. LES GAINS RETRECISSENT AVEC L'ALTITUDE : chaque victoire pro rendait
+   son poids PLEIN de 5 a 95. Desormais < 40 plein · 40-60 x0,7 ·
+   60-75 x0,45 · 75+ x0,25. LES PERTES RESTENT PLEINES — une reputation
+   se perd plus vite qu'elle ne se gagne. Mesure au banc : +3 a 20 de
+   reputation, +0,8 a 80.
+2. LE PRO QUI FRAPPE RESTE A SA PORTE : la fenetre de notoriete laissait
+   passer un sous-carte des INTERNATIONALES (peu connu mais sous contrat
+   AFC). L'orga du telephone est bornee par la reputation :
+   portee <= reputation + 10 — rep 55+ : nationales · 70+ : europeennes ·
+   90+ : internationales. Mesure : a rep 60, 4 000 tirages, JAMAIS une
+   grande orga (Sokol et Trident seulement).
+
+## /!\ DEUX PIEGES DE BANC DE LA NUIT, consignes
+1. LE BLOC « METIER » COMPTAIT SUR LA CHANCE DU SINGE : chaque nouvelle
+   mecanique decale le flux d'alea et le cassait. Il FORCE desormais le
+   chemin (comme les blocs revanche et presse) : le banc tient que la
+   porte S'OUVRE, pas que le singe a eu de la chance.
+2. UN TIRAGE CONSTANT DANS trancherBlocage EST UN PIEGE : a 0,4 fixe, le
+   blocage gala_maison retombait sur la meme option morte huit fois par
+   jour — le calendrier fige, le banc accuse le jeu. Tirage varie.
