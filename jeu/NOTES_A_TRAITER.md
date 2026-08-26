@@ -12302,3 +12302,38 @@ regarde que le soir meme.
 JOUR MEME n'est pas un orphelin (le blocage tient jusqu'a l'encaissement,
 une course peut finir un soir de combat) — l'orphelin, c'est la carte
 d'HIER encore en attente.
+
+## LE PLAFOND DU GARAGE — MESURE, PUIS ARBITRE : C'EST VOULU (Mael, 26/08)
+LA QUESTION : l'economie plafonne (salle pleine au jour 180, caisse a
+zero, jamais les 2 850 € de la sortie du garage). Etait-ce le jeu, ou le
+pilote ? Le singe joue au hasard — il fallait un temoin qui joue BIEN.
+
+L'INSTRUMENT : js/pilote_eco.js — deux pilotes, memes graines. Le "bon"
+patron : forfait cale a ~95 % du prix accepte, materiel des que la caisse
+depasse le prix + 1 500 € de reserve, demenagement des que plein avec
+caution + 4 loyers devant lui.
+
+LA MESURE (graine 7, 1200 jours) :
+             naif                bon joueur
+  local      garage, toujours    garage, toujours
+  caisse     oscille -2 288..+1 319   oscille -3 424..+391
+  adherents  28/28 (plein, 390 €)     23-26/28 (forfait suit reco -> 830 €)
+  reputation 50                  60
+  objectifs  5/12                5/12 (les memes)
+  mur        vide                vide
+LE VERDICT DU METRE : MEME BIEN JOUE, ON NE SORT PAS DU GARAGE en 3 ans
+et demi. Monter les prix rapporte autant que remplir a bas prix (~11 k/an
+dans les deux cas — la capacite de 28 borne tout), le materiel s'achete
+mais la marche de 2 850 € (caution + entree) ne se franchit jamais. Et
+NOTABLE : les objectifs SPORTIFS tombent pareil des deux cotes — le sport
+ne depend pas de la gestion fine, l'economie est une contrainte de
+SURVIE, pas un moteur de croissance.
+
+L'ARBITRAGE DE MAEL : « C'EST VOULU, ON NE TOUCHE A RIEN. » Le garage
+doit faire mal ; la sortie passe par les bourses pro tardives, pas par
+les cotisations. Trois remedes etaient poses (caution etalee en 3 fois ·
+bourses qui remontent mieux · palier intermediaire de local) : TOUS
+ECARTES. Ne pas les reintroduire sans son accord.
+CE QUI ROUVRIRAIT LA QUESTION, grave d'avance : si en JOUANT une longue
+partie la frustration confirme (le mur vide et le local fige y sont
+lies), on ressort ces trois remedes — avec cette mesure comme temoin.
