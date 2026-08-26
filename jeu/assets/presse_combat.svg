@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240">
+  <defs><linearGradient id="pcb" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#0A0D12"/><stop offset="1" stop-color="#150A0B"/></linearGradient>
+  <linearGradient id="pray" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#E6EAF0" stop-opacity=".14"/><stop offset="1" stop-color="#E6EAF0" stop-opacity="0"/></linearGradient></defs>
+  <rect width="640" height="240" fill="url(#pcb)"/>
+  <polygon points="150,0 210,0 320,240 60,240" fill="url(#pray)"/>
+  <polygon points="430,0 490,0 580,240 320,240" fill="url(#pray)"/>
+  <ellipse cx="320" cy="216" rx="270" ry="42" fill="#D94F3D" opacity=".1"/>
+  <ellipse cx="320" cy="220" rx="215" ry="30" fill="none" stroke="#3A2A2C" stroke-width="2"/>
+  <line x1="60" y1="120" x2="580" y2="120" stroke="#C9A227" stroke-width="1.2" opacity=".5"/>
+</svg>

@@ -129,6 +129,44 @@ const DOSSIER = path.join(__dirname, "..", "assets");
     bloque=null;
     return !h.includes("data:image");})()`));
 
+  /* LES ARTICLES DE PRESSE. La table THEME_ARTICLE doit pointer vers des
+     visuels QUI EXISTENT — un theme fantome afficherait un article sans
+     image en silence, la pire classe de defaut du carnet. Et chaque TYPE
+     d'article ecrit par le jeu doit etre dans la table : un nouveau type
+     ajoute sans theme se verra ici, pas dans six mois. */
+  const themes = P.lire(`(function(){
+    const manquants=[], sansVisuel=[];
+    for(const [type,nom] of Object.entries(THEME_ARTICLE))
+      if(!asset(nom))sansVisuel.push(type+"->"+nom);
+    /* Les types que ecrireArticle sait ecrire, lus dans sa source. */
+    const src=String(ecrireArticle);
+    /* Le motif est SOUPLE expres (pas d'ancre de colonne) : une
+       re-indentation de ecrireArticle ne doit pas casser le banc. */
+    const types=[...src.matchAll(/([a-zA-Z]+):\\(\\)=>\\(\\{/g)].map(m=>m[1]);
+    for(const t of types)if(!THEME_ARTICLE[t])manquants.push(t);
+    return {sansVisuel,manquants,types:types.length};
+  })()`);
+  dit("chaque thème d'article pointe vers un visuel qui existe",
+      themes.sansVisuel.length === 0, themes.sansVisuel.join(", ") || `table saine`);
+  dit("chaque type d'article que le jeu sait écrire a son thème",
+      themes.manquants.length === 0 && themes.types >= 10,
+      themes.manquants.join(", ") || `${themes.types} types couverts`);
+
+  dit("un article ouvert porte son illustration", P.lire(`(function(){
+    articlesDe().unshift({jour:t.jour,type:"titre",sujet:null,
+      titre:"Essai",corps:"<p>x</p>",lu:false});
+    ouvrirArticle(0);
+    const h=document.getElementById("fiche").innerHTML;
+    articlesDe().shift();
+    return h.includes("data:image");})()`));
+  dit("et la liste des articles montre la vignette", P.lire(`(function(){
+    articlesDe().unshift({jour:t.jour,type:"serie",sujet:null,
+      titre:"Essai2",corps:"<p>x</p>",lu:false});
+    rendreMedia();
+    const h=document.getElementById("m-articles").innerHTML;
+    articlesDe().shift();
+    return h.includes("data:image");})()`));
+
   dit("aucune exception avec les visuels", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
@@ -149,6 +187,13 @@ const DOSSIER = path.join(__dirname, "..", "assets");
   const [orgasSans, accueilSans, combatSans] = h.split("|");
   dit("les organisations gardent leur monogramme même sans visuels",
       (orgasSans.match(/<img /g) || []).length >= 5, "le repli ne dépend pas d'assets.js");
+  dit("un article sans visuels s'ouvre comme avant, sans image ni casse",
+      P.lire(`(function(){
+        articlesDe().unshift({jour:1,type:"titre",sujet:null,titre:"E",corps:"<p>x</p>",lu:false});
+        ouvrirArticle(0);
+        const h=document.getElementById("fiche").innerHTML;
+        articlesDe().shift();
+        return !h.includes("data:image")&&h.includes("la presse régionale");})()`));
   dit("mais ni fond d'accueil ni affiche ne s'inventent",
       !accueilSans.includes("data:image") && !combatSans.includes("data:image"));
   dit("et aucun « undefined » à l'écran", !/undefined|>null</.test(h));

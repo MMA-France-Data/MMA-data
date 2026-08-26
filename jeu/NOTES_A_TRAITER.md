@@ -12136,3 +12136,32 @@ est inchange : effectif 38, Okonkwo, combat de Lyon.
 DANS LA VISIONNEUSE LA SAUVEGARDE RESTE IMPOSSIBLE (stockage bloque par
 la sandbox — cas 122 sexies) : on peut y JOUER, pas y VIVRE. Le telephone
 et le navigateur restent la maison du jeu.
+
+## CAS 127 — LES ILLUSTRATIONS DE LA PRESSE (Mael, 26/08)
+Demande : « tu peux m'ajouter des illustrations dans les articles média ? »
+QUATORZE TYPES D'ARTICLES, SIX THEMES — la table THEME_ARTICLE dit qui
+porte quoi :
+  presse_ceinture    titre · titrePerdu · titreRate · avantTitre
+  presse_classement  top15 · serie · doute
+  presse_signature   signeOrga · changeOrga
+  presse_salle       portraitSalle · portraitPatron · retro
+  presse_adieux      retraiteMaison
+  presse_combat      afficheOrdinaire
+/!\ L'ILLUSTRATION EST DU DECOR, JAMAIS DU CONTENU : noms, bilans, dates
+restent dans le texte. Une image figee qui porterait un nom mentirait des
+le deuxieme article — meme regle que l'affiche et la plaque.
+L'article ouvert porte sa banniere en tete ; la liste Media porte des
+vignettes (58x36). Un type sans theme ou un visuel manquant : l'article
+parait SANS image, comme avant — garde par le banc.
+BANC 31 etendu (4 assertions) : chaque theme pointe vers un visuel QUI
+EXISTE · chaque type que ecrireArticle sait ecrire A un theme (les types
+sont lus dans SA source — un nouveau type sans theme se verra au banc,
+pas dans six mois ; motif souple, sans ancre de colonne, pour survivre a
+une re-indentation) · l'article ouvert et la liste montrent l'image · et
+sans assets.js, l'article s'ouvre comme avant.
+/!\ CANVA : QUOTA DE GENERATION ATTEINT (les 9 designs du cas 125). Les
+six bannieres Canva restent A GENERER quand le quota reviendra — meme
+contrat que le reste : presse_ceinture.png (etc.) depose dans assets/,
+840 px de large, SANS TEXTE, et gen_assets fait le reste. Les SVG de
+secours (ceinture doree, gants au clou, podium, contrat, salle, projecteurs)
+tiennent l'ecran d'ici la — 16 Ko au total pour les 14 visuels du jeu.

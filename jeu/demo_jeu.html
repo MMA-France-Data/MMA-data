@@ -5696,11 +5696,37 @@ function fermerScene(){
   SCENE=[]; rendre();
 }
 
+/* ==== L'ILLUSTRATION D'UN ARTICLE (26/08) ================================
+   Quatorze types d'articles, six THEMES d'illustration — la table dit qui
+   porte quoi. /!\ L'ILLUSTRATION EST DU DECOR, JAMAIS DU CONTENU : les
+   noms, bilans et dates restent dans le texte (une image figee qui
+   porterait un nom mentirait des le deuxieme article). Un type absent de
+   la table, ou un visuel manquant : l'article parait SANS image — comme
+   avant, et c'est garde par le banc 31. Les six presse_*.svg de assets/
+   sont les secours ; les designs Canva les remplacent par depot de
+   fichier, comme tous les autres. */
+const THEME_ARTICLE={
+  titre:"presse_ceinture", titrePerdu:"presse_ceinture",
+  titreRate:"presse_ceinture", avantTitre:"presse_ceinture",
+  top15:"presse_classement", serie:"presse_classement", doute:"presse_classement",
+  signeOrga:"presse_signature", changeOrga:"presse_signature",
+  portraitSalle:"presse_salle", portraitPatron:"presse_salle", retro:"presse_salle",
+  retraiteMaison:"presse_adieux",
+  afficheOrdinaire:"presse_combat",
+};
+function illuArticle(type){
+  const nom=THEME_ARTICLE[type]; if(!nom)return null;
+  return asset(nom);
+}
+
 function ouvrirArticle(ix){
   const a=articlesDe()[ix]; if(!a)return;
   a.lu=true;
   const JR=Math.ceil(a.jour/7);
-  $("fiche").innerHTML=`<div class="f-tete"><div>
+  const illu=illuArticle(a.type);
+  $("fiche").innerHTML=`${illu?`<img src="${illu}" alt="" style="width:calc(100% + 36px);
+      margin:-18px -18px 14px;display:block;border-radius:14px 14px 0 0">`:""}
+    <div class="f-tete"><div>
       <div class="f-nom" style="font-size:17px;line-height:1.3">${a.titre}</div>
       <div class="f-sous">semaine ${JR} · la presse régionale</div></div></div>
     <div style="line-height:1.55;font-size:14px">${a.corps}</div>`;
@@ -5710,9 +5736,12 @@ function ouvrirArticle(ix){
 function rendreMedia(){
   const arts=articlesDe();
   $("m-articles").innerHTML=arts.length
-    ?arts.slice(0,12).map((a,ix)=>`<div class="g-ligne cliquable" onclick="ouvrirArticle(${ix})">
-      <div class="l">${a.lu?"":"<span style='color:var(--or)'>●</span> "}📰 ${a.titre}
-        <div class="sous">semaine ${Math.ceil(a.jour/7)}</div></div></div>`).join("")
+    ?arts.slice(0,12).map((a,ix)=>{const v=illuArticle(a.type);
+      return `<div class="g-ligne cliquable" onclick="ouvrirArticle(${ix})" style="align-items:center">
+      ${v?`<img src="${v}" alt="" style="width:58px;height:36px;object-fit:cover;
+        border-radius:7px;flex:none;margin-right:2px">`:""}
+      <div class="l">${a.lu?"":"<span style='color:var(--or)'>●</span> "}${v?"":"📰 "}${a.titre}
+        <div class="sous">semaine ${Math.ceil(a.jour/7)}</div></div></div>`;}).join("")
     :`<div class="g-ligne"><div class="l"><div class="sous">Rien encore — la presse attend un jalon : un classement, une série, une ceinture.</div></div></div>`;
   const ICO={combat:"🥊",hausse:"📈",baisse:"📉",post:"📱",pub:"📣",event:"🎪",arrivee:"👥"};
   $("m-etat").innerHTML=
