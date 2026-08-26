@@ -20794,7 +20794,7 @@ function ouvrirAccueil(){
     <button class="g-btn" style="width:100%;margin-top:8px;opacity:0.8" onclick="reprendreAncienne()">
       ↩ Reprendre l'ancienne partie (coffre de secours)</button>
     ${B("Partie démo","La partie scriptée : Okonkwo, Kanté, le combat de Lyon.","choisirMode('demo')")}
-    ${aSauve?`<button onclick="if(confirm('Effacer définitivement la sauvegarde ?')){try{localStorage.removeItem(CLE_SAUVE);localStorage.removeItem(CLE_SAUVE+'_jour');}catch(e){}coffreEffacer();setTimeout(ouvrirAccueil,120);}"
+    ${aSauve?`<button onclick="confirmerEffacement()"
       style="text-align:left;padding:11px 16px;border-radius:13px;border:1px solid var(--bord);cursor:pointer;
       background:none;color:var(--doux);font:inherit;font-size:13px">Effacer la sauvegarde</button>`:""}`;
 }
@@ -20808,20 +20808,66 @@ function choisirMode(m){
      2. une confirmation FORTE, qui dit quoi perdre et comment sauver. */
   if(m!=="reprendre"){
     coffreLire().then(s=>{
-      if(s){
-        let det="";
-        try{const o=JSON.parse(s);det=` (jour ${o.jour||"?"}, ${Math.round(s.length/1024)} Ko)`;}catch(e){}
-        if(!confirm("⚠ Une partie existe déjà"+det+".\n\nDémarrer une nouvelle partie la remplacera."
-          +"\nElle sera gardée en secours, mais UNE SEULE fois : un deuxième démarrage l'écraserait aussi."
-          +"\n\nContinuer ?"))return;
-        coffreEcrireSecours(s).then(()=>{location.hash="#"+m;location.reload();});
-        return;
-      }
+      /* /!\ PLUS JAMAIS confirm() ICI (Mael, 26/08 : "les boutons de
+         l'accueil ne marchent plus"). Des qu'une partie existait, le
+         demarrage passait par un confirm() NATIF — et une visionneuse ou
+         un WebView Android qui le bloque repond "non" EN SILENCE : le
+         bouton avait l'air mort, sans une erreur nulle part. C'est le
+         cas 121 quinquies ("LE CLIC REPOND TOUJOURS") sous une autre
+         peau : un dialogue natif est un pari sur l'hote. La confirmation
+         se rend DANS LA PAGE — memes mots, memes garanties. */
+      if(s){confirmerNouvellePartie(m,s);return;}
       location.hash="#"+m;location.reload();
     });
     return;
   }
   location.hash="#"+m; location.reload();
+}
+
+/** La confirmation d'ecrasement, rendue dans l'accueil — aucun dialogue
+ *  natif. La partie sortante part au coffre de secours AVANT le reload,
+ *  exactement comme avant (cas 122 : on n'ecrase pas une vie). */
+function confirmerNouvellePartie(m,s){
+  const z=document.getElementById("accueil");
+  if(!z){ /* pas d'accueil a l'ecran : on n'ecrase rien sans accord. */
+    ouvrirAccueil(); return; }
+  let det="";
+  try{const o=JSON.parse(decompresserSauvegarde(s));
+      det=` — jour ${o.jour!=null?o.jour:"?"}`;}catch(e){}
+  z.innerHTML=`<div style="font-size:22px;font-weight:800">⚠ Une partie existe déjà${det}.</div>
+    <div class="f-sous" style="line-height:1.55;margin-bottom:10px">Démarrer une
+      ${m==="demo"?"partie démo":"nouvelle partie"} la remplacera. Elle sera gardée
+      en secours, mais <b>une seule fois</b> : un deuxième démarrage écraserait
+      aussi le secours.</div>
+    <button onclick="lancerNouvellePartie('${m}')" style="text-align:left;padding:15px 16px;
+      border-radius:13px;border:1px solid var(--accent);cursor:pointer;
+      background:var(--accent);color:#fff;font:inherit">
+      <div style="font-size:16px;font-weight:700">Garder l'ancienne en secours, et démarrer</div></button>
+    <button onclick="ouvrirAccueil()" style="text-align:left;padding:15px 16px;
+      border-radius:13px;border:1px solid var(--bord);cursor:pointer;
+      background:var(--carte);color:var(--texte);font:inherit">
+      <div style="font-size:16px;font-weight:700">Annuler — je garde ma partie</div></button>`;
+}
+/** Effacer la sauvegarde : la confirmation aussi se rend dans la page. */
+function confirmerEffacement(){
+  const z=document.getElementById("accueil"); if(!z)return;
+  z.innerHTML=`<div style="font-size:22px;font-weight:800">Effacer définitivement ?</div>
+    <div class="f-sous" style="margin-bottom:10px">La sauvegarde et son secours seront perdus. Il n'y a pas de retour.</div>
+    <button onclick="try{localStorage.removeItem(CLE_SAUVE);localStorage.removeItem(CLE_SAUVE+'_jour');}catch(e){};coffreEffacer();setTimeout(ouvrirAccueil,120);"
+      style="text-align:left;padding:15px 16px;border-radius:13px;border:1px solid var(--accent);cursor:pointer;background:var(--accent);color:#fff;font:inherit">
+      <div style="font-size:16px;font-weight:700">Oui, tout effacer</div></button>
+    <button onclick="ouvrirAccueil()" style="text-align:left;padding:15px 16px;border-radius:13px;
+      border:1px solid var(--bord);cursor:pointer;background:var(--carte);color:var(--texte);font:inherit">
+      <div style="font-size:16px;font-weight:700">Annuler</div></button>`;
+}
+function lancerNouvellePartie(m){
+  coffreLire().then(s=>{
+    const partir=()=>{location.hash="#"+m;location.reload();};
+    if(!s)return partir();
+    /* Meme si le coffre de secours refuse d'ecrire, le choix du joueur
+       est fait : on part quand meme — il a lu ce qu'il perdait. */
+    coffreEcrireSecours(s).then(partir).catch(partir);
+  });
 }
 function coffreEcrireSecours(texte){
   return ouvrirCoffre().then(db=>new Promise(res=>{

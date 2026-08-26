@@ -428,6 +428,53 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* L'ACCUEIL REPOND MEME CHEZ UN HOTE HOSTILE                            */
+/* /!\ NE DU 26/08 (Mael : "les boutons de l'accueil ne marchent plus") : */
+/* des qu'une partie existait, demarrer passait par un confirm() NATIF — */
+/* et l'hote qui le bloque (visionneuse, WebView) repond "non" en        */
+/* silence. Ici confirm() est EMPOISONNE : y toucher fait echouer le     */
+/* banc. Le clic doit repondre sans lui. (cas 121 quinquies)             */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "choix", graine: 2 });
+  P.lire(`(function(){
+    confirm=function(){throw new Error("confirm() natif appelé — l'hôte hostile l'avale");};
+    prompt=confirm; alert=function(){};
+    location._recharges=0; location.reload=function(){location._recharges++;};
+    return true;})()`);
+
+  const panneau = P.lire(`(function(){
+    ouvrirAccueil();
+    confirmerNouvellePartie("neuf", JSON.stringify({v:1,jour:42}));
+    return document.getElementById("accueil").innerHTML;})()`);
+  dit("la confirmation d'écrasement se rend dans la page, sans confirm()",
+      panneau.includes("jour 42") && panneau.includes("secours")
+      && panneau.includes("lancerNouvellePartie") && panneau.includes("ouvrirAccueil()"),
+      "les deux issues sont des boutons de la page");
+
+  dit("« Annuler » ramène l'accueil entier",
+      P.lire(`(function(){ouvrirAccueil();
+        return document.getElementById("accueil").innerHTML.includes("choisirMode");})()`));
+
+  /* /!\ DEUX EVALUATIONS, PAS UNE : lancerNouvellePartie passe par une
+     promesse (coffreLire), et le bac ne vide ses microtaches QU'ENTRE
+     deux evaluations (microtaskMode). Lire le resultat dans la meme
+     evaluation voyait toujours zero — le banc accusait le jeu. */
+  P.lire(`(lancerNouvellePartie("neuf"), true)`);
+  dit("démarrer recharge vraiment la page sur le bon mode",
+      P.lire(`location._recharges>=1&&location.hash==="#neuf"`),
+      "hash posé + reload appelé");
+
+  dit("l'effacement aussi se confirme dans la page",
+      P.lire(`(function(){ouvrirAccueil();confirmerEffacement();
+        const h=document.getElementById("accueil").innerHTML;
+        return h.includes("Oui, tout effacer")&&h.includes("Annuler");})()`));
+
+  dit("et pas une exception — confirm() empoisonné n'a jamais été touché",
+      P.erreurs.length === 0, [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

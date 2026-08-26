@@ -12071,3 +12071,29 @@ et TOUT TIENT SANS assets.js (monogrammes compris, zero exception).
 Tailles d'export conseillees (le plafond fait loi) : logos 256 px,
 accueil 840 px de large (JPG), affiche 840 px (JPG), plaque 640 px.
 /!\ affiche et plaque doivent rester SANS TEXTE : le jeu ecrit dessus.
+
+## CAS 126 — « LES BOUTONS DE L'ACCUEIL NE MARCHENT PLUS » (Mael, 26/08)
+LE SYMPTOME EST APPARU SANS CHANGEMENT DE CODE SUR CES BOUTONS — et c'est
+le piege : des qu'une partie EXISTE, demarrer (Nouvelle partie / Demo)
+passait par la garde du cas 122... qui posait un confirm() NATIF. Un hote
+qui bloque les dialogues (visionneuse de fichiers, certains WebViews
+Android) repond « non » EN SILENCE : le clic a l'air mort, aucune erreur
+nulle part. Mael n'avait rien vu avant parce qu'il n'avait PAS de
+sauvegarde — le chemin ne s'ouvrait pas.
+Reproduit au banc Chromium avec les dialogues avales (Playwright
+dismiss) : 1 confirm() emis, rien ne se passe, hash inchange.
+LE REMEDE, cas 121 quinquies applique jusqu'au bout (« LE CLIC REPOND
+TOUJOURS ») : PLUS AUCUN DIALOGUE NATIF DANS LE JEU.
+ - confirmerNouvellePartie(m,s) : la confirmation d'ecrasement se rend
+   DANS l'accueil — memes mots, memes garanties (copie de secours AVANT
+   le reload). « Annuler » rend l'accueil entier.
+ - confirmerEffacement() : idem pour « Effacer la sauvegarde ».
+ - Meme si l'ecriture du secours echoue, le choix du joueur est fait :
+   on part quand meme — il a lu ce qu'il perdait.
+Banc 27, bloc « hote hostile » : confirm() y est EMPOISONNE (y toucher
+fait echouer le banc), et les deux confirmations doivent repondre sans
+lui. Verifie aussi bout en bout dans Chromium reel, dialogues avales :
+0 dialogue natif, panneau en page, secours ecrit, partie neuve lancee.
+/!\ PIEGE DE BANC consigne : le bac ne vide ses microtaches QU'ENTRE deux
+evaluations — lire le resultat d'une promesse dans la MEME evaluation
+voit toujours zero, et le banc accuse le jeu.
