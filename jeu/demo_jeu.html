@@ -1676,6 +1676,95 @@ function resumeFrappes(r){
    boucle sans fin. Un verrou doit TOUJOURS avoir une clef : on peut
    simuler le combat d'un coup. Le moteur joue les rounds restants, le
    resultat est le meme, seule l'animation est sautee. */
+/* ==== LA CAUSERIE D'AVANT-COMBAT (chantier du 26/08) =====================
+   Le dernier mot au vestiaire, UNE fois par combat. Meme regle que le
+   ressenti (cas 104) : TOUT SORT DU MOTEUR ET DES JAUGES REELLES — la
+   pression de la fight week (imageDe), la fraicheur, le dernier resultat.
+   LE BON DISCOURS DEPEND DE SON ETAT, et se deduit, jamais ne se tire :
+     sous pression        -> le calmer   (on lui rend ce que la pression a pris)
+     froid, vient de perdre -> l'allumer (il monte dense au premier round)
+     bien                 -> recadrer le plan (il monte lucide)
+   Un mauvais discours COUTE — allumer un homme qui deborde le fait
+   deborder plus. Les effets passent par les canaux EXISTANTS : les stats
+   du combattant deja construit (comme la pression le fait a
+   preparerCombat) et coin.plan, le canal legal du premier round. Le
+   moteur n'apprend rien de neuf. */
+function ouvrirCauserie(){
+  const r=COMBAT1; if(!r||r.moteur.fini)return;
+  if(r.causerie){toast("La causerie est faite. Maintenant, ça se passe dans la cage.");return;}
+  const cle=r.a, l=MESGARS[cle]||{};
+  const im=imageDe(cle), ef=EFFECTIF.find(x=>x.id===cle);
+  const fr=ef?Math.round(fraicheurDe(ef)):100;
+  const dern=(l.vie&&l.vie.derniers||[]).slice(-1)[0]||null;
+  const etat=[];
+  if(im.pression>=0.04)etat.push("Il tourne en rond depuis ce matin. Il parle trop, il regarde sa bande trop de fois.");
+  else if(im.pression>=0.02)etat.push("Un peu de nerfs — le niveau normal d'un soir de combat.");
+  else etat.push("Il est posé. Presque trop calme.");
+  etat.push(fr>=85?"Le corps est frais.":fr>=60?"Le corps est correct, sans plus.":"Le corps est entamé — le camp a coûté.");
+  if(dern==="D")etat.push("Sa dernière sortie s'est mal finie. Il y pense, même s'il n'en parle pas.");
+  else if(dern==="V")etat.push("Il reste sur une victoire.");
+  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">Le vestiaire</div>
+      <div class="f-sous">dix minutes avant la marche — tu as droit à UN discours</div>
+      <button class="f-fermer" onclick="fermerFiche()">Plus tard</button></div>
+    ${etat.map(x=>`<div class="f-statut" style="margin-top:8px">${x}</div>`).join("")}
+    <div class="f-actions" style="margin-top:14px;flex-direction:column;align-items:stretch">
+      <button onclick="direCauserie('calmer')">« Respire. C'est un combat comme les autres. »
+        <div class="f-sous">le calmer</div></button>
+      <button onclick="direCauserie('allumer')">« Ce soir tu vas le chercher dès la première seconde. »
+        <div class="f-sous">l'allumer</div></button>
+      <button onclick="direCauserie('plan')">« On récite. Rien d'autre que ce qu'on a préparé. »
+        <div class="f-sous">recadrer le plan</div></button>
+    </div>`;
+  $("voile").classList.add("ouvert");
+}
+
+function direCauserie(ton){
+  const r=COMBAT1; if(!r||r.causerie||r.moteur.fini)return;
+  const cle=r.a, l=MESGARS[cle]||{};
+  const im=imageDe(cle), fa=r.fa;
+  const dern=(l.vie&&l.vie.derniers||[]).slice(-1)[0]||null;
+  const besoin=im.pression>=0.04?"calmer":(dern==="D"||im.pression<0.015)?"allumer":"plan";
+  const juste=ton===besoin;
+  /* L'allure du premier round passe par coin.plan — et ne PIETINE JAMAIS
+     un plan d'allure pose par le joueur : sa decision prime. */
+  const poserAllure=(v)=>{
+    if(l.plan&&l.plan.allure)return;
+    try{ r.moteur.plan("f1",{allure:v}); }catch(e){}
+  };
+  let mot;
+  if(ton==="calmer"){
+    if(juste){
+      /* On lui rend LA MOITIE de ce que la pression a pris (preparerCombat
+         a deja applique le retrait — la causerie repare, elle ne dope pas). */
+      fa.mental.fight_iq=Math.round(fa.mental.fight_iq*(1+im.pression*0.5));
+      fa.physical.cardio=Math.round(fa.physical.cardio*(1+im.pression*0.35));
+      mot="Les épaules redescendent. Il t'écoute jusqu'au bout, il hoche la tête. Tu l'as récupéré.";
+    }else{
+      poserAllure(0.92);
+      mot="Il n'avait pas besoin de ça. Il monte trop calme — le premier round partira doucement.";
+    }
+  }else if(ton==="allumer"){
+    if(juste){
+      poserAllure(1.12);
+      fa.mental.fight_iq=Math.round(fa.mental.fight_iq+1);
+      mot="Les yeux changent. Il tape dans ses gants. Le premier round sera dense.";
+    }else{
+      fa.mental.fight_iq=Math.round(fa.mental.fight_iq*0.96);
+      mot="Il débordait déjà — tu viens de rajouter du bois. Il monte en surchauffe.";
+    }
+  }else{
+    if(juste){
+      fa.mental.fight_iq=Math.round(fa.mental.fight_iq+3);
+      mot="Il récite le plan avec toi, geste par geste. Il monte lucide.";
+    }else{
+      mot="Les mots glissent. Ce soir, ce n'est pas le plan qui lui manque.";
+    }
+  }
+  r.causerie={ton,juste};
+  raconter(t.jour,[`🗣 <b>La causerie.</b> ${mot}`],juste);
+  fermerFiche(); rendre();
+}
+
 function simulerCombat(){
   if(!COMBAT1)return;
   try{
@@ -2534,6 +2623,21 @@ function jouerJournee(jour,echeances){
     if(e.donnees.id&&e.donnees.id.indexOf("combat_")===0){
       const d=e.donnees, l=MESGARS[d.cle];
       if(!l){continue;}
+      /* /!\ ON NE TIENT PAS DEUX COINS LE MEME SOIR (attrape par le banc
+         27, 26/08) : deux combats tombes le meme jour — possible depuis
+         toujours, frequent depuis l'appel de derniere minute — faisaient
+         que le SECOND ecrasait COMBAT1 et le blocage du premier. Sa carte
+         restait « en attente » a vie : l'orphelin du cas 20, par un
+         chemin neuf. Le second combat se REPORTE a demain, et on le dit. */
+      /* /!\ LE GARDE NE REGARDE QUE LE SOIR MEME. Sa premiere version
+         regardait aussi un vieux COMBAT1 jamais encaisse — et reportait
+         le duel du jour 194 A L'INFINI (mesure au banc). Un etat ancien
+         n'est pas une collision. */
+      if(bloque&&bloque.id==="combat"){
+        t.poser(jour+1,"combat",d);
+        cr.evenements.push(`📆 Deux combats le même soir — celui de ${lienGars(d.cle)} est décalé à demain.`);
+        continue;
+      }
       COMBAT1=preparerCombat(d.a,d.b,d.rounds,d.graine);
       /* /!\ L'OFFRE VOYAGE SUR LE COMBAT (10/08). Avant, combatsDuJour
          vidait combatPrevu AVANT le combat : a l'encaissement,
@@ -2788,7 +2892,32 @@ function totaux7(jc){
 }
 
 /* ==== etat UI ==== */
-let bloque=null,dernierCR=null,ongletActif="salle";
+/* ==== LE BLOCAGE NE S'ECRASE PLUS (attrape par le banc 27, 26/08) =======
+   Quinze endroits posent `bloque = {...}` et AUCUN ne regardait s'il en
+   ecrasait un. Mesure, graine 7 : le soir de combat de Girard (jour 149)
+   a ete mange par un autre evenement du meme jour — carte « en attente »
+   a vie, l'orphelin du cas 20 par un chemin neuf. Plutot que de blinder
+   quinze poseurs (on en oublierait un seizieme), `bloque` devient une
+   PROPRIETE : le soir de combat est INECRASABLE, tout autre evenement qui
+   arrive pendant fait la queue et se presente des que le combat est
+   solde. La file est transitoire, comme le blocage lui-meme — elle ne se
+   sauvegarde pas, et un rechargement la vide (comportement d'avant). */
+let _bloqueReel=null;
+const FILE_BLOQUE=[];
+Object.defineProperty(globalThis,"bloque",{
+  get(){ return _bloqueReel; },
+  set(v){
+    if(v&&_bloqueReel&&_bloqueReel.id==="combat"&&v.id!=="combat"){
+      FILE_BLOQUE.push(v); return;               /* le combat d'abord */
+    }
+    if(v&&v.id==="combat"&&_bloqueReel&&_bloqueReel.id!=="combat"){
+      FILE_BLOQUE.unshift(_bloqueReel);          /* rien ne se perd non plus */
+    }
+    _bloqueReel=v;
+    if(!v&&FILE_BLOQUE.length)_bloqueReel=FILE_BLOQUE.shift();
+  },
+});
+let dernierCR=null,ongletActif="salle";
 let filtreGr="tous",tri="prog";
 let vm,va,selCal=null;
 const $=id=>document.getElementById(id);
@@ -2961,6 +3090,8 @@ function rendreSalle(){
       ? `<div class="attend" style="${fondAff?`background:linear-gradient(rgba(18,21,26,.55),rgba(18,21,26,.82)),url('${fondAff}') center/cover no-repeat;`:""}"><div class="qui">🥊 ${texte(bloque.titre)}</div>
          <div class="quoi">${texte(bloque.texte)}</div>
          <div class="choix"><button class="oui" onclick="agirBloque()">${bloque.action}</button>
+         ${bloque.id==="combat"&&COMBAT1&&!COMBAT1.causerie&&!COMBAT1.moteur.fini
+           ?`<button onclick="ouvrirCauserie()" style="border-color:var(--or);color:var(--or)">🗣 Causerie</button>`:""}
          ${bloque.id==="combat"?`<button onclick="simulerCombat()">⏭ Simuler</button>`:""}</div></div>`
       : `<div class="attend"><div class="qui">⏳ ${texte(bloque.qui)}</div>
          <div class="quoi">${texte(bloque.quoi)}</div>
@@ -5212,6 +5343,44 @@ function quotaDemandes(){
   return demandesCetteAnnee < DEMANDES_PAR_AN;
 }
 
+/* ==== L'APPEL DE DERNIERE MINUTE (chantier du 26/08) =====================
+   Un adversaire se blesse, le matchmaker decroche son telephone : combat
+   dans 8 a 12 jours, bourse majoree de moitie, reponse sous 48 h. LE PRIX
+   EST NATUREL, pas un malus invente : a J-10 il n'y a pas de camp qui
+   tienne — la preparation courte EST le cout, le moteur n'est pas touche.
+   Rare (l'ordre d'un appel tous les ~2 ans par homme), jamais deux fois
+   de suite (l.dernierAppel), et jamais a un homme deja affiche, blesse,
+   en camp ou indisponible. */
+function appelDeDerniereMinute(){
+  for(const [cle,l] of Object.entries(MESGARS)){
+    if(l.amateur||l.retraite||!l.org)continue;
+    if(l.combatPrevu||l.camp||l.renego)continue;
+    if(t.jour<(l.vie&&l.vie.dispo||0))continue;
+    if(l.vie&&l.vie.restants<=0)continue;
+    if(l.blessure&&!l.blessure.soignee&&t.jour<l.blessure.jusqua)continue;
+    if(OFFRES.some(o=>o.cle===cle))continue;
+    if(l.dernierAppel!==undefined&&t.jour-l.dernierAppel<240)continue;
+    if(alea()>=0.0035)continue;                       /* ~1/285 par jour eligible */
+    let o=null;
+    try{ o=MMA.offres.fabriquer(MONDE,RELATION,l,l.org,t.jour,
+      t.jour+8+Math.trunc(alea()*5),{refusInternes:REFUS_INTERNES}); }
+    catch(e){ console.error("appel :",e); }
+    if(!o)continue;
+    o.cle=cle; o.nomGars=l.nom;
+    o.remplacement=true;
+    o.bourse=Math.round(o.bourse*1.5);
+    o.expire=t.jour+2;                                 /* reponse sous 48 h */
+    o.avertissement="Remplacement au pied levé — préavis court, bourse majorée de moitié. "
+      +"Pas le temps d'un vrai camp.";
+    l.dernierAppel=t.jour;
+    OFFRES.push(o);
+    raconter(t.jour,[`📞 <b>L'appel de dernière minute.</b> ${o.org} a perdu un combattant : `
+      +`${lienGars(cle)} c. ${lienMonde(o.adversaire,o.trace.nom)} dans <b>${o.jourCombat-t.jour} jours</b>, `
+      +`bourse majorée. Réponse sous 48 h.`],true);
+    return;                                            /* un seul appel a la fois */
+  }
+}
+
 function proposerOffres(){
   completerRelation();
   OFFRES=OFFRES.filter(o=>{
@@ -5240,8 +5409,32 @@ function proposerOffres(){
     const attente=30+(fav.durete||0)*9;
     if(l.derniereOffre!==undefined&&t.jour-l.derniereOffre<attente)continue;
     if((t.jour+Math.abs(l.id)*7)%18!==0)continue;
+    /* ==== LA REVANCHE (chantier du 26/08) ==============================
+       Une rivalite VIVANTE (endgame.js) pousse le matchmaker a proposer
+       LA revanche — par la porte cible EXISTANTE, qui respecte deja la
+       regle de Mael (« aucune revanche immediate » : advPrec est refuse,
+       il faut un combat entre les deux). La cible du JOUEUR passe
+       d'abord : c'est lui le patron. Le rallumage de la bourse et le mot
+       de la rivalite sont deja branches plus bas — ici on ne fait que
+       VISER. */
+    let cibleOffre=cibleId();
     try{
-      const o=MMA.offres.fabriquer(MONDE,RELATION,l,l.org,t.jour,t.jour+42,{cible:cibleId(),refusInternes:REFUS_INTERNES});
+      if(cibleOffre==null){
+        /* /!\ LE SEUIL EST vivante(), PAS UN CHIFFRE A MOI (attrape au
+           banc) : a 45 de chaleur exigee, une ceinture volee (40, qui
+           refroidit) n'avait JAMAIS sa revanche. rivalitesDe ne rend deja
+           que les vivantes — une defaite seule refroidit sous le seuil
+           avant les 45 jours de delai, et c'est voulu : une simple
+           defaite ne fait pas une affiche de revanche. */
+        const rv=MMA.endgame.rivalitesDe(rivalitesTable(),cle,t.jour)
+          .find(r=>{const b=MONDE.pros.get(r.b);
+            return b&&b.org===l.org&&b.division===l.division
+              &&t.jour-r.dernier>=45;});
+        if(rv)cibleOffre=rv.b;
+      }
+    }catch(e){ console.error("revanche :",e); }
+    try{
+      const o=MMA.offres.fabriquer(MONDE,RELATION,l,l.org,t.jour,t.jour+42,{cible:cibleOffre,refusInternes:REFUS_INTERNES});
       if(!o)continue;
       o.cle=cle; o.nomGars=l.nom;
       l.derniereOffre=t.jour;
@@ -5259,7 +5452,10 @@ function proposerOffres(){
         }
       }catch(e){ console.error("rivalite/offre :",e); }
       OFFRES.push(o);
-      raconter(t.jour,[`✉ ${l.org} propose un combat à ${lienGars(cle)}.`
+      const estRevanche=o.rivalite&&cibleOffre===o.adversaire&&cibleOffre!==cibleId();
+      raconter(t.jour,[estRevanche
+        ?`💥 <b>LA REVANCHE.</b> ${l.org} propose ${lienGars(cle)} c. ${lienMonde(o.adversaire,o.trace.nom)} — ${o.rivalite}`
+        :`✉ ${l.org} propose un combat à ${lienGars(cle)}.`
         +(o.rivalite?` — <b>${o.rivalite}</b>`:"")],true);
     }catch(e){}
   }
@@ -5927,6 +6123,7 @@ function continuer(){
   if(t.jour%7===0)vieDuStaff();
   if(!bloque)interviewFightWeek();
   if(!bloque&&t.jour%7===3)proQuiFrappe();
+  if(!bloque)appelDeDerniereMinute();
   /* /!\ SIGNALE PAR MAEL EN JOUANT : le bouton du jour de combat affichait
      "Combat !" mais ne faisait que DEFILER vers la zone d'attente. Sur
      telephone, on ne voit meme pas qu'on a bouge — le combat semblait

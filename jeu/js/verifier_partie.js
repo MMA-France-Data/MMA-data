@@ -128,10 +128,18 @@ function coherence(P) {
   if (new Set(ids).size !== ids.length) pb.push("un id en double dans l'effectif");
   const sansFiche = P.lire("EFFECTIF.filter(f=>!FICHES[f.id]).map(f=>f.id)");
   if (sansFiche.length) pb.push(`homme sans fiche : ${sansFiche.join(", ")}`);
-  const attente = P.lire("RESULTATS.filter(r=>r.enAttente).length");
-  if (attente) pb.push(`${attente} carte(s) restée(s) en attente`);
-  const orphelins = P.lire('Object.entries(MESGARS).filter(([,l])=>l.combatPrevu&&l.combatPrevu.jourCombat<t.jour-2).length');
-  if (orphelins) pb.push(`${orphelins} combat(s) orphelin(s)`);
+  /* /!\ UNE CARTE D'AUJOURD'HUI PEUT ATTENDRE : le blocage du soir tient
+     jusqu'a l'encaissement (cas 20), et une course qui s'arrete PILE un
+     soir de combat finit legitimement dessus — l'appel de derniere minute
+     a rendu ce cas frequent en fin de banc. L'orphelin, c'est la carte
+     d'HIER encore en attente : le jeu est passe au-dela. */
+  const attente = P.lire(`JSON.stringify(RESULTATS.filter(r=>r.enAttente&&r.quand<t.jour)
+    .map(r=>({q:r.quand,g:r.graine,a:String(r.affiche).replace(/<[^>]+>/g,"").slice(0,30)})))`);
+  if (attente !== "[]") pb.push(`cartes passées en attente ${attente} (jour ${P.lire("t.jour")})`);
+  const orphelins = P.lire(`JSON.stringify(Object.entries(MESGARS)
+    .filter(([,l])=>l.combatPrevu&&l.combatPrevu.jourCombat<t.jour-2)
+    .map(([c,l])=>({c,jc:l.combatPrevu.jourCombat,org:l.combatPrevu.org,rempl:!!l.combatPrevu.remplacement})))`);
+  if (orphelins !== "[]") pb.push(`combats orphelins ${orphelins}`);
   const retraitesActifs = P.lire('EFFECTIF.filter(f=>MESGARS[f.id]&&MESGARS[f.id].retraite).length');
   if (retraitesActifs) pb.push(`${retraitesActifs} retraité(s) encore à l'effectif`);
   return pb;
@@ -504,6 +512,113 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
 
   dit("et pas une exception — confirm() empoisonné n'a jamais été touché",
       P.erreurs.length === 0, [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
+/* ==================================================================== */
+/* LA REVANCHE, L'APPEL, LA CAUSERIE (chantiers du 26/08)                */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 31 });
+  jouer(P, 60, 31);
+
+  /* LA REVANCHE : une rivalite chaude, un rival du meme roster, un delai
+     respecte — le matchmaker doit viser CE nom-la, et la bourse monter. */
+  const rev = P.lire(`(function(){
+    const e=Object.entries(MESGARS).find(([,l])=>!l.amateur&&!l.retraite&&l.org);
+    if(!e)return null;
+    const [cle,l]=e;
+    const rival=[...MONDE.pros.values()].find(x=>x.org===l.org
+      &&x.division===l.division&&x.id!==l.id&&!x.salle);
+    if(!rival)return {raison:"aucun rival possible"};
+    rival.vie=rival.vie||{}; rival.vie.dispo=0;
+    MMA.endgame.nourrir(rivalitesTable(),cle,rival.id,"ceinture",t.jour-50,rival.nom);
+    l.combatPrevu=null;l.camp=null;delete l.renego;
+    l.vie.dispo=0;l.vie.restants=3;l.derniereOffre=undefined;
+    if(l.vie)l.vie.advPrec=null;
+    OFFRES.length=0;CIBLE=null;
+    /* On force la fenetre de frequence du matchmaker : le banc teste la
+       VISEE, pas le calendrier. */
+    let o=null;
+    for(let j=0;j<40&&!OFFRES.length;j++){t.avancer(1);proposerOffres();}
+    o=OFFRES[0]||null;
+    return o?{adv:o.adversaire,rival:rival.id,bourseUp:!!o.rivalite}
+            :{raison:"aucune offre en 40 jours"};
+  })()`);
+  dit("le matchmaker propose la revanche au rival encore chaud",
+      !!rev && rev.adv === rev.rival, rev ? (rev.raison || `adversaire ${rev.adv} = rival`) : "pas de pro");
+  dit("et la rivalité se paie sur la bourse de cette offre",
+      !!rev && rev.bourseUp === true);
+
+  /* L'APPEL DE DERNIERE MINUTE : conditions reunies, on force le tirage
+     en appelant tous les jours — l'offre doit etre courte, majoree, et
+     expirer sous 48 h. */
+  const appel = P.lire(`(function(){
+    OFFRES.length=0;
+    const e=Object.entries(MESGARS).find(([,l])=>!l.amateur&&!l.retraite&&l.org);
+    if(!e)return null;
+    const [cle,l]=e;
+    l.combatPrevu=null;l.camp=null;delete l.renego;l.vie.dispo=0;l.vie.restants=3;
+    delete l.dernierAppel; l.blessure=null;
+    let garde=0;
+    while(!OFFRES.length&&garde++<4000){appelDeDerniereMinute();}
+    const o=OFFRES[0];
+    return o?{court:o.jourCombat-t.jour, expire:o.expire-t.jour,
+              remplacement:!!o.remplacement, avert:!!o.avertissement}:null;
+  })()`);
+  dit("l'appel de dernière minute finit par sonner", !!appel,
+      appel ? `combat à J+${appel.court}` : "jamais en 4000 tirages");
+  dit("préavis court, réponse sous 48 h, et c'est écrit sur l'offre",
+      !!appel && appel.court <= 12 && appel.expire <= 2
+      && appel.remplacement && appel.avert);
+
+  /* LA CAUSERIE : une par combat, le bon discours repare, le mauvais
+     coute — et l'allure du premier round passe par coin.plan sans
+     pietiner un plan du joueur. */
+  const cau = P.lire(`(function(){
+    COMBAT1=preparerCombat("Okonkwo","Renaud",3,77);
+    const im=imageDe("Okonkwo"); im.pression=0.08;
+    const avant=COMBAT1.fa.mental.fight_iq;
+    ouvrirCauserie();
+    const panneau=document.getElementById("fiche").innerHTML;
+    direCauserie("calmer");
+    const apres=COMBAT1.fa.mental.fight_iq;
+    const deuxieme=(function(){const n=COMBAT1.fa.mental.fight_iq;
+      direCauserie("allumer");return COMBAT1.fa.mental.fight_iq===n;})();
+    return {panneau:panneau.includes("calmer")&&panneau.includes("allumer")&&panneau.includes("plan"),
+            tourne:panneau.includes("tourne en rond"),
+            repare:apres>avant, une:deuxieme, juste:COMBAT1.causerie.juste};
+  })()`);
+  dit("la causerie lit son état réel et offre les trois discours",
+      !!cau && cau.panneau && cau.tourne, "il tourne en rond — la pression se voit");
+  dit("calmer un homme sous pression lui rend une part de ses moyens",
+      !!cau && cau.repare && cau.juste === true);
+  dit("une causerie par combat, pas deux", !!cau && cau.une === true);
+
+  const cau2 = P.lire(`(function(){
+    COMBAT1=preparerCombat("Okonkwo","Renaud",3,78);
+    imageDe("Okonkwo").pression=0.08;
+    const avant=COMBAT1.fa.mental.fight_iq;
+    direCauserie("allumer");
+    return {coute:COMBAT1.fa.mental.fight_iq<avant, juste:COMBAT1.causerie.juste};
+  })()`);
+  dit("allumer un homme qui déborde déjà se paie",
+      !!cau2 && cau2.coute && cau2.juste === false);
+
+  const cau3 = P.lire(`(function(){
+    COMBAT1=preparerCombat("Okonkwo","Renaud",3,79);
+    const l=MESGARS["Okonkwo"]; if(l){l.plan=l.plan||{};l.plan.allure=1.3;}
+    imageDe("Okonkwo").pression=0;
+    if(l&&l.vie)l.vie.derniers=["D"];
+    direCauserie("allumer");
+    const traces=COMBAT1.moteur.consignes.filter(c=>c.plan&&c.allure!==undefined);
+    if(l)delete l.plan;
+    return {aucunPietinage:traces.length===0, juste:COMBAT1.causerie.juste};
+  })()`);
+  dit("la causerie ne piétine jamais un plan d'allure posé par le joueur",
+      !!cau3 && cau3.aucunPietinage && cau3.juste === true);
+
+  dit("aucune exception sur les trois mécaniques", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
 console.log(echecs === 0

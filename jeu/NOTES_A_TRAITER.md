@@ -12165,3 +12165,140 @@ contrat que le reste : presse_ceinture.png (etc.) depose dans assets/,
 840 px de large, SANS TEXTE, et gen_assets fait le reste. Les SVG de
 secours (ceinture doree, gants au clou, podium, contrat, salle, projecteurs)
 tiennent l'ecran d'ici la — 16 Ko au total pour les 14 visuels du jeu.
+
+===========================================================================
+SEANCE DU 26/08 (suite) — TROIS CONTENUS DEMANDES PAR MAEL
+(« une idée pour ajouter du contenu ? des interactions ou autre » — les
+trois retenus par lui : la revanche + l'appel, la causerie, le vestiaire)
+===========================================================================
+
+## CAS 128 — LA REVANCHE PROPOSEE PAR LE MATCHMAKER (fait)
+La piece etait en place (endgame.js : chaleur, bourse, presse) mais RIEN
+NE L'ALIMENTAIT — une rivalite vivante en dix ans de mesure, car le
+matchmaker ne re-proposait jamais un ancien adversaire.
+CE QUI EST CODE : dans proposerOffres, quand le joueur n'a PAS de cible,
+le matchmaker regarde les rivalites VIVANTES de l'homme (rivalitesDe) et
+VISE le rival — par la porte cible EXISTANTE de choisirAdversaire, qui
+respecte deja la regle de Mael (« aucune revanche immediate » : advPrec
+refuse, il faut un combat entre les deux). Conditions : meme orga, meme
+division, 45 jours depuis le dernier fait. La bourse majoree et le mot de
+la rivalite etaient deja branches — l'offre s'annonce « 💥 LA REVANCHE ».
+/!\ LE SEUIL EST vivante(), PAS UN CHIFFRE A MOI (attrape au banc) : a 45
+de chaleur exigee, une ceinture volee (40, qui refroidit) n'avait JAMAIS
+sa revanche. Et une defaite seule (30) refroidit sous vivante() avant les
+45 jours de delai : PAS d'affiche de revanche pour une simple defaite —
+voulu, et assume ici.
+/!\ LA CIBLE DU JOUEUR PRIME : s'il a cible un adversaire, le matchmaker
+ne lui substitue pas sa dramaturgie.
+
+## CAS 129 — L'APPEL DE DERNIERE MINUTE (fait)
+Un adversaire se blesse, le matchmaker decroche : combat dans 8 a 12
+jours, bourse +50 %, REPONSE SOUS 48 H (l'offre expire a J+2 — et une
+offre expiree compte deja comme un refus).
+/!\ LE PRIX EST NATUREL, PAS UN MALUS INVENTE : a J-10 il n'y a pas de
+camp qui tienne — la preparation courte EST le cout. Le moteur n'est pas
+touche. L'offre passe par offres.fabriquer (adversaire, trace, place —
+tout le reel), puis : bourse x1,5, expire 48 h, avertissement ecrit sur
+la bulle.
+Rare et borne : ~1/285 par jour et par homme eligible (l'ordre d'un appel
+tous les 2 ans), 240 jours mini entre deux appels au meme homme
+(l.dernierAppel), jamais a un homme affiche/blesse/en camp/indisponible,
+UN SEUL appel a la fois dans la salle.
+
+## CAS 130 — LA CAUSERIE D'AVANT-COMBAT (fait)
+Le dernier mot au vestiaire, UNE fois par combat, bouton « 🗣 Causerie »
+sur la carte du soir. MEME REGLE QUE LE RESSENTI (cas 104) : tout sort
+des jauges reelles — la pression de la fight week (imageDe), la
+fraicheur, le dernier resultat. L'ecran DECRIT (« il tourne en rond, il
+parle trop »), il ne chiffre pas.
+LE BON DISCOURS SE DEDUIT DE SON ETAT :
+    sous pression (>=0.04)        -> LE CALMER
+    froid ou vient de perdre      -> L'ALLUMER
+    bien                          -> RECADRER LE PLAN
+LES EFFETS PASSENT PAR LES CANAUX EXISTANTS, le moteur n'apprend rien :
+ - calmer (juste) : on lui rend LA MOITIE de ce que la pression a pris
+   (fight_iq, cardio) — la causerie REPARE, elle ne dope pas ;
+ - allumer (juste) : allure 1,12 au premier round via coin.plan — le
+   canal legal du R1 — et +1 de lucidite ;
+ - recadrer (juste) : +3 fight_iq, il monte lucide ;
+ - ET LE MAUVAIS DISCOURS COUTE : allumer un homme qui deborde -> -4 %
+   fight_iq (« tu viens de rajouter du bois ») ; calmer un homme froid ->
+   allure 0,92 au R1 (« il monte trop calme ») ; recadrer un homme sous
+   pression -> rien (« les mots glissent »), et le recit le dit.
+/!\ LA CAUSERIE NE PIETINE JAMAIS UN PLAN D'ALLURE POSE PAR LE JOUEUR :
+sa decision prime (verifie au banc).
+Bancs : les trois discours offerts, l'etat visible, le juste repare, le
+faux coute, une seule causerie, le plan du joueur intouche.
+
+## CHANTIER N — LE VESTIAIRE VIVANT (CONCEPTION SEULE — ARBITRAGES REQUIS)
+/!\ RIEN N'EST CODE. Mael a choisi « conception d'abord » : voici le
+dessin, et LES QUESTIONS A TRANCHER AVANT UNE LIGNE DE CODE.
+
+LE PRINCIPE (la regle fondatrice appliquee aux liens entre TES hommes) :
+UN LIEN EST UN RESIDU DES FAITS, jamais une jauge cliquable. Il vit en
+PAIRES (cle A, cle B, valeur, faits[]) dans SALLE.liens — une seule
+source, il voyage dans la sauvegarde comme le reste de SALLE.
+
+CE QUI CONSTRUIT UN LIEN (tout existe deja dans le jeu, rien a inventer) :
+ - le sparring regulier ensemble (memes seances, meme groupe) — lentement ;
+ - le duel interne (cas 72/73) : selon l'issue ET la maniere — un combat
+   propre fait le respect, une demolition fait le froid ;
+ - etre dans le coin de l'autre (cas « au_coin » du staff, a etendre) ;
+ - l'anciennete partagee (arrives la meme annee).
+CE QUI RONGE :
+ - le passage pro de l'un quand l'autre attend (jalousie — aggression
+   haute et bilan comparable) ;
+ - l'ecart de bourse dans le meme vestiaire (l'argent se sait) ;
+ - le poulain d'un coach (cas 83) : les autres du groupe regardent ;
+ - le depart d'un homme lie (debauchage, retraite) laisse un trou.
+LES CONSEQUENCES (toutes reelles, mesurables au banc) :
+ - une paire liee s'entraine mieux ENSEMBLE (bonus de sparring quand les
+   deux sont a la meme seance) ;
+ - un froid REFUSE le sparring ensemble (la seance perd un des deux) ;
+ - les demandes existantes se branchent sur le REEL : « son pote au
+   coin » designe le VRAI pote, « moins de monde » vise le VRAI froid ;
+ - LE LEADER DE VESTIAIRE (anciennete + entente + resultats) : tant
+   qu'il est la, un petit plus de moral/fraicheur du groupe ; s'il part,
+   le vestiaire vacille — et ca se raconte.
+
+LES QUESTIONS POUR MAEL (une reponse chacune, puis on code) :
+ 1. VISIBILITE : en mots seulement, jamais de chiffre (comme l'entente) —
+    mais OU ? Sur la fiche de l'homme ? Par les interpellations du coach
+    (« ces deux-la, mets-les ensemble ») ? Les deux ?
+ 2. LE LEADER : il EMERGE des faits, ou le joueur le NOMME (capitaine de
+    salle) ? L'emergence est plus dans l'esprit du jeu, mais nommer est
+    une decision de coach.
+ 3. LA FORME : des paires seulement, ou des CLANS (3+) ? Les paires sont
+    mesurables et bornees ; les clans racontent plus mais divergent vite.
+ 4. LE DUEL INTERNE : gagner « trop fort » contre un coequipier doit-il
+    abimer le lien meme si le combat etait accepte des deux cotes ?
+ 5. LE PLAFOND : combien de liens VIVANTS a la fois dans une salle de 100
+    (les onze demandes en attente du 09/08 guettent) ?
+
+## CAS 131 — LE SOIR DE COMBAT MANGE PAR UN AUTRE EVENEMENT (banc 27, 26/08)
+LE VRAI TRESOR DE LA SEANCE, trouve en codant l'appel de derniere minute.
+Mesure, graine 7 : le soir de combat de Girard (jour 149) — carte posee,
+blocage pose — a ete ECRASE par un autre evenement du meme jour. QUINZE
+endroits posent `bloque = {...}` et AUCUN ne regardait s'il en ecrasait
+un : visite, retraite, vie de la salle, cafe, interview... Sa carte est
+restee « en attente » a vie — l'orphelin du cas 20, par un chemin neuf.
+Le defaut existait DEPUIS TOUJOURS ; l'appel de derniere minute a juste
+densifie le calendrier assez pour que le banc le voie.
+LE REMEDE EST SYSTEMIQUE, pas quinze rustines (on oublierait la
+seizieme) : `bloque` devient une PROPRIETE ACCESSEUR —
+ - un blocage de COMBAT est INECRASABLE : tout autre evenement qui
+   arrive pendant fait la queue (FILE_BLOQUE) et se presente des que le
+   combat est solde ;
+ - et l'inverse ne perd rien non plus : un combat qui arrive sur un
+   blocage ordinaire remet celui-ci en tete de file.
+La file est transitoire comme le blocage lui-meme (pas sauvegardee).
+/!\ DEUX COMBATS LE MEME SOIR : le second se REPORTE a demain (« on ne
+tient pas deux coins le meme soir »), et le fil le dit.
+/!\ PIEGE DE MON PROPRE GARDE, consigne : sa premiere version regardait
+aussi « un vieux COMBAT1 jamais encaisse » — et reportait le duel du
+jour 194 A L'INFINI. Un etat ancien n'est pas une collision : le garde ne
+regarde que le soir meme.
+/!\ ET L'INVARIANT DU BANC S'EST AFFINE : une carte « en attente » du
+JOUR MEME n'est pas un orphelin (le blocage tient jusqu'a l'encaissement,
+une course peut finir un soir de combat) — l'orphelin, c'est la carte
+d'HIER encore en attente.
