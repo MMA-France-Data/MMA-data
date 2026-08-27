@@ -532,6 +532,23 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
         [...new Set(D.erreurs)].slice(0, 3).join(" | "));
   }
 
+  /* /!\ L'EXPORT NON PLUS N'A PLUS DE CUL-DE-SAC (Mael, 27/08 : "je vois
+     jamais le code, seulement le bouton copier et ca me met impossible") :
+     presse-papier EMPOISONNE + execCommand mort -> le clic DOIT finir sur
+     la zone de copie manuelle, morceau 1 affiché. */
+  dit("copier avec un presse-papier mort finit sur la zone à copier",
+      P.lire(`(function(){
+        document.execCommand=function(){throw new Error("sandbox");};
+        navigator.clipboard={writeText:function(){throw new Error("sandbox");}};
+        try{ demarrerEnPlace("demo"); }catch(e){}
+        copierSauvegarde();
+        const h=document.getElementById("fiche").innerHTML;
+        return h.includes("morceau 1/")&&h.includes("zone-copie");})()`),
+      "aucun échec ne mange plus la sauvegarde");
+  dit("et le bouton « à la main » existe sur l'écran d'export",
+      P.lire(`(function(){exporterSauvegarde();
+        return document.getElementById("fiche").innerHTML.includes("je copie à la main");})()`));
+
   dit("l'effacement aussi se confirme dans la page",
       P.lire(`(function(){ouvrirAccueil();confirmerEffacement();
         const h=document.getElementById("accueil").innerHTML;

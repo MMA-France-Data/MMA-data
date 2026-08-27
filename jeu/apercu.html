@@ -20988,8 +20988,10 @@ function exporterSauvegarde(){
       ⬇ Télécharger le fichier de sauvegarde</button>
     <button class="cc-voir" style="width:100%;margin-bottom:10px" onclick="copierSauvegarde()">
       📋 Copier au presse-papier</button>
-    <button class="cc-voir" style="width:100%" onclick="partagerSauvegarde()">
+    <button class="cc-voir" style="width:100%;margin-bottom:10px" onclick="partagerSauvegarde()">
       📤 Partager (la feuille Android)</button>
+    <button class="cc-voir" style="width:100%" onclick="copieManuelle('MMALZ1|'+lzC(JSON.stringify(etatDuJeu())))">
+      ✍ Afficher le texte, je copie à la main</button>
     <div class="f-sous" style="margin:10px 0">Le fichier se range et se partage ;
       la copie se colle dans « Importer » sur un autre appareil.</div>`;
   $("voile").classList.add("ouvert");
@@ -21054,9 +21056,21 @@ function copierSauvegarde(){
      (download, file picker, clipboard). execCommand('copy') sur un
      textarea temporaire marche partout JUSTEMENT parce qu'il est vieux
      — c'est la voie WebView. Le clipboard moderne n'est que le repli. */
+  /* /!\ AUCUN CUL-DE-SAC (Mael, 27/08, dans la visionneuse : "ca me met
+     impossible", et il ne voit JAMAIS la zone a copier). L'ancienne forme
+     finissait sur un toast d'echec : une exception n'importe ou dans le
+     chemin — et la visionneuse peut jeter DES L'ACCES a
+     navigator.clipboard — ne montrait jamais le repli manuel. La regle du
+     cas 121 quinquies vaut ici aussi : TOUT echec finit sur la zone a
+     copier a la main. Le seul vrai cul-de-sac restant est une sauvegarde
+     qui ne se SERIALISE pas — et la, on le dit. */
+  let sTexte=null;
   try{
     const brut=JSON.stringify(etatDuJeu());
-    const s="MMALZ1|"+lzC(brut);
+    sTexte="MMALZ1|"+lzC(brut);
+  }catch(e){ toast("La partie ne se laisse pas exporter ("+e.message+")."); return; }
+  const s=sTexte;
+  try{
     const z=document.createElement("textarea");
     z.value=s; z.style.cssText="position:fixed;top:-9999px;left:0;opacity:0";
     document.body.appendChild(z);
@@ -21073,7 +21087,7 @@ function copierSauvegarde(){
       return;
     }
     copieManuelle(s);
-  }catch(e){ toast("Copie impossible ("+e.message+") — ouvre l'aperçu dans Chrome."); }
+  }catch(e){ copieManuelle(s); }
 }
 /* /!\ LA FEUILLE DE PARTAGE (Mael, 22/08, apres l'echec de TOUTES les
    copies) : navigator.share passe par l'INTENT ANDROID — la visionneuse

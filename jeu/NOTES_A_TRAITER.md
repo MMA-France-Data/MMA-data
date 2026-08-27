@@ -12438,3 +12438,18 @@ LES BANCS QUI MANQUAIENT, ajoutes au 27 :
 non reproduit. La classe du defaut est fermee et tenue au banc ; SI CA SE
 REPRODUIT sur v161+, il faut LA SAUVEGARDE (Gestion -> Exporter) pour
 disséquer le combat exact.
+
+## CAS 137 — L'EXPORT SANS CUL-DE-SAC (Mael, 27/08, dans la visionneuse)
+« Je ne vois jamais le code, seulement le bouton copier, et ca me met
+impossible. » Le chemin de copie avait UN cul-de-sac : une exception
+n'importe ou (et la visionneuse peut jeter DES L'ACCES a
+navigator.clipboard) finissait sur un toast d'echec — jamais sur la zone
+de copie manuelle. Sa partie etait prisonniere de la sandbox.
+LE REMEDE, cas 121 quinquies encore : TOUT echec de copie finit sur la
+zone a copier a la main (les morceaux de 80 Ko). Le seul vrai cul-de-sac
+restant est une sauvegarde qui ne se SERIALISE pas — et la, on le dit.
+ET UN BOUTON DIRECT « ✍ Afficher le texte, je copie a la main » sur
+l'ecran d'export : on ne force plus l'utilisateur a traverser des chemins
+qui echouent pour atteindre celui qui marche.
+Banc : presse-papier EMPOISONNE + execCommand mort -> le clic DOIT finir
+sur « morceau 1/N ». Verifie aussi en Chromium sandbox+blob reel.
