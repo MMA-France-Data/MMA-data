@@ -14412,10 +14412,90 @@ function remonterDansLeMonde(r){
   l.combatPrevu=null;
 }
 
+/* ==== L'AUTOPSIE DU COMBAT (cas 136 bis, 27/08) =========================
+   La capture de Mael ("je perds mais c'est marque que je domine") n'a pas
+   pu etre disséquée : sa partie vit dans une visionneuse d'ou la
+   sauvegarde ne sort pas, et le chat tronque les morceaux. LE JEU FAIT
+   DONC SA PROPRE AUTOPSIE : a l'encaissement, on croise la feuille (ce
+   que l'ecran affiche) avec les bilans du log (ce que le moteur a
+   compte). Le rapport est MINUSCULE — il se colle en un seul message —
+   et si les deux divergent, la carte du resultat porte un ⚠ et le dit. */
+/** Le rapport technique d'une carte : quelques centaines d'octets, a
+ *  coller en UN message. Meme regle que l'export (cas 137) : tout echec
+ *  de copie finit sur la zone a copier a la main. */
+function copierRapport(texte){
+  try{
+    const z=document.createElement("textarea");
+    z.value=texte; z.style.cssText="position:fixed;top:-9999px;left:0;opacity:0";
+    document.body.appendChild(z); z.focus(); z.select();
+    let ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+    z.remove();
+    if(ok){toast("Rapport copié — colle-le tel quel.");return;}
+  }catch(e){}
+  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">Rapport technique</div>
+    <button class="f-fermer" onclick="fermerFiche()">Fermer</button></div>
+    <div class="f-sous" style="margin:10px 0">Appui long → tout sélectionner → copier, puis colle-le tel quel.</div>
+    <textarea readonly id="zone-copie" style="width:100%;height:150px;background:var(--carte2);
+      color:var(--texte);border:1px solid var(--bord);border-radius:9px;padding:8px;font-size:11px"></textarea>`;
+  $("voile").classList.add("ouvert");
+  const z=$("zone-copie"); z.value=texte;
+  setTimeout(()=>{z.focus();z.select();},80);
+}
+
+function autopsieCombat(r){
+  try{
+    const M={};
+    for(const l of r.moteur.log){
+      const m=String(l).match(/^\s{4}(\S+)\s+dégâts\s+\S+ \| frappes (\d+)\/(\d+)/);
+      if(m){M[m[1]]=M[m[1]]||[0,0];M[m[1]][0]+=Number(m[2]);M[m[1]][1]+=Number(m[3]);}
+    }
+    const F=r.feuille?r.feuille.total:null;
+    const a=M[r.fa.name]||[0,0], b=M[r.fb.name]||[0,0];
+    const fA=F?F[0].sig:[0,0], fB=F?F[1].sig:[0,0];
+    /* LE BANDEAU AUSSI : le dernier st des etapes — c'est LUI que le
+       joueur regarde pendant le combat, et c'est lui qui mentait sur la
+       capture (la feuille, elle, a le correctif du cas 61). */
+    /* /!\ st EST UN DELTA PAR ETAPE, PAS UN CUMUL (le gabarit fait +=) :
+       prendre "le dernier st" lisait la derniere goutte au lieu du
+       fleuve — faux positif garanti (paye au banc). On SOMME, comme
+       l'ecran le fait. */
+    let st=null;
+    for(const e of (r.etapes||[]))if(e.st){st=st||[0,0,0,0];
+      st[0]+=e.st[0];st[1]+=e.st[1];st[2]+=e.st[2];st[3]+=e.st[3];}
+    const eA=st?st[0]:null, eB=st?st[2]:null;
+    /* le crime : le camp dominant du moteur affiche a l'oppose — sur la
+       feuille OU sur le bandeau — ou un camp entier qui disparait. */
+    const dM=a[0]-b[0], dF=fA[0]-fB[0];
+    const dE=st?eA-eB:dM;
+    /* /!\ POUR LE BANDEAU, SEULE L'INVERSION DE SENS EST UN CRIME : il
+       sous-compte naturellement (il ne suit que ce que le traducteur met
+       en scene) — un seuil de "disparition" sonnait a tort sur un combat
+       sain (paye au banc). La disparition ne se juge que sur la FEUILLE,
+       qui, elle, doit tomber juste. */
+    const inverse=(dM>5&&dF<-5)||(dM<-5&&dF>5)
+      ||(dM>5&&dE<-5)||(dM<-5&&dE>5)
+      ||(b[0]>15&&fB[0]<b[0]/3)||(a[0]>15&&fA[0]<a[0]/3)
+      /* la disparition au bandeau, seuil LARGE (mesure : il peut rendre
+         un tiers du moteur sur un combat au sol — mais jamais un
+         huitieme). C'est le motif exact de la capture du cas 136. */
+      ||(st&&b[0]>25&&eB<b[0]/8)||(st&&a[0]>25&&eA<a[0]/8);
+    return {v:1,graine:r.graine,jetons:[r.fa.name,r.fb.name],
+      noms:[r.nomA||r.a,r.nomB||r.b],
+      moteur:{[r.fa.name]:a,[r.fb.name]:b},
+      feuille:{A:fA,B:fB},
+      ecran:st?[eA,eB]:null,
+      verdict:r.vainqueur,libelle:r.libelle||null,
+      inverse};
+  }catch(e){ return {v:1,erreur:String(e&&e.message)}; }
+}
+
 function encaisserResultat(){
   const r=COMBAT1;
   if(!r||!r.moteur.fini||r.encaisse)return;
   r.encaisse=true;
+  /* L'autopsie se fait ICI, sur l'etat encore chaud — apres, les stats
+     de l'homme bougent et le combat n'est plus reproductible. */
+  r.autopsie=autopsieCombat(r);
   pasFait("combat");
   /* Le combat a eu lieu : le blocage tombe ICI, et nulle part avant. */
   if(bloque&&bloque.id==="combat")bloque=null;
@@ -14434,9 +14514,15 @@ function encaisserResultat(){
      les combats. Un combat d'offre se paie a SA bourse, chez SON orga. */
   const lieu=r.offre?r.offre.org:"Lyon";
   const detail=`<span class="${res}">${motResultat(r.vainqueur)}</span> — ${lib} · ${tour} · ${lieu}`;
-  if(carte){carte.res=res;carte.enAttente=false;carte.rejouable=true;carte.detail=detail;}
+  /* Le ⚠ se voit sur la carte : des compteurs suspects ne restent pas
+     silencieux — et l'autopsie voyage sur la carte, DONC dans la
+     sauvegarde : elle survit au rechargement. */
+  const susp=r.autopsie&&r.autopsie.inverse
+    ?` <span style="color:var(--accent)" title="Les compteurs de l'écran et le compte du moteur divergent — copie le rapport technique depuis cette carte.">⚠ compteurs suspects</span>`:"";
+  if(carte){carte.res=res;carte.enAttente=false;carte.rejouable=true;
+    carte.detail=detail+susp;carte.autopsie=r.autopsie||null;}
   else RESULTATS.unshift({quand:t.jour,affiche:`{${r.a}} c. {${r.b}}`,res,
-    rejouable:true,detail});
+    rejouable:true,detail:detail+susp,autopsie:r.autopsie||null});
 
   /* /!\ L'ADVERSAIRE N'EST PLUS FORCEMENT DANS FICHES (branchement du
      09/08) : contre le monde, r.b est un IDENTIFIANT NUMERIQUE et sa vie
@@ -17569,7 +17655,7 @@ function rendreCombats(){
     ? RESULTATS.map(r=>`<div class="carte-combat"><div class="cc-quand">${JOURS_SEMAINE[r.quand%7]} ${dateDe(r.quand).getUTCDate()} ${MOIS[dateDe(r.quand).getUTCMonth()]}</div>
         <div class="cc-affiche">${texte(r.affiche)}</div><div class="cc-res">${r.detail}</div>
         ${r.enAttente&&COMBAT1&&r.graine===COMBAT1.graine
-            ?`<button class="cc-voir" onclick="ouvrirEcran()">▶ Lancer le combat</button>`:""}${r.rejouable?resumeFrappes(COMBAT1)+`<button class="cc-voir" onclick="ouvrirEcran()">▶ Revoir le combat</button>`:""}</div>`).join("")
+            ?`<button class="cc-voir" onclick="ouvrirEcran()">▶ Lancer le combat</button>`:""}${r.rejouable?resumeFrappes(COMBAT1)+`<button class="cc-voir" onclick="ouvrirEcran()">▶ Revoir le combat</button>`:""}${r.autopsie?`<button class="cc-voir" style="margin-top:6px;${r.autopsie.inverse?"border-color:var(--accent);color:var(--accent)":""}" onclick='copierRapport(${JSON.stringify(JSON.stringify(r.autopsie))})'>🔬 Copier le rapport technique</button>`:""}</div>`).join("")
     : `<div class="repos">Pas encore de résultats.</div>`;
 
   /* ==== LES CLASSEMENTS (branchement du 09/08) ====

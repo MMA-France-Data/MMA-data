@@ -808,8 +808,10 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       const vCartes=(r.cartes||[]).reduce((a,c)=>{a[c.pour]=(a[c.pour]||0)+1;return a;},{});
       /* Les COMPTEURS DE L'ECRAN : le dernier st des etapes du traducteur
          — c'est LUI que le bandeau du haut affiche, pas la feuille. */
+      /* st est un DELTA par etape : on somme, comme le gabarit. */
       let st=null;
-      for(let k=r.etapes.length-1;k>=0&&!st;k--)if(r.etapes[k].st)st=r.etapes[k].st;
+      for(const e of r.etapes)if(e.st){st=st||[0,0,0,0];
+        st[0]+=e.st[0];st[1]+=e.st[1];st[2]+=e.st[2];st[3]+=e.st[3];}
       return {noms:[r.fa.name,r.fb.name],
         moteur:[M[r.fa.name],M[r.fb.name]],
         ecran:st?[st[0],st[2]]:null,
@@ -837,6 +839,9 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
   let inversions = 0, testes = 0, prefixeVu = null;
   for (const r of sonde) {
     if (!r || !r.moteur) continue;
+    /* le cas fabrique est LA PREUVE de la faille : il ne compte pas dans
+       le croiseur des paires reelles (il a sa propre assertion). */
+    if (r.fabrique) { prefixeVu = r; continue; }
     testes++;
     /* Sur une decision complete, feuille == bilans exactement ; sur une
        finition, la feuille compte aussi le round inacheve : >=. */
@@ -852,9 +857,11 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       if (r.fabrique) prefixeVu = r; }
     if (r.fabrique) prefixeVu = r;
   }
+  const details = sonde.filter((r) => r && r.moteur && !r.fabrique).map((r) =>
+    `${r.noms.join("/")} g?: M${r.moteur.join("-")} E${r.ecran ? r.ecran.join("-") : "?"} F${r.feuille.join("-")}`);
   dit("sur toutes les paires salle-monde, la feuille compte du même côté que le moteur",
-      inversions === 0 && testes >= 5,
-      `${testes} combats croisés, ${inversions} inversion(s)`);
+      inversions === 0 && testes >= 4,
+      inversions ? details.join(" · ") : `${testes} combats croisés, 0 inversion`);
   /* /!\ CE CAS FABRIQUE PROUVE LA FAILLE, PAS LA CORRECTION : il renomme
      APRES preparerCombat, donc SANS la garde — et le traducteur DOIT y
      detourner les frappes (startsWith). Si un jour ce test "passe", c'est
@@ -877,6 +884,36 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       sonde.filter((r) => r && !r.fabrique).map((r) => r.noms.join("/")).slice(0, 3).join(" · "));
   dit("le verdict de l'écran est celui du moteur, côté pour côté",
       sonde.every((r) => !r || r.vainqueur === null || r.verdict === r.vainqueur));
+  /* L'AUTOPSIE EMBARQUEE (cas 136 bis) : chaque combat encaisse porte
+     son rapport. Sur un combat sain, pas d'alerte ; sur l'inversion
+     fabriquee (prefixe, sans la garde), l'alerte DOIT sonner. */
+  const auto = P.lire(`(function(){
+    const jouer=(renomme)=>{
+      const c=Object.keys(MESGARS).find(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite);
+      const l=MESGARS[c];
+      const adv=[...MONDE.pros.values()].find(p=>!p.salle&&p.division===l.division);
+      const r=preparerCombat(c,adv.id,3,88);
+      if(renomme){r.fa.name=renomme[0];r.fb.name=renomme[1];}
+      let g=0;while(!r.moteur.fini&&g++<8)jouerUnRound(r);
+      retraduire(r);
+      COMBAT1=r; RESULTATS.unshift({quand:t.jour,affiche:"x",res:"?",enAttente:true,graine:r.graine});
+      encaisserResultat();
+      return RESULTATS[0].autopsie;
+    };
+    const sain=jouer(null);
+    const casse=jouer(["Dur","Durand"]);
+    return {sain:{inverse:sain&&sain.inverse,graine:sain&&sain.graine},
+            casse:{inverse:casse&&casse.inverse},
+            taille:JSON.stringify(casse||{}).length};
+  })()`);
+  dit("un combat sain porte son rapport, sans alerte",
+      !!auto && auto.sain.inverse === false && auto.sain.graine === 88);
+  dit("l'inversion fabriquée fait sonner l'alerte de la carte",
+      !!auto && auto.casse.inverse === true,
+      "⚠ compteurs suspects, et le rapport tient en un message");
+  dit("le rapport tient en un seul message", !!auto && auto.taille < 700,
+      auto ? `${auto.taille} octets` : "");
+
   dit("aucune exception pendant le croisement", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }

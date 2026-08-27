@@ -12453,3 +12453,34 @@ l'ecran d'export : on ne force plus l'utilisateur a traverser des chemins
 qui echouent pour atteindre celui qui marche.
 Banc : presse-papier EMPOISONNE + execCommand mort -> le clic DOIT finir
 sur « morceau 1/N ». Verifie aussi en Chromium sandbox+blob reel.
+
+## CAS 138 — L'AUTOPSIE EMBARQUEE, ET LA CAPTURE EXPLIQUEE AU CHIFFRE PRES
+Mael a tente d'envoyer sa sauvegarde par le chat : LE CHAT TRONQUE LES
+MORCEAUX (13 Ko passes sur 80). Une sauvegarde du jour 708 ne passera
+jamais par ce canal. LE JEU FAIT DONC SA PROPRE AUTOPSIE :
+ - a l'encaissement, autopsieCombat() croise TROIS sources : les bilans
+   du log (la verite moteur), la feuille, et LE BANDEAU (la somme des st
+   du traducteur — c'est lui que le joueur regarde, et c'est lui qui
+   mentait sur la capture) ;
+ - divergence -> la carte du resultat porte « ⚠ compteurs suspects » ;
+ - chaque carte a un bouton « 🔬 Copier le rapport technique » :
+   ~250 octets, un seul message a coller — meme regle que l'export
+   (cas 137), tout echec de copie finit sur la zone a la main ;
+ - l'autopsie voyage SUR LA CARTE, donc dans la sauvegarde.
+/!\ LA PREUVE QUI CLOT LE CAS 136 : le cas fabrique (« Dur » c.
+« Durand », sans la garde) donne moteur 1-56 -> ECRAN 83-0. Les frappes
+de B sont TRANSFEREES a A et B tombe a zero — EXACTEMENT la capture de
+Mael (lui a 81/124, l'adversaire a 1, en perdant 27-30). Le mecanisme de
+son combat est confirme au chiffre pres ; la garde du prefixe (v161) le
+ferme.
+/!\ TROIS PIEGES D'INSTRUMENT payes dans la foulee, consignes :
+ 1. st EST UN DELTA PAR ETAPE, PAS UN CUMUL (le gabarit fait +=) :
+    prendre « le dernier st » lisait la derniere goutte au lieu du
+    fleuve. On SOMME.
+ 2. LE BANDEAU SOUS-COMPTE NATURELLEMENT (il ne suit que ce que le
+    traducteur met en scene — un combat au sol peut rendre un tiers du
+    moteur) : le seuil de disparition est LARGE (1/8), et l'inversion de
+    sens reste le crime principal.
+ 3. LE CAS FABRIQUE NE COMPTE PAS DANS LE CROISEUR DES PAIRES REELLES —
+    il a sa propre assertion. Le laisser dedans faisait accuser le jeu
+    par sa propre preuve.
