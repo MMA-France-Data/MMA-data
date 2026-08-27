@@ -11246,10 +11246,20 @@ function ressenti(f, ctx = {}) {
     lucide = false;
   }
 
-  /* Le momentum : ce que le round vient de dire. Un fait, lui aussi. */
-  if (ctx.gagne === true && etat !== "cassé")
-    dit += " Il commence à me regarder.";
-  else if (ctx.gagne === false && lu >= 0.55 && F.length)
+  /* Le momentum : ce que le round vient de dire. Un fait, lui aussi.
+     /!\ « Il commence a me regarder » est SORTIE (Mael, 27/08 : "j'aime
+     pas du tout cette phrase") — elle voulait dire "il commence a me
+     craindre" et se lisait de travers. Le repertoire est DERIVE de
+     l'etat (jeton), jamais tire : meme combat, meme phrase. */
+  if (ctx.gagne === true && etat !== "cassé") {
+    const MOMENTUM = [
+      " Le round est pour moi, je le sais.",
+      " Je le sens plier.",
+      " Il recule. C'est bon signe.",
+      " Je suis en train de le user.",
+    ];
+    dit += MOMENTUM[jeton(f, round) % MOMENTUM.length];
+  } else if (ctx.gagne === false && lu >= 0.55 && F.length)
     dit += " Et il a pris le round.";
 
   return { etat, dit, signes: signes(f, ctx), demande, lucide, faits: F };

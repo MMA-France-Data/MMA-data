@@ -12484,3 +12484,12 @@ ferme.
  3. LE CAS FABRIQUE NE COMPTE PAS DANS LE CROISEUR DES PAIRES REELLES —
     il a sa propre assertion. Le laisser dedans faisait accuser le jeu
     par sa propre preuve.
+
+## CAS 139 — « IL COMMENCE A ME REGARDER » EST SORTIE (Mael, 27/08)
+« J'aime pas du tout cette phrase. » Elle voulait dire « il commence a me
+craindre » et se lisait de travers. Le momentum du ressenti a maintenant
+un REPERTOIRE de quatre phrases (« Le round est pour moi, je le sais. » ·
+« Je le sens plier. » · « Il recule. C'est bon signe. » · « Je suis en
+train de le user. »), choisi par le jeton derive de l'etat — la regle 4
+du module tient : AUCUN tirage, meme combat = meme phrase, et le banc 28
+prouve toujours que le flux du hasard ne bouge pas d'une unite.
