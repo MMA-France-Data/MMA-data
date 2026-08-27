@@ -918,6 +918,66 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* LES TROIS RAPPORTS DU 27/08 (Mael) : le pro sous orga peut signer      */
+/* son contrat de salle, le renvoi existe, la chute est plus dure de     */
+/* haut.                                                                 */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 21 });
+  const r = P.lire(`(function(){
+    /* 1. Un pro du monde, sous contrat d'organisation, adopte SANS
+       accord de salle : l'ecran de contrat doit etre celui de la
+       SIGNATURE — pas "personne ne peut le prendre". */
+    const p=[...MONDE.pros.values()].find(x=>!x.salle&&!x.retraite&&x.org
+      &&!x.champion&&(x.bilan.v||0)>=3);
+    const cle=adopterProDuMonde(p);
+    ouvrirContrat(cle);
+    const h=$("fiche").innerHTML;
+    const signe=h.indexOf("Ta part sur ses bourses")>=0;
+    const bloqueAvant=h.indexOf("Personne ne peut le prendre")>=0;
+    /* 2. Le renvoi — d'abord la garde : combat programme => refus. */
+    const l=MESGARS[cle];
+    l.combatPrevu={jourCombat:t.jour+30};
+    virerGars(cle);
+    const gardeTient=!!MESGARS[cle];
+    l.combatPrevu=null;
+    /* Un contrat de salle en cours, pour verifier le solde. */
+    MMA.contrats.signerSalle(l,0.25,3,t.jour);
+    const frais=MMA.contrats.fraisDossier(l);
+    ouvrirRenvoi(cle);
+    const ecranSolde=$("fiche").innerHTML.indexOf("se solde")>=0;
+    const av=argent;
+    virerGars(cle);
+    const paye=av-argent;
+    const parti=!MESGARS[cle]&&!EFFECTIF.some(x=>x.id===cle);
+    const rendu=p.salle===false&&p.contratSalle===null;
+    /* 3. La chute : la MEME defaite, a 30 puis a 80 de reputation. */
+    const c2=Object.keys(MESGARS).find(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite);
+    const rr={vainqueur:"B",methode:"KO",round:2,a:c2,b:"personne"};
+    SALLE.reputation=30; const basse=retombees(rr).rep;
+    SALLE.reputation=80; const haute=retombees(rr).rep;
+    return {signe,bloqueAvant,gardeTient,ecranSolde,paye,frais,parti,rendu,basse,haute};
+  })()`);
+  dit("le pro sous contrat d'orga tombe sur l'écran de signature de salle",
+      !!r && r.signe && !r.bloqueAvant,
+      r ? (r.bloqueAvant ? "l'écran dit encore « personne ne peut le prendre »" : "") : "rien lu");
+  dit("le renvoi refuse tant qu'un combat est programmé", !!r && r.gardeTient);
+  dit("l'écran de renvoi annonce le solde avant le clic", !!r && r.ecranSolde);
+  dit("rompre un contrat en cours se solde — les frais de dossier par combat restant",
+      !!r && r.paye === r.frais * 3 && r.paye > 0,
+      r ? `${r.paye} € payés (frais ${r.frais} € × 3)` : "");
+  dit("le renvoyé quitte l'effectif et les fiches du jour", !!r && r.parti);
+  dit("et le monde le reprend : la marque salle tombe, le contrat de salle aussi",
+      !!r && r.rendu);
+  dit("la même défaite coûte trois fois plus cher à 80 de réputation qu'à 30",
+      !!r && r.basse < 0 && r.haute < 0
+      && r.haute / r.basse > 2.8 && r.haute / r.basse < 3.2,
+      r ? `à 30 : ${r.basse} · à 80 : ${r.haute}` : "");
+  dit("aucune exception pendant les trois rapports", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

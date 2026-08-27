@@ -13432,14 +13432,34 @@ function verifierContratsEchus(){
           raconter(t.jour,[ent>=60
             ? `◆ ${lienGars(cle)} range son casier. Poignée de main longue — il part sans un mot de travers.`
             : `◆ ${lienGars(cle)} range son casier. Il ne se retourne pas.`],true);
-          delete MESGARS[cle]; const i=EFFECTIF.findIndex(x=>x.id===cle);
-          if(i>=0)EFFECTIF.splice(i,1);
-          if(FICHES[cle])FICHES[cle].statut="Parti libre à la fin de son contrat de salle.";
+          quitterLaSalle(cle,"Parti libre à la fin de son contrat de salle.");
           bloque=null;rendre();}},
       ]};
     return true;
   }
   return false;
+}
+
+/* ==== LE DEPART D'UN HOMME — UN SEUL CHEMIN (27/08) ====
+   /!\ Fin de contrat, renvoi : la sortie passe ICI, sinon on oublie un
+   morceau. Et on en oubliait un : tout homme de l'effectif EST un homme
+   de MONDE.pros marque salle=true (cartes.js l'exclut du monde a cause
+   de cette marque). "Le laisser partir" ne l'effacait jamais — l'homme
+   parti n'etait plus a toi ET plus au monde : un fantome. La marque
+   tombe au depart : le monde le reprend, sa carriere continue sans toi. */
+function quitterLaSalle(cle,statutTexte){
+  const l=MESGARS[cle];
+  if(l){
+    l.combatPrevu=null; l.camp=null; delete l.renego;
+    l.contratSalle=null; delete l.partProposee;
+    if(l.id!==undefined&&l.id!==null&&MONDE&&MONDE.pros.get(l.id)===l)
+      l.salle=false;
+  }
+  delete MESGARS[cle];
+  const i=EFFECTIF.findIndex(x=>x.id===cle);
+  if(i>=0)EFFECTIF.splice(i,1);
+  if(typeof suivis!=="undefined")suivis.delete(cle);
+  if(FICHES[cle])FICHES[cle].statut=statutTexte;
 }
 
 function jouerUnRound(r){
@@ -14100,6 +14120,17 @@ function retombees(r){
   else if(r.methode==="TKO")  base*=gagne?1.6:1.2;
   else if(r.methode==="SOUMISSION") base*=gagne?1.5:1.1;
   if(gagne&&r.round===1)base*=1.4;                   /* vite fait, bien fait */
+  /* /!\ PLUS HAUT, PLUS DURE LA CHUTE (Mael, 27/08 : "la reputation de
+     la salle doit bcp baisser avec les defaites"). Le frein d'altitude
+     du 26/08 retrecit les GAINS en haut — mais une defaite coutait le
+     meme prix a 30 qu'a 80 de reputation. Or c'est l'inverse du reel :
+     une salle de quartier qui perd, personne n'en parle ; une salle
+     mondiale qui perd, tout le monde en parle. Le miroir exact du
+     frein :  < 40 : plein · 40-60 : x1,6 · 60-75 : x2,2 · 75+ : x3. */
+  if(!gagne){
+    const rp=SALLE.reputation||0;
+    base*=rp<40?1:rp<60?1.6:rp<75?2.2:3;
+  }
   const A=FICHES[r.a];
   /* /!\ CONTRE LE MONDE, L'ADVERSAIRE N'EST PAS DANS FICHES : son bilan
      se lit sur sa fiche legere (branchement du 09/08). */
@@ -14110,6 +14141,8 @@ function retombees(r){
   const ecart=niv(bB)-niv(A.bilan);                  /* adversaire plus dur ? */
   if(gagne&&ecart>2)base*=1.35;
   if(gagne&&ecart<-4)base*=0.6;
+  /* Battu par un homme au bilan bien plus court : la presse adore. */
+  if(!gagne&&ecart<-3)base*=1.4;
   return {rep:Math.round(base*10)/10,titre:null};
 }
 
@@ -18237,13 +18270,15 @@ function actionsPour(id){
       `ouvrirCamp('${id}')`,!!(MESGARS[id]&&MESGARS[id].combatPrevu&&!MESGARS[id].camp)),
     B("Plan du 1er round",`ouvrirPlan('${id}')`),
     B("Ce qu'il demande",`ouvrirDemande('${id}')`),
-    B("Contrat",`ouvrirContrat('${id}')`),B("Parler",`ouvrirDialogue('${id}')`)];
+    B("Contrat",`ouvrirContrat('${id}')`),B("Parler",`ouvrirDialogue('${id}')`),
+    B("S'en séparer",`ouvrirRenvoi('${id}')`)];
   /* /!\ LES BOUTONS AMATEUR ETAIENT TOUS MORTS (Mael, en jouant) : trois
      avenir() sur quatre. On les cable sur ce qui existe deja. */
   if(f.gr==="amateur")return [B("Proposer le passage pro",`passerPro('${id}')`,true),
     B("Inviter au sparring pro",`inviterSparring('${id}')`),
     B("Ce qu'il demande",`ouvrirDemande('${id}')`),
-    B("Parler",`ouvrirDialogue('${id}')`)];
+    B("Parler",`ouvrirDialogue('${id}')`),
+    B("S'en séparer",`ouvrirRenvoi('${id}')`)];
   if(f.gr==="loisir")return [B("Inviter à une séance test",`seanceTest('${id}')`,true),
     B(suivis.has(id)?"Suivi ✓":"Suivre de près",`basculerSuivi('${id}')`)];
   if(f.gr==="adversaire")return [
@@ -18266,6 +18301,66 @@ function basculerSuivi(id){
   if(suivis.has(id)){suivis.delete(id);toast(`${id} retiré de ta liste de suivi.`);}
   else{suivis.add(id);toast(`${id} suivi de près — il remonte en tête de l'effectif.`);}
   ouvrirFiche(id);
+}
+
+/* ==== LE RENVOI (Mael, 27/08 : "je peux pas virer qlq") ====
+   /!\ Il n'existait AUCUN moyen de se separer d'un homme avant
+   l'echeance de son contrat — le seul depart etait le "laisser partir"
+   du contrat echu. Les regles, gravees :
+   - jamais pendant une echeance : un combat programme se respecte ;
+   - un contrat de salle en cours se SOLDE — les frais de dossier par
+     combat restant, le meme etalon que la signature (le coach, lui,
+     part avec un mois de salaire : meme logique, son echelle a lui) ;
+   - un homme de la maison (entente 60+) qu'on jette, ca se raconte :
+     la reputation prend le coup, par le canal officiel ;
+   - la sortie passe par quitterLaSalle() — le monde le reprend.
+   Deux ecrans, jamais un dialogue natif : la fiche montre le prix,
+   le second clic seulement execute (cas 121 quinquies : le clic
+   repond toujours, meme pour dire non). */
+function ouvrirRenvoi(cle){
+  const f=FICHES[cle]; if(!f)return;
+  const l=MESGARS[cle];
+  if(l&&l.combatPrevu)
+    return toast("Il a un combat programmé — pas de départ avant l'échéance.");
+  const cs=l?MMA.contrats.contratSalle(l):null;
+  const actif=!!(cs&&!MMA.contrats.salleEchue(l));
+  const solde=actif?MMA.contrats.fraisDossier(l)*cs.restants:0;
+  const ent=l&&l.entente?MMA.entente.lire(l.entente).valeur:50;
+  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${f.nom}</div>
+      <button class="f-fermer" onclick="ouvrirFiche('${cle}')">Retour</button></div>
+    <div class="f-sous" style="margin:12px 0">Tu t'apprêtes à le renvoyer de la salle.
+      Il ne s'entraînera plus ici${l&&l.org?` — son contrat ${l.org} le suit, sa carrière continue sans toi`:""}.</div>
+    ${actif?`<div class="f-statut" style="border-color:var(--accent)">
+      ✍️ Son contrat de salle court encore — <b>${cs.restants} combat${cs.restants>1?"s":""}</b>.
+      Rompre se solde : <b>${solde.toLocaleString("fr-FR")} €</b>
+      (les frais de dossier par combat restant).</div>`
+      :`<div class="f-sous" style="color:var(--doux)">Aucun contrat de salle en cours — il part sans solde.</div>`}
+    ${ent>=60?`<div class="f-sous" style="color:var(--accent);margin-top:8px">
+      Il te faisait confiance. Un homme de la maison qu'on jette, ça se raconte dans le secteur.</div>`:""}
+    <div class="f-actions" style="margin-top:14px">
+      <button class="chaud" onclick="virerGars('${cle}')">Confirmer son renvoi${solde?` — ${solde.toLocaleString("fr-FR")} €`:""}</button>
+      <button onclick="ouvrirFiche('${cle}')">Le garder</button></div>`;
+  $("voile").classList.add("ouvert");
+}
+function virerGars(cle){
+  const f=FICHES[cle]; if(!f)return;
+  const l=MESGARS[cle];
+  if(l&&l.combatPrevu){ouvrirFiche(cle);
+    return toast("Il a un combat programmé — pas de départ avant l'échéance.");}
+  const cs=l?MMA.contrats.contratSalle(l):null;
+  const actif=!!(cs&&!MMA.contrats.salleEchue(l));
+  const solde=actif?MMA.contrats.fraisDossier(l)*cs.restants:0;
+  const ent=l&&l.entente?MMA.entente.lire(l.entente).valeur:50;
+  if(solde){argent-=solde;
+    depeche(t.jour,"bourse",`Solde de rupture — ${f.nom} renvoyé avant la fin de son contrat.`,
+      `−${solde.toLocaleString("fr-FR")} €`);}
+  raconter(t.jour,[ent>=60
+    ?`◆ Tu renvoies ${f.nom}. Il vide son casier sans un mot — le vestiaire non plus n'en dit pas un.`
+    :`◆ Tu renvoies ${f.nom}. Personne ne s'attarde sur son casier vide.`],true);
+  if(ent>=60)bougerReputation(-1.5,`${f.nom} renvoyé — dans le secteur, on en parle.`);
+  quitterLaSalle(cle,actif?"Renvoyé de la salle avant la fin de son contrat."
+                          :"Renvoyé de la salle.");
+  fermerFiche(); rendre();
 }
 
 /* La cible est une CLE d'affichage : on la traduit en id du monde. */
@@ -19514,7 +19609,16 @@ function ouvrirContrat(cle){
      contrat d'organisation avec un accord de salle termine ne voyait
      JAMAIS l'ecran pour re-signer. L'accord avec TOI prime sur la
      lecture de son contrat d'organisation. */
+  /* /!\ ET LE CONTRAT DE SALLE PASSE AVANT L'ORGA AUSSI QUAND IL N'A
+     JAMAIS SIGNE (Mael, 27/08 : "quand je signe qlq qui a deja un
+     contrat avec une orga je peux pas faire de contrat de salle") : le
+     pro venu par la reputation arrive AVEC son contrat d'organisation
+     et SANS accord de salle — salleEchue() repond faux quand il n'y a
+     rien a echoir, donc ce bloc l'attrapait et l'ecran de signature ne
+     venait jamais. Meme regle que le 14/08 : l'accord avec TOI se
+     regle d'abord, l'orga se lit ensuite. */
   if(st.statut!=="libre"&&!MMA.contrats.salleEchue(l)
+     &&MMA.contrats.contratSalle(l)
      &&(st.statut==="en_cours"||st.statut==="dernier")){
     const rach=MMA.contrats.rachat(MONDE,l,t.jour,0.5);
     const cSa=MMA.contrats.contratSalle(l);
@@ -19554,6 +19658,9 @@ function ouvrirContrat(cle){
       +`<div class="f-sous" style="margin:12px 0">${echu
           ?`Son contrat de salle est terminé. Sans nouvel accord, tu ne démarches
             plus pour lui — et tu ne prends rien sur ses bourses.`
+          :(l.org&&(st.statut==="en_cours"||st.statut==="dernier"))
+          ?`Il est sous contrat ${l.org} — mais rien ne le lie à la salle.
+          Tant qu'il n'a pas signé, tu ne prends rien sur ses bourses.`
           :`Il n'a pas encore signé avec la salle.
           Tant que c'est le cas, il ne combattra pour personne.`}</div>
         <h3>Ta part sur ses bourses</h3>

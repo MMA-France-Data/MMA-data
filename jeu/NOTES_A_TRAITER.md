@@ -12493,3 +12493,52 @@ un REPERTOIRE de quatre phrases (« Le round est pour moi, je le sais. » ·
 train de le user. »), choisi par le jeton derive de l'etat — la regle 4
 du module tient : AUCUN tirage, meme combat = meme phrase, et le banc 28
 prouve toujours que le flux du hasard ne bouge pas d'une unite.
+
+## CAS 140 — LE PRO SOUS ORGA NE POUVAIT PAS SIGNER SON CONTRAT DE SALLE (Mael, 27/08)
+« Quand je signe qlq qui a deja un contrat avec une orga je peux pas
+faire de contrat de salle. » Le pro venu par la reputation (cas frappe)
+arrive AVEC son contrat d'organisation et SANS accord de salle — et
+salleEchue() repond faux quand il n'y a RIEN a echoir. L'ecran « sous
+contrat, personne ne peut le prendre » l'attrapait donc AVANT l'ecran de
+signature : impossible de prendre une part sur ses bourses, jamais.
+C'est le frere du piege du 14/08 (le contrat ECHU passait apres) : meme
+regle, gravee une deuxieme fois — L'ACCORD AVEC TOI SE REGLE D'ABORD,
+l'organisation se lit ensuite. Le bloc « sous contrat » exige maintenant
+un contrat de salle EXISTANT ; l'ecran de signature dit la situation
+vraie (« il est sous contrat AFC — mais rien ne le lie a la salle »).
+
+## CAS 141 — LE RENVOI N'EXISTAIT PAS (Mael, 27/08)
+« Je peux pas virer qlq. » Le seul depart etait le « laisser partir » du
+contrat echu — entre deux echeances, un homme etait indelogeable. Le
+bouton « S'en separer » (fiche pro ET amateur) ouvre un ecran qui montre
+le prix AVANT le clic ; le second clic seulement execute. Les regles :
+ - JAMAIS pendant une echeance : combat programme => refus (garde dans
+   ouvrirRenvoi ET virerGars — l'ecran reste peut etre ouvert) ;
+ - un contrat de salle en cours SE SOLDE : les frais de dossier par
+   combat restant — le meme etalon que la signature (le coach part avec
+   un mois de salaire : meme logique, son echelle a lui) ;
+ - un homme de la maison (entente 60+) qu'on jette, ca se raconte :
+   reputation -1,5 par le canal officiel (bougerReputation => depeche).
+/!\ FUITE TROUVEE EN CREUSANT : tout homme de l'effectif EST un homme de
+MONDE.pros marque salle=true (cartes.js l'exclut du monde pour ca). Le
+« laisser partir » du contrat echu n'effacait JAMAIS cette marque —
+l'homme parti n'etait plus a toi ET plus au monde : un fantome, hors
+sim pour toujours. La sortie passe maintenant par UN SEUL chemin,
+quitterLaSalle() : la marque tombe, le contrat de salle aussi, le monde
+le reprend et sa carriere continue sans toi. Une chose reparee aux deux
+endroits parce qu'elle n'existe qu'a un seul.
+
+## CAS 142 — PLUS HAUT, PLUS DURE LA CHUTE (Mael, 27/08)
+« La reputation de la salle doit bcp baisser avec les defaites. » Le
+frein d'altitude du 26/08 retrecit les GAINS en haut — mais une defaite
+coutait le meme prix a 30 qu'a 80 de reputation. C'est l'inverse du
+reel : une salle de quartier qui perd, personne n'en parle ; une salle
+mondiale qui perd, tout le monde en parle. Dans retombees(), le MIROIR
+exact du frein, sur les defaites seulement :
+    < 40 : plein · 40-60 : x1,6 · 60-75 : x2,2 · 75+ : x3
+et une defaite contre un homme au bilan bien plus court prend x1,4 de
+plus (le symetrique du bonus de l'exploit). Une defaite par KO a 80 de
+reputation coute desormais ~x3 ce qu'elle coutait hier — la haute
+reputation devient une chose qui se DEFEND, pas un plateau acquis.
+Les pertes hors combat (affiche annulee, silence) ne changent pas :
+Mael a parle des defaites, le frein reste chirurgical.
