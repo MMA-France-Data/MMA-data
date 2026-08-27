@@ -13257,7 +13257,15 @@ function preparerCombat(idA,idB,rounds,graine){
      PREFIXE de "Aubry_B" : la feuille attribuait les lignes des DEUX au
      premier. Sur collision, les deux jetons prennent un suffixe distinct
      ("AubryA"/"AubryB") — aucun n'est prefixe de l'autre. */
-  if(nomA===nomB){ nomA=nomA+"A"; nomB=nomB+"B"; }
+  /* /!\ LE PREFIXE AUSSI, PAS SEULEMENT L'EGALITE (Mael, 27/08 : "je
+     perds mais c'est marque que je domine"). Le traducteur attribue
+     chaque ligne par startsWith(nomA) PUIS startsWith(nomB) : si un
+     jeton est un PREFIXE de l'autre, toutes les frappes du second
+     partent au premier — l'ecran montre un massacre inverse pendant que
+     les cartes (parse exact) disent la verite. C'etait le cas 61 de la
+     feuille... jamais couvert cote traducteur, et la garde ci-dessous ne
+     couvrait que l'egalite stricte. */
+  if(nomA===nomB||nomA.startsWith(nomB)||nomB.startsWith(nomA)){ nomA=nomA+"A"; nomB=nomB+"B"; }
   fa.name=nomA; fb.name=nomB;
   return {a:idA,b:idB,rounds,graine,fa,fb,
           nomA:typeof idA==="number"&&MONDE?MONDE.pros.get(idA).nom:idA,

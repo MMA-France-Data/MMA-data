@@ -751,6 +751,119 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* L'ECRAN COMPTE DU BON COTE (Mael, 27/08 : "je perds mais c'est        */
+/* marque que je domine")                                                */
+/* /!\ L'INVARIANT QUI MANQUAIT : les bancs comparaient l'ecran au pli   */
+/* du traducteur, et le pli a lui-meme — JAMAIS au MOTEUR. Une inversion */
+/* systematique de cotes passait les 31 bancs. Ici : les frappes de la   */
+/* feuille (ce que l'ecran affiche) == les bilans du log (ce que le      */
+/* moteur a compte), nom par nom, sur des paires salle-monde REELLES et  */
+/* sur la collision par prefixe fabriquee expres.                        */
+/* ==================================================================== */
+{
+  /* /!\ EN DEMO, PAS EN NEUF : une partie neuve met des mois a produire
+     un pro (lecon du marquage des contrats) — le croiseur a besoin
+     d'hommes qui combattent, pas de l'economie de lancement. */
+  const P = ouvrirPartie({ mode: "demo", graine: 13 });
+  let sN = 13; const alN = () => ((sN = (sN * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  let gN = 0;
+  while (P.lire("t.jour") < 30 && gN++ < 400) {
+    P.essai("continuer");
+    for (let k = 0; k < 8 && trancherBlocage(P, alN()); k++);
+  }
+  const sonde = P.lire(`(function(){
+    const res=[];
+    const compterMoteur=(log,na,nb)=>{const M={[na]:0,[nb]:0};
+      /* double antislash : le gabarit cuit une fois (piege paye 2 fois). */
+      for(const l of log){const m=String(l).match(/^\\s{4}(\\S+)\\s+dégâts\\s+\\S+ \\| frappes (\\d+)\\//);
+        if(m&&M[m[1]]!==undefined)M[m[1]]+=Number(m[2]);}
+      return M;};
+    const jouer=(cle,advId,graine,renomme)=>{
+      const r=preparerCombat(cle,advId,3,graine);
+      if(renomme){r.fa.name=renomme[0];r.fb.name=renomme[1];}
+      let g=0;while(!r.moteur.fini&&g++<8)jouerUnRound(r);
+      retraduire(r);
+      const M=compterMoteur(r.moteur.log,r.fa.name,r.fb.name);
+      const F=r.feuille.total;
+      /* Les cartes lisent le log : le vainqueur des cartes doit etre
+         celui du moteur, cote pour cote. */
+      const vCartes=(r.cartes||[]).reduce((a,c)=>{a[c.pour]=(a[c.pour]||0)+1;return a;},{});
+      /* Les COMPTEURS DE L'ECRAN : le dernier st des etapes du traducteur
+         — c'est LUI que le bandeau du haut affiche, pas la feuille. */
+      let st=null;
+      for(let k=r.etapes.length-1;k>=0&&!st;k--)if(r.etapes[k].st)st=r.etapes[k].st;
+      return {noms:[r.fa.name,r.fb.name],
+        moteur:[M[r.fa.name],M[r.fb.name]],
+        ecran:st?[st[0],st[2]]:null,
+        feuille:[F[0].sig[0],F[1].sig[0]],
+        finiTot:r.round>=3&&r.methode==="DÉCISION",
+        vainqueur:r.moteur.vainqueur?(r.moteur.vainqueur===r.fa?"A":"B"):null,
+        verdict:r.vainqueur};
+    };
+    /* des paires reelles */
+    const pros=Object.keys(MESGARS).filter(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite).slice(0,3);
+    for(const cle of pros){
+      const l=MESGARS[cle];
+      const adv=[...MONDE.pros.values()].find(p=>!p.salle&&p.division===l.division);
+      if(!adv)continue;
+      for(const g of [11,42])res.push(jouer(cle,adv.id,g,null));
+    }
+    /* LA COLLISION FABRIQUEE : nomA prefixe de nomB — le cas qui envoyait
+       toutes les frappes de B chez A avant la garde. */
+    if(pros.length){
+      const l=MESGARS[pros[0]];
+      const adv=[...MONDE.pros.values()].find(p=>!p.salle&&p.division===l.division);
+      if(adv)res.push(Object.assign(jouer(pros[0],adv.id,77,["Dur","Durand"]),{fabrique:true}));
+    }
+    return res;})()`);
+  let inversions = 0, testes = 0, prefixeVu = null;
+  for (const r of sonde) {
+    if (!r || !r.moteur) continue;
+    testes++;
+    /* Sur une decision complete, feuille == bilans exactement ; sur une
+       finition, la feuille compte aussi le round inacheve : >=. */
+    const okA = r.finiTot ? r.feuille[0] === r.moteur[0] : r.feuille[0] >= r.moteur[0];
+    const okB = r.finiTot ? r.feuille[1] === r.moteur[1] : r.feuille[1] >= r.moteur[1];
+    /* Le vrai crime : le camp dominant du moteur affiche a l'oppose —
+       sur LA FEUILLE ou sur LES COMPTEURS DU BANDEAU. */
+    const domM = r.moteur[0] - r.moteur[1], domF = r.feuille[0] - r.feuille[1];
+    const domE = r.ecran ? r.ecran[0] - r.ecran[1] : domM;
+    const inverse = (domM > 5 && domF < -5) || (domM < -5 && domF > 5)
+      || (domM > 5 && domE < -5) || (domM < -5 && domE > 5);
+    if (inverse || (!okA && !okB)) { inversions++;
+      if (r.fabrique) prefixeVu = r; }
+    if (r.fabrique) prefixeVu = r;
+  }
+  dit("sur toutes les paires salle-monde, la feuille compte du même côté que le moteur",
+      inversions === 0 && testes >= 5,
+      `${testes} combats croisés, ${inversions} inversion(s)`);
+  /* /!\ CE CAS FABRIQUE PROUVE LA FAILLE, PAS LA CORRECTION : il renomme
+     APRES preparerCombat, donc SANS la garde — et le traducteur DOIT y
+     detourner les frappes (startsWith). Si un jour ce test "passe", c'est
+     que le traducteur a change : la garde de preparerCombat devra etre
+     re-jugee, pas supprimee en silence. */
+  /* La faille vit dans les COMPTEURS DU TRADUCTEUR (la feuille, elle, a
+     le correctif du cas 61 depuis longtemps) : sur « Dur » c. « Durand »,
+     les frappes de B partent en A au bandeau du haut. */
+  dit("la preuve : sans la garde, l'écran de « Dur » c. « Durand » vole les frappes de B",
+      !!prefixeVu && !!prefixeVu.ecran && prefixeVu.moteur[1] > 20
+      && prefixeVu.ecran[1] < prefixeVu.moteur[1] / 2,
+      prefixeVu && prefixeVu.ecran
+        ? `moteur ${prefixeVu.moteur.join("-")} · écran ${prefixeVu.ecran.join("-")}`
+        : "cas non joué");
+  /* Et LA GARDE : sur toutes les paires reelles, les jetons sortis de
+     preparerCombat ne sont JAMAIS en relation de prefixe. */
+  dit("la garde : aucun couple de jetons du jeu n'est en relation de préfixe",
+      sonde.filter((r) => r && !r.fabrique).every((r) =>
+        !r.noms[0].startsWith(r.noms[1]) && !r.noms[1].startsWith(r.noms[0])),
+      sonde.filter((r) => r && !r.fabrique).map((r) => r.noms.join("/")).slice(0, 3).join(" · "));
+  dit("le verdict de l'écran est celui du moteur, côté pour côté",
+      sonde.every((r) => !r || r.vainqueur === null || r.verdict === r.vainqueur));
+  dit("aucune exception pendant le croisement", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

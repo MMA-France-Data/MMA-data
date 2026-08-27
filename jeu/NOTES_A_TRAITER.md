@@ -12401,3 +12401,40 @@ moteurs, deux freins :
 2. UN TIRAGE CONSTANT DANS trancherBlocage EST UN PIEGE : a 0,4 fixe, le
    blocage gala_maison retombait sur la meme option morte huit fois par
    jour — le calendrier fige, le banc accuse le jeu. Tirage varie.
+
+## CAS 136 — « JE PERDS MAIS C'EST MARQUE QUE JE DOMINE » (Mael, 27/08, capture)
+Capture : Estève perd 27-30 (cartes 9-10 x3) pendant que le bandeau
+affiche SIG 81-1 et FRAPPES 124-1 pour lui, controle 2:02 a l'adversaire.
+Un homme qui touche UNE frappe en trois rounds ne gagne pas 30-27 : l'un
+des deux affichages ment.
+L'ENQUETE, au croiseur moteur/ecran :
+ - LES CARTES SONT INNOCENTES : elles lisent le log en parse exact — le
+   verdict de l'ecran est celui du moteur, cote pour cote (verifie).
+ - LA FEUILLE EST INNOCENTE : elle porte le correctif du cas 61.
+ - LE COUPABLE EST LE BANDEAU DU HAUT : les compteurs viennent du
+   traducteur, dont l'attribution est `l.startsWith(nomA) ? A :
+   l.startsWith(nomB) ? B` — SI UN JETON EST PREFIXE DE L'AUTRE, les
+   lignes du second partent au premier ET LEUR PARSE RATE : ses frappes
+   DISPARAISSENT du bandeau. PREUVE AU BANC : « Dur » c. « Durand » —
+   moteur 1-56, ecran 2-0. Exactement la forme de la capture (le camp
+   du moteur qui domine affiche ~1).
+ - C'ETAIT LE CAS 61 DE LA FEUILLE... jamais couvert cote traducteur, et
+   la garde de preparerCombat ne couvrait que l'EGALITE stricte.
+LE REMEDE : la garde de preparerCombat couvre le PREFIXE (nomA prefixe de
+nomB ou l'inverse -> suffixes A/B), une porte unique — le traducteur
+(conforme a Python, fige) n'est pas touche.
+LES BANCS QUI MANQUAIENT, ajoutes au 27 :
+ - LE CROISEUR : sur des paires salle-monde REELLES, les frappes de la
+   feuille ET du bandeau == les bilans du log, nom par nom. /!\ AUCUN
+   banc ne comparait l'ecran AU MOTEUR — l'ecran etait compare au pli, et
+   le pli a lui-meme : une inversion systematique passait les 31 bancs.
+ - LA PREUVE DE LA FAILLE, gardee expres SANS la garde : si un jour ce
+   test « passe », c'est que le traducteur a change — la garde devra etre
+   re-jugee, pas supprimee en silence.
+ - LA GARDE : aucun couple de jetons sortis de preparerCombat n'est en
+   relation de prefixe (Okonkwo/Okamoto passent — proches, pas prefixes).
+/!\ HONNETE SUR LA PORTEE : la paire exacte de la capture (« Estève » /
+« Bexley ») n'est PAS en prefixe — le vecteur precis de SON combat reste
+non reproduit. La classe du defaut est fermee et tenue au banc ; SI CA SE
+REPRODUIT sur v161+, il faut LA SAUVEGARDE (Gestion -> Exporter) pour
+disséquer le combat exact.
