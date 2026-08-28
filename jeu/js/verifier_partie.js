@@ -1021,6 +1021,80 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* LE SCOUTING AUX SOIREES (Mael, 28/08) : le billet s'achète, la        */
+/* soirée laisse son rapport, l'œil s'arrête à trois, le backstage       */
+/* respecte la porte des internationales (cas 143 — la même fonction).   */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 45 });
+  const resa = P.lire(`(function(){
+    argent=999999;
+    const s=soireesAvenir(); if(!s.length)return null;
+    const c=s[0]; reserverVoyage(c.org);
+    return SALLE.voyage
+      ? {org:SALLE.voyage.org,jour:SALLE.voyage.jour,cout:SALLE.voyage.cout}
+      : null;
+  })()`);
+  dit("le calendrier des soirées se lit et le billet s'achète",
+      !!resa && resa.cout > 0,
+      resa ? `${resa.org} · ${resa.cout} €` : "aucune soirée annoncée");
+  const attente = resa ? Math.max(1, resa.jour - P.lire("t.jour") + 2) : 0;
+  if (attente) jouer(P, attente, 45);
+  const rap = P.lire(`(function(){
+    const s=SALLE.soiree; if(!s)return null;
+    const ids=[...new Set(s.combats.flatMap(c=>[c.a,c.b]))];
+    for(const id of ids.slice(0,4)){fermerFiche();observerScout(id);}
+    const scoutes=ids.filter(id=>{const l=MONDE.pros.get(id);return l&&l.scoute;});
+    ouvrirFicheMonde(s.vus[0],s.org);
+    const fiche=$("fiche").innerHTML.indexOf("Rapport de scouting")>=0;
+    const chiffreExact=$("fiche").innerHTML.indexOf("l.note")>=0;
+    return {combats:s.combats.length, vus:s.vus.length, scoutes:scoutes.length,
+      fiche, chiffreExact, voyage:!!SALLE.voyage,
+      est:(MONDE.pros.get(s.vus[0]).scoute.est||[]).length};
+  })()`);
+  dit("la soirée jouée laisse son rapport, et le billet est consommé",
+      !!rap && rap.combats > 0 && !rap.voyage,
+      rap ? `${rap.combats} combats au rapport` : "PAS DE RAPPORT — la soirée n'a pas eu lieu ?");
+  dit("l'œil du scout s'arrête à trois regards",
+      !!rap && rap.vus === 3 && rap.scoutes === 3,
+      rap ? `${rap.vus} vus sur 4 tentés` : "");
+  dit("le rapport se lit en fourchettes sur la fiche du monde",
+      !!rap && rap.fiche && rap.est === 11 && !rap.chiffreExact,
+      rap ? `${rap.est} axes` : "");
+  const back = P.lire(`(function(){
+    const s=SALLE.soiree; if(!s)return null;
+    const ids=[...new Set(s.combats.flatMap(c=>[c.a,c.b]))];
+    const orgI=Object.keys(MMA.classement.ORGS).find(k=>MMA.classement.ORGS[k].niveau==="internationale");
+    /* Un contracte international en fin de contrat, SANS preuve a la
+       salle : la porte du cas 143 doit rester fermee au backstage. */
+    const l=MONDE.pros.get(ids[0]);
+    const sauve={org:l.org,restants:l.vie?l.vie.restants:null,rep:SALLE.reputation};
+    l.org=orgI; l.vie=l.vie||{derniers:[]}; l.vie.restants=0; SALLE.reputation=95;
+    bloque=null;
+    approcherBackstage(ids[0]);
+    const porteTient=!bloque&&s.approches===1;
+    /* Deux approches par soiree, pas une de plus. */
+    const l2=MONDE.pros.get(ids[1]); const sauve2={org:l2.org};
+    l2.org=null;
+    approcherBackstage(ids[1]);
+    const deux=s.approches===2, adopte=!!bloque;
+    if(bloque)bloque=null;
+    approcherBackstage(ids[1]);
+    const stop=s.approches===2;
+    l.org=sauve.org; if(sauve.restants!==null)l.vie.restants=sauve.restants;
+    l2.org=sauve2.org; SALLE.reputation=sauve.rep;
+    return {porteTient,deux,adopte,stop};
+  })()`);
+  dit("au backstage, la porte des internationales tient (cas 143)",
+      !!back && back.porteTient);
+  dit("deux approches par soirée, la troisième est refusée",
+      !!back && back.deux && back.stop,
+      back && back.adopte ? "et l'un d'eux a voulu voir la salle" : "");
+  dit("aucune exception pendant le scouting", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

@@ -12560,3 +12560,39 @@ on regarde QUI s'y prepare. La regle, gravee :
 Mesure au banc (4000 tirages a 95 de reputation) : zero internationale
 sans la preuve, la porte se rouvre des qu'un homme de la salle est
 top 15 chez elle.
+
+## CAS 144 — LE SCOUTING AUX SOIREES (chantier O, Mael, 28/08)
+« Du scouting, où je peux me rendre aux événements et regarder les
+cartes, recruter. » LE TERRAIN ETAIT PREPARE : le calendrier vivait deja
+dans MONDE.vie.prochaine (cartes.js), et l'empreinte datee avait ete
+concue le 09/08 comme « matiere du futur rapport de scouting ». On ne
+fabrique rien cote monde — on achete un billet pour aller voir ce qui se
+joue deja. C'est le PREMIER RECRUTEMENT ACTIF du jeu (avant : tout
+toquait a la porte, rien ne s'allait chercher).
+Les trois arbitrages de Mael (28/08, les trois recommandes) :
+ 1. backstage : LIBRES et FINS DE CONTRAT seulement — on n'arrache
+    personne a son organisation ;
+ 2. l'absence est ABSTRAITE : le billet coute (300/600/1200/2500 € a la
+    portee), la salle tourne — jouable au telephone sans friction ;
+ 3. l'oeil du scout : TROIS regards par soiree — le choix fait le jeu.
+Ce qui est branche :
+ - onglet Monde, « Les soirees a venir » : les prochaines cartes par
+   orga (lecture de MONDE.vie.prochaine, RIEN de nouveau), reservation,
+   annulation a moitie remboursee ; soiree sans carte = rembourse ;
+ - le soir : rapport sur SALLE.soiree (les combats, resultats,
+   methodes), relation orga +echange_juste (se montrer aux
+   matchmakers) ;
+ - l'oeil : fourchettes sur les 11 axes du profil (MMA.profil.lire —
+   LA MEME lecture que « sur le papier »), decalage derive de l'id,
+   JAMAIS la note, jamais un chiffre exact ; le rapport vit sur l'homme
+   du monde (l.scoute) et s'affiche sur sa fiche ;
+ - le backstage : DEUX approches par soiree, la porte du cas 143 passe
+   par preuveInternationale() — LA MEME FONCTION que le pro qui frappe,
+   pas un deuxieme exemplaire de la regle ; acceptation a la reputation
+   contre sa notoriete ; accepte => blocage « frappe » (adoption par le
+   meme chemin qu'avant).
+/!\ PIEGE EVITE ET GRAVE : la carte du monde se CONSTRUIT ET SE RESOUT
+le jour meme (batirCarte + resoudre dans vivre) — on n'annonce donc que
+la DATE et l'orga, jamais l'affiche a l'avance. Pre-construire la carte
+pour l'afficher aurait cree un deuxieme exemplaire de la verite, faux
+des qu'un roster bouge entre l'annonce et le soir.

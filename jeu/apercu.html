@@ -384,6 +384,9 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
        il n'y avait plus ni bouton ni panneau pour y entrer. Une fonction
        sans porte n'existe pas — troisieme fois aujourd'hui. -->
   <div class="onglet" id="o-monde" style="display:none">
+    <!-- /!\ LES SOIREES A VENIR (Mael, 28/08) : le calendrier existait
+         deja dans MONDE.vie.prochaine — on ne fait que le MONTRER. -->
+    <h2>Les soirées à venir</h2><div class="bloc" id="mo-soirees"></div>
     <h2>Les organisations</h2><div class="bloc" id="mo-orgas"></div>
     <h2>Ce qui s'est passé ailleurs</h2><div class="bloc" id="mo-depeches"></div>
   </div>
@@ -17346,6 +17349,7 @@ function synchroniserMonde(){
     const d=MMA.salle.depechesDe(MONDE,r.resultats);
     DEPECHES=d.slice(-40).concat(DEPECHES).slice(0,60);
   }
+  traiterSoiree(r.resultats);
   proposerOffres();
   poserDemandes();
 }
@@ -19129,6 +19133,8 @@ function ouvrirFicheMonde(id,org,div){
     ${ans.length?`<h3>Faits de carrière</h3>`+ans.map(an=>
       `<div class="f-combat"><span class="f-res" style="min-width:44px;color:var(--or)">${an}</span>
        <span class="f-adv">${faits[an].join(" · ")}</span></div>`).join(""):""}
+    ${l.scoute?`<h3>Rapport de scouting <span style="color:var(--doux);text-transform:none;letter-spacing:0">· vu en vrai — jamais des certitudes</span></h3>`
+      +l.scoute.est.map(e=>`<div class="f-est"><span>${e[0]}</span><span class="fourchette">${e[1]}</span></div>`).join(""):""}
     <h3>Ses combats</h3>
     ${emp.length?emp.slice().reverse().map((e,i)=>{
       const idx=emp.length-1-i;
@@ -19921,7 +19927,208 @@ function blocStats(id){
    (donc la notoriete qu'on y gagne), ses bourses, et ou tu en es avec
    elle — EN MOTS, jamais en chiffre. */
 /* L'onglet Monde : la meme matiere, mais a plat, sans surcouche. */
+/* ==== LE SCOUTING AUX SOIREES (Mael, 28/08 : "du scouting, où je peux
+   me rendre aux événements et regarder les cartes, recruter") ========
+   /!\ LE TERRAIN ETAIT PREPARE : le calendrier vit deja dans
+   MONDE.vie.prochaine (cartes.js le tient), et chaque combat du monde
+   laisse son empreinte "matiere du futur rapport de scouting"
+   (charpente du 09/08). On ne fabrique RIEN de nouveau cote monde —
+   on ACHETE UN BILLET pour aller voir ce qui se joue deja.
+   Les trois arbitrages de Mael (28/08) :
+   - backstage : LIBRES et FINS DE CONTRAT seulement — on n'arrache
+     personne a son organisation ;
+   - l'absence est ABSTRAITE : le billet coute, la salle tourne ;
+   - l'oeil du scout : TROIS regards par soiree — le choix fait le jeu.
+   Et les portes existantes tiennent : un contracte d'internationale
+   n'accepte que si la salle a sa preuve (cas 143 — la MEME fonction,
+   pas un deuxieme exemplaire de la regle). */
+const COUT_VOYAGE=(org)=>{const p=(MMA.classement.ORGS[org]||{}).portee||40;
+  return p>=80?2500:p>=70?1200:p>=55?600:300;};
+
+function soireesAvenir(){
+  if(!MONDE||!MONDE.vie||!MONDE.vie.prochaine)return [];
+  return Object.entries(MONDE.vie.prochaine)
+    .filter(([o])=>MMA.classement.ORGS[o])
+    .map(([o,j])=>({org:o,jour:j}))
+    .filter(s=>s.jour>=t.jour)
+    .sort((a,b)=>a.jour-b.jour);
+}
+
+function reserverVoyage(org){
+  if(!MONDE)return;
+  if(SALLE.voyage)return toast("Un déplacement est déjà réservé — annule-le d'abord.");
+  const jour=MONDE.vie&&MONDE.vie.prochaine?MONDE.vie.prochaine[org]:undefined;
+  if(jour===undefined||jour<t.jour)return toast("Pas de date annoncée pour cette organisation.");
+  const cout=COUT_VOYAGE(org);
+  if(argent<cout)return toast(`La caisse ne suit pas — il faut ${cout.toLocaleString("fr-FR")} € pour le déplacement.`);
+  argent-=cout;
+  SALLE.voyage={org,jour,cout};
+  const nom=(MMA.classement.ORGS[org]||{}).nom||org;
+  depeche(t.jour,"bourse",`Billet et déplacement — soirée ${nom}.`,`−${cout.toLocaleString("fr-FR")} €`);
+  raconter(t.jour,[`🎟️ Billet pris pour la soirée ${nom} — dans ${jour-t.jour} jour${jour-t.jour>1?"s":""}.`],false);
+  rendre();
+}
+function annulerVoyage(){
+  const v=SALLE.voyage; if(!v)return;
+  const remb=Math.round(v.cout/2);
+  argent+=remb; SALLE.voyage=null;
+  raconter(t.jour,[`Tu annules le déplacement — ${remb.toLocaleString("fr-FR")} € récupérés sur ${v.cout.toLocaleString("fr-FR")}.`],false);
+  rendre();
+}
+
+/* Le soir venu : la carte s'est jouee (cartes.js, comme toujours) — on
+   n'a fait qu'y ETRE. Le rapport se pose sur SALLE, la relation note le
+   passage, et le billet est consomme. */
+function traiterSoiree(resultats){
+  const v=SALLE.voyage; if(!v||!MONDE)return;
+  const dus=(resultats||[]).filter(x=>x.org===v.org&&x.jour===v.jour);
+  if(dus.length){
+    SALLE.soiree={org:v.org,jour:v.jour,vus:[],approches:0,
+      combats:dus.map(x=>({a:x.a,b:x.b,vainqueur:x.vainqueur,methode:x.methode,
+        round:x.round,detail:x.detail,titre:!!x.titre,place:x.place||"",
+        nomA:(MONDE.pros.get(x.a)||{nom:"?"}).nom,nomB:(MONDE.pros.get(x.b)||{nom:"?"}).nom}))};
+    SALLE.voyage=null;
+    /* Se montrer aux matchmakers : le meme geste que "on discute". */
+    try{completerRelation();MMA.relation.bouger(RELATION,v.org,"echange_juste");}catch(e){ console.error("soiree/relation :",e); }
+    raconter(t.jour,[`🎟️ Tu étais à la soirée ${(MMA.classement.ORGS[v.org]||{}).nom||v.org} — `
+      +`${dus.length} combats sous tes yeux. <b>Ton rapport t'attend</b> (onglet Monde).`],true);
+  } else if(t.jour>v.jour){
+    /* La soiree n'a pas eu lieu (carte introuvable) : billet rembourse. */
+    argent+=v.cout; SALLE.voyage=null;
+    raconter(t.jour,[`La soirée prévue est tombée à l'eau — billet remboursé (${v.cout.toLocaleString("fr-FR")} €).`],false);
+  }
+}
+
+function ouvrirSoiree(){
+  const s=SALLE.soiree; if(!s)return toast("Aucun rapport de soirée pour l'instant.");
+  const o=MMA.classement.ORGS[s.org]||{};
+  const regards=3-s.vus.length, approches=2-s.approches;
+  const rows=s.combats.map(c=>{
+    const oeil=(id,nom)=>s.vus.indexOf(id)>=0
+      ?`<button class="puce actif" onclick="ouvrirFicheMonde(${id},'${s.org}')">🔍 ${nom} ✓</button>`
+      :regards<=0?""
+      :`<button class="puce" onclick="observerScout(${id})">🔍 ${nom}</button>`;
+    const gagneA=c.vainqueur===c.a;
+    return `<div class="carte-combat">
+      ${c.place==="main_event"||c.titre?`<div class="cc-quand">${c.titre?"ceinture en jeu":"main event"}</div>`:""}
+      <div class="cc-affiche">${c.nomA} c. ${c.nomB}</div>
+      <div class="cc-sous">${c.vainqueur===null?"Match nul":`${gagneA?c.nomA:c.nomB} l'emporte`} — ${c.detail||c.methode} · R${c.round}</div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">${oeil(c.a,c.nomA)}${oeil(c.b,c.nomB)}</div>
+    </div>`;}).join("");
+  /* Le backstage : les libres et les fins de contrat de la carte —
+     l'arbitrage de Mael, on n'arrache personne a son organisation. */
+  const backIds=[...new Set(s.combats.flatMap(c=>[c.a,c.b]))];
+  const back=backIds.map(id=>MONDE.pros.get(id)).filter(l=>l&&!l.salle&&!l.retraite
+    &&(!l.org||(l.vie&&l.vie.restants<=0)));
+  const backHTML=back.length?back.map(l=>`<div class="f-combat">
+      <span class="f-adv" style="cursor:pointer" onclick="ouvrirFicheMonde(${l.id},'${s.org}')">${l.nom} — ${l.org?"dernier combat de son contrat":"libre"}</span>
+      <span class="f-meth">${s.approches>=2?"":`<button class="puce"
+        onclick="approcherBackstage(${l.id})">L'approcher</button>`}</span></div>`).join("")
+    :`<div class="repos">Personne d'approchable ce soir — tous sous contrat.</div>`;
+  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">Soirée ${o.nom||s.org}</div>
+      <button class="f-fermer" onclick="fermerFiche()">Fermer</button></div>
+    <div class="f-sous">${s.combats.length} combat${s.combats.length>1?"s":""} ·
+      l'œil du scout : ${regards>0?regards+" regard"+(regards>1?"s":"")+" restant"+(regards>1?"s":""):"épuisé"} ·
+      backstage : ${approches>0?approches+" approche"+(approches>1?"s":""):"terminé"}</div>
+    ${rows}
+    <h3>Backstage</h3>${backHTML}`;
+  $("voile").classList.add("ouvert");
+}
+
+/* L'oeil du scout : TROIS par soiree. Les memes axes que "sur le
+   papier", rendus en FOURCHETTES — jamais la note, jamais un chiffre
+   exact (regle du carnet : le niveau d'un adversaire ne se lit pas).
+   Le decalage de la fourchette est derive de l'id — pas un tirage. */
+function observerScout(id){
+  const s=SALLE.soiree; if(!s)return;
+  if(s.vus.indexOf(id)>=0)return ouvrirFicheMonde(id,s.org);
+  if(s.vus.length>=3)return toast("Trois regards par soirée — tu ne peux pas tout voir.");
+  const l=MONDE.pros.get(id); if(!l)return;
+  let est=null;
+  try{
+    const fiche=MMA.salle.ficheDe(MONDE,id);
+    const vals=MMA.profil.lire(fiche);
+    est=MMA.profil.LIBELLES.map((lib,i)=>{
+      const v=vals[i], jet=(id*31+i*7)%5;
+      const lo=Math.max(1,v-4-jet), hi=Math.min(99,lo+9+((id+i)%4));
+      const mot=v>=72?"fort":v>=55?"moyen":"faible";
+      return [lib,`${mot} (${lo}-${hi})`];
+    });
+  }catch(e){ console.error("scout :",e); return toast("Impossible de le lire ce soir."); }
+  s.vus.push(id);
+  l.scoute={jour:t.jour,org:s.org,est};
+  toast(`${l.nom} observé — rapport ajouté à sa fiche.`);
+  ouvrirFicheMonde(id,s.org);
+}
+
+/* L'approche au bord de la cage : DEUX par soiree. Les portes du "pro
+   qui frappe" tiennent ici aussi — cas 143 pour les internationaux ;
+   pour le reste, ta reputation face a sa notoriete decide. */
+function approcherBackstage(id){
+  const s=SALLE.soiree; if(!s)return;
+  if(s.approches>=2){ouvrirSoiree();return toast("Tu as déjà fait le tour du backstage.");}
+  const l=MONDE.pros.get(id);
+  if(!l||l.salle||l.retraite)return;
+  s.approches++;
+  const o=l.org?(MMA.classement.ORGS[l.org]||{}):null;
+  let accepte;
+  if(o&&o.niveau==="internationale"&&!preuveInternationale())accepte=false;
+  else{
+    const chance=Math.max(0.05,Math.min(0.9,((SALLE.reputation||0)+25-(l.notoriete||0))/100));
+    accepte=alea()<chance;
+  }
+  if(!accepte){
+    raconter(t.jour,[`Tu abordes ${l.nom} au bord de la cage. Il t'écoute poliment — « J'ai déjà ce qu'il me faut. »`],false);
+    ouvrirSoiree();return;
+  }
+  fermerFiche();
+  const orgO=o||{};
+  bloque={id:"frappe",titre:"Il veut voir ta salle",
+    texte:`<b>${lienMonde(l.id,l.nom)}</b>, ${l.age} ans, ${l.bilan.v}-${l.bilan.d}
+      (${String(l.division).replace(/_/g," ")})${l.org?`, ${orgO.nom||l.org}`:", libre"}.
+      Tu l'as abordé au bord de la cage — ta réputation a fait le reste :
+      « Montre-moi ta salle. » ${l.org?"Son contrat d'organisation le suit ; le":"Le"}
+      contrat de salle — ta part sur ses bourses — est à discuter.`,
+    choix:[
+      {lab:"L'accueillir à la salle",faire:()=>{
+        const cle=adopterProDuMonde(l);
+        raconter(t.jour,[`🤝 <b>${l.nom}</b> (${l.bilan.v}-${l.bilan.d}) s'installe à la salle — repéré à la soirée ${(MMA.classement.ORGS[s.org]||{}).nom||s.org}.`],true);
+        (SALLE.annee=SALLE.annee||{v:0,d:0,faits:[]}).faits.push(`${l.nom} recruté en soirée`);
+        bloque=null;ouvrirContrat(cle);rendre();}},
+      {lab:"Finalement non",faire:()=>{
+        raconter(t.jour,[`Tu le remercies pour la discussion. ${l.nom} restera où il est.`],true);
+        bloque=null;rendre();}},
+    ]};
+  allerOnglet("salle");rendre();
+}
+
 function rendreMonde(){
+  const zs=$("mo-soirees");
+  if(zs&&MONDE){
+    const v=SALLE.voyage;
+    const enTete=(v?`<div class="carte-combat" style="border-color:var(--or)">
+        <div class="cc-quand">déplacement réservé · dans ${Math.max(0,v.jour-t.jour)} jour${v.jour-t.jour>1?"s":""}</div>
+        <div class="cc-affiche">${(MMA.classement.ORGS[v.org]||{}).nom||v.org}</div>
+        <div class="cc-sous">Billet payé : ${v.cout.toLocaleString("fr-FR")} €</div>
+        <button class="puce" style="margin-top:7px" onclick="annulerVoyage()">Annuler — moitié remboursée</button></div>`:"")
+      +(SALLE.soiree?`<div class="carte-combat cliquable" onclick="ouvrirSoiree()">
+        <div class="cc-quand">ton dernier rapport</div>
+        <div class="cc-affiche">Soirée ${(MMA.classement.ORGS[SALLE.soiree.org]||{}).nom||SALLE.soiree.org} <span class="cc-fleche">›</span></div>
+        <div class="cc-sous">${SALLE.soiree.combats.length} combats · l'œil du scout et le backstage t'attendent</div></div>`:"");
+    const lignes=soireesAvenir().slice(0,6).map(sv=>{
+      const o=MMA.classement.ORGS[sv.org], cout=COUT_VOYAGE(sv.org), dsJ=sv.jour-t.jour;
+      const dejaLa=v&&v.org===sv.org&&v.jour===sv.jour;
+      const peut=!v&&argent>=cout;
+      return `<div class="carte-combat" style="display:flex;gap:11px;align-items:center">
+        ${logoOrga(sv.org,34)}<div style="flex:1;min-width:0">
+          <div class="cc-quand">${o.pays||"—"} · ${dsJ===0?"ce soir":"dans "+dsJ+" jour"+(dsJ>1?"s":"")}</div>
+          <div class="cc-affiche">${o.nom}</div></div>
+        ${dejaLa?`<span class="cc-sous" style="color:var(--or);white-space:nowrap">Réservé ✓</span>`
+          :`<button class="cc-voir" style="white-space:nowrap${peut?"":";opacity:.4"}" ${peut?"":"disabled"}
+             onclick="reserverVoyage('${sv.org}')">${cout.toLocaleString("fr-FR")} €</button>`}
+      </div>`;}).join("");
+    zs.innerHTML=enTete+(lignes||`<div class="repos">Aucune soirée annoncée pour l'instant.</div>`);
+  }
   const z=$("mo-orgas"); if(!z||!MONDE)return;
   const cles=Object.keys(MMA.classement.ORGS)
     .sort((a,b)=>MMA.classement.ORGS[b].portee-MMA.classement.ORGS[a].portee);
@@ -22044,6 +22251,15 @@ function poserItw(cle,l,Q,ix,effets){
    circuit appellent — d'autant meilleurs qu'elle est haute. Il arrive
    SANS organisation et SANS contrat : tout reste a construire, comme
    pour n'importe qui. ============================================== */
+/* /!\ LA PREUVE DES INTERNATIONALES (cas 143) VIT ICI, UNE SEULE FOIS :
+   le pro qui frappe ET l'approche backstage (cas 144) lisent la MEME
+   fonction — pas deux exemplaires de la meme regle. */
+function preuveInternationale(){
+  return Object.values(MESGARS).some(g=>g&&!g.retraite&&g.org
+    &&((MMA.classement.ORGS[g.org]||{}).niveau==="internationale")
+    &&(g.champion||(g.rang!==null&&g.rang!==undefined&&g.rang<=15)));
+}
+
 function proQuiFrappe(){
   if((SALLE.reputation||0)<55||!MONDE)return false;
   if(alea()>=(SALLE.reputation-50)/280)return false;
@@ -22074,13 +22290,11 @@ function proQuiFrappe(){
      salle compte deja un top 15 (ou un champion) SOUS CONTRAT chez une
      internationale. Les europeennes et nationales, elles, viennent
      toujours a la reputation. */
-  const preuveInternationale=Object.values(MESGARS).some(g=>g&&!g.retraite&&g.org
-    &&((MMA.classement.ORGS[g.org]||{}).niveau==="internationale")
-    &&(g.champion||(g.rang!==null&&g.rang!==undefined&&g.rang<=15)));
+  const preuve=preuveInternationale();
   const cands=[...MONDE.pros.values()].filter(p=>
     !p.salle&&!p.retraite&&p.org&&!p.champion
     &&((MMA.classement.ORGS[p.org]||{}).portee||40)<=porteeMax
-    &&((MMA.classement.ORGS[p.org]||{}).niveau!=="internationale"||preuveInternationale)
+    &&((MMA.classement.ORGS[p.org]||{}).niveau!=="internationale"||preuve)
     &&p.age>=22&&p.age<=31
     &&(p.notoriete||0)>=minN&&(p.notoriete||0)<=maxN
     &&(p.bilan.v||0)>=3);
