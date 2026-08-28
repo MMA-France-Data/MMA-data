@@ -12542,3 +12542,21 @@ reputation coute desormais ~x3 ce qu'elle coutait hier — la haute
 reputation devient une chose qui se DEFEND, pas un plateau acquis.
 Les pertes hors combat (affiche annulee, silence) ne changent pas :
 Mael a parle des defaites, le frein reste chirurgical.
+
+## CAS 143 — LES INTERNATIONALES VEULENT DES PREUVES (Mael, 28/08)
+« Pour UFC il faut avoir au moins 1 top 15 UFC pour que d'autres
+veuillent rejoindre. » La porte des internationales s'ouvrait a la
+reputation seule (90+, cas frappe) — meme sans jamais avoir place un
+homme la-bas. Or a ce niveau on ne choisit pas sa salle sur la rumeur :
+on regarde QUI s'y prepare. La regle, gravee :
+ - un contracte d'une INTERNATIONALE (AFC, GFL) ne toque que si la
+   salle compte deja un top 15 — ou un champion — SOUS CONTRAT chez une
+   internationale (le contrat en cours, pas un souvenir : un homme
+   parti ou redescendu ne vaut plus preuve) ;
+ - les europeennes et nationales viennent toujours a la reputation
+   seule — c'est la le chemin : y placer son premier homme, le monter
+   top 15, et alors seulement les autres suivent ;
+ - la porte de reputation (90+) reste EN PLUS : les deux se cumulent.
+Mesure au banc (4000 tirages a 95 de reputation) : zero internationale
+sans la preuve, la porte se rouvre des qu'un homme de la salle est
+top 15 chez elle.

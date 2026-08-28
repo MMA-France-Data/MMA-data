@@ -978,6 +978,49 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* LES INTERNATIONALES VEULENT DES PREUVES (Mael, 28/08) : un contracté  */
+/* AFC/GFL ne toque que si la salle compte déjà un top 15 sous contrat   */
+/* chez une internationale. La réputation seule n'ouvre plus leur porte. */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 33 });
+  const r = P.lire(`(function(){
+    SALLE.reputation=95;
+    const ramasse=()=>{const orgs=new Set();
+      for(let i=0;i<4000;i++){ bloque=null; proQuiFrappe();
+        if(bloque&&bloque.id==="frappe"){
+          const t=String(bloque.texte), j=t.indexOf("chez");
+          if(j>=0){const a=t.indexOf("<b>",j), b=t.indexOf("</b>",a);
+            if(a>=0&&b>a)orgs.add(t.slice(a+3,b).trim());}
+          bloque=null; } }
+      return [...orgs];};
+    const inter=n=>{const o=Object.values(MMA.classement.ORGS).find(x=>x.nom===n);
+      return !!(o&&o.niveau==="internationale");};
+    const avant=ramasse();
+    /* On forge la preuve : un homme de la salle, top 15 d'une
+       internationale — et la meme porte se rouvre. */
+    const c=Object.keys(MESGARS).find(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite);
+    const l=MESGARS[c];
+    const orgI=Object.keys(MMA.classement.ORGS).find(k=>MMA.classement.ORGS[k].niveau==="internationale");
+    const sauve={org:l.org,rang:l.rang};
+    l.org=orgI; l.rang=8;
+    const apres=ramasse();
+    l.org=sauve.org; l.rang=sauve.rang;
+    SALLE.reputation=20; bloque=null;
+    return {avantI:avant.filter(inter),avant:avant.length,
+            apresI:apres.filter(inter),apres:apres.length};
+  })()`);
+  dit("à 95 de réputation SANS top 15 international, aucune internationale ne toque",
+      !!r && r.avantI.length === 0 && r.avant > 0,
+      r ? (r.avantI.join(",") || `${r.avant} orgas vues, aucune internationale`) : "");
+  dit("avec un top 15 chez une internationale, leur porte se rouvre",
+      !!r && r.apresI.length > 0,
+      r ? r.apresI.join(" · ") : "");
+  dit("aucune exception sur la porte des internationales", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

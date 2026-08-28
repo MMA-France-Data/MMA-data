@@ -10105,9 +10105,22 @@ function proQuiFrappe(){
          rep 55+ : nationales (portee <= 65)
          rep 70+ : les europeennes    rep 90+ : les internationales */
   const porteeMax=rep+10;
+  /* /!\ LES INTERNATIONALES VEULENT DES PREUVES, PAS UNE REPUTATION
+     (Mael, 28/08 : "pour ufc il faut avoir au moins 1 top 15 ufc pour
+     que d'autres veuillent rejoindre"). La reputation ouvrait leur
+     porte a 90 — meme sans jamais avoir place un homme la-bas. Or a ce
+     niveau on ne choisit pas sa salle sur la rumeur : on regarde QUI
+     s'y prepare. Un contracte d'une internationale ne toque que si la
+     salle compte deja un top 15 (ou un champion) SOUS CONTRAT chez une
+     internationale. Les europeennes et nationales, elles, viennent
+     toujours a la reputation. */
+  const preuveInternationale=Object.values(MESGARS).some(g=>g&&!g.retraite&&g.org
+    &&((MMA.classement.ORGS[g.org]||{}).niveau==="internationale")
+    &&(g.champion||(g.rang!==null&&g.rang!==undefined&&g.rang<=15)));
   const cands=[...MONDE.pros.values()].filter(p=>
     !p.salle&&!p.retraite&&p.org&&!p.champion
     &&((MMA.classement.ORGS[p.org]||{}).portee||40)<=porteeMax
+    &&((MMA.classement.ORGS[p.org]||{}).niveau!=="internationale"||preuveInternationale)
     &&p.age>=22&&p.age<=31
     &&(p.notoriete||0)>=minN&&(p.notoriete||0)<=maxN
     &&(p.bilan.v||0)>=3);
