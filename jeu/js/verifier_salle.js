@@ -153,6 +153,26 @@ const neuf = () => {
     dep.length > 0 && dep.length < r.resultats.length && !/\d+ of \d+/.test(dep[0].texte),
     `${dep.length} dépêches sur ${r.resultats.length} combats · ex. « ${dep[0].texte} »`);
 
+  /* Les categories suivies (Mael, 28/08) : la fenetre ORG|division
+     ouvre le filtre aux combats de top 15 — et a eux seuls. */
+  const surAFC = r.resultats.filter(x => x.org === "AFC" && m.pros.get(x.a) && m.pros.get(x.b));
+  const top15 = surAFC.filter(x => (x.rangA !== null && x.rangA <= 15)
+    || (x.rangB !== null && x.rangB <= 15));
+  if (surAFC.length && top15.length) {
+    const div = m.pros.get(top15[0].a).division;
+    const avant = S.depechesDe(m, r.resultats).filter(d => d.org === "AFC" && !d.titre).length;
+    const dep2 = S.depechesDe(m, r.resultats, new Set(["AFC|" + div]));
+    const suivis = dep2.filter(d => d.suivi);
+    const attendu = top15.filter(x => m.pros.get(x.a).division === div
+      && !m.pros.get(x.a).salle && !m.pros.get(x.b).salle && !x.titre).length;
+    dit("une catégorie suivie fait remonter ses combats de top 15 — et eux seuls",
+      suivis.length >= attendu && suivis.every(d => d.org === "AFC" && d.division === div),
+      `${suivis.length} dépêches suivies (${div}) · sans le suivi : ${avant} hors-titre AFC`);
+  } else {
+    dit("une catégorie suivie fait remonter ses combats de top 15 — et eux seuls",
+      false, "pas de combat AFC top 15 sur 60 jours — graine à revoir");
+  }
+
   const cl = S.classement(m, "HEX", "poids_welter");
   dit("le classement sort prêt à afficher, sans trou ni doublon",
     cl.length > 0 && cl.every((x, i) => x.rang === i + 1),

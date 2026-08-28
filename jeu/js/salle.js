@@ -257,17 +257,29 @@ function classement(m, org, division) {
 
 /** Les resultats du monde qui meritent une depeche : ton org, les titres,
  *  et les combats de tes hommes. Le reste est du bruit. */
-function depechesDe(m, resultats) {
+/* /!\ LE FILTRE S'OUVRE SUR LES CATEGORIES SUIVIES (Mael, 28/08 : "une
+   notif quand des top 15 de la categorie de l'orga d'un de mes
+   combattants combattent"). `suivies` est un Set de cles "ORG|division"
+   — la ou TES hommes sont sous contrat. Un combat de top 15 dans une de
+   ces fenetres n'est pas du bruit : c'est le paysage de tes gars — leurs
+   futurs adversaires. Le rang lu est celui DU SOIR DU COMBAT (rangA/
+   rangB captures par resoudre), pas celui d'apres. Optionnel : sans
+   `suivies`, le filtre d'avant, inchange. */
+function depechesDe(m, resultats, suivies) {
   const sortie = [];
   for (const r of resultats) {
     const a = m.pros.get(r.a), b = m.pros.get(r.b);
     if (!a || !b) continue;
     const mien = a.salle || b.salle;
-    if (!mien && !r.titre && r.org !== ORG_DEPART) continue;
+    const suivi = !!(suivies && suivies.has(r.org + "|" + a.division)
+      && ((r.rangA !== null && r.rangA !== undefined && r.rangA <= 15)
+        || (r.rangB !== null && r.rangB !== undefined && r.rangB <= 15)));
+    if (!mien && !r.titre && !suivi && r.org !== ORG_DEPART) continue;
     const vainqueur = r.vainqueur ? m.pros.get(r.vainqueur) : null;
     const perdant = vainqueur ? (vainqueur === a ? b : a) : null;
     sortie.push({
-      jour: r.jour, org: r.org, titre: r.titre, mien,
+      jour: r.jour, org: r.org, titre: r.titre, mien, suivi,
+      division: a.division,
       // /!\ ON REND LES IDS, PAS SEULEMENT UNE PHRASE : sans eux l'ecran
       // ne peut pas rendre les noms cliquables (Mael, 09/08).
       a: a.id, b: b.id, nomA: a.nom, nomB: b.nom,

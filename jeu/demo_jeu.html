@@ -5386,7 +5386,13 @@ function synchroniserMonde(){
   rattraperCombats();
   const r=MMA.salle.avancerMonde(MONDE,t.jour);
   if(r.resultats.length){
-    const d=MMA.salle.depechesDe(MONDE,r.resultats);
+    /* /!\ LES CATEGORIES SUIVIES (Mael, 28/08) : la ou TES hommes sont
+       sous contrat, les combats de top 15 remontent en depeche — ce
+       sont leurs futurs adversaires, pas du bruit. */
+    const suivies=new Set(Object.values(MESGARS)
+      .filter(l=>l&&l.org&&!l.retraite&&!l.amateur)
+      .map(l=>l.org+"|"+l.division));
+    const d=MMA.salle.depechesDe(MONDE,r.resultats,suivies);
     DEPECHES=d.slice(-40).concat(DEPECHES).slice(0,60);
   }
   traiterSoiree(r.resultats);
@@ -5785,7 +5791,7 @@ function rendreCombats(){
   const zone=$("cb-monde");
   if(zone)zone.innerHTML=DEPECHES.length
     ? DEPECHES.slice(0,12).map(d=>`<div class="carte-combat">
-        <div class="cc-quand">${d.org}${d.titre?" · <b>titre</b>":""}${d.mien?" · <b>ta salle</b>":""}</div>
+        <div class="cc-quand">${d.org}${d.titre?" · <b>titre</b>":""}${d.mien?" · <b>ta salle</b>":""}${d.suivi&&!d.mien?" · <b>ta catégorie</b>":""}</div>
         <div class="cc-res">${depecheHTML(d)}</div></div>`).join("")
     : `<div class="repos">Le monde n'a pas encore combattu.</div>`;
 }
@@ -8187,7 +8193,7 @@ function rendreMonde(){
   const zd=$("mo-depeches");
   if(zd)zd.innerHTML=DEPECHES.length
     ? DEPECHES.slice(0,15).map(d=>`<div class="carte-combat">
-        <div class="cc-quand">${d.org}${d.titre?" · <b>titre</b>":""}${d.mien?" · <b>ta salle</b>":""}</div>
+        <div class="cc-quand">${d.org}${d.titre?" · <b>titre</b>":""}${d.mien?" · <b>ta salle</b>":""}${d.suivi&&!d.mien?" · <b>ta catégorie</b>":""}</div>
         <div class="cc-res">${depecheHTML(d)}</div></div>`).join("")
     : `<div class="repos">Le monde n'a pas encore combattu.</div>`;
 }

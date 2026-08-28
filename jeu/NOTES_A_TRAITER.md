@@ -12596,3 +12596,16 @@ le jour meme (batirCarte + resoudre dans vivre) — on n'annonce donc que
 la DATE et l'orga, jamais l'affiche a l'avance. Pre-construire la carte
 pour l'afficher aurait cree un deuxieme exemplaire de la verite, faux
 des qu'un roster bouge entre l'annonce et le soir.
+
+## CAS 145 — LES CATEGORIES SUIVIES (Mael, 28/08)
+« Une notif quand des top 15 de la categorie de l'orga d'un de mes
+combattants combattent. » Le filtre des depeches (salle.depechesDe :
+« ton orga, les titres, tes hommes — le reste est du bruit ») s'ouvre
+d'une fenetre : les cles ORG|division ou TES pros sont sous contrat.
+Un combat de top 15 dans une de ces fenetres remonte en depeche marquee
+« ta categorie » (onglet Monde et fil des depeches) — ce sont les futurs
+adversaires de tes gars, pas du bruit. Le rang lu est celui DU SOIR
+(rangA/rangB captures par resoudre), pas celui d'apres le recalcul.
+Le parametre `suivies` est OPTIONNEL : sans lui, le filtre d'avant,
+inchange — et c'est le jeu qui construit la fenetre a chaque jour
+(l'homme parti ou retraite ne laisse pas sa categorie ouverte).
