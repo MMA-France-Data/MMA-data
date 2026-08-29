@@ -1095,6 +1095,54 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* LE VESTIAIRE VIVANT (chantier N, 28/08) : le sparring tisse, la      */
+/* fiche parle en mots, le chef émerge des faits, et son départ fait    */
+/* vaciller la salle.                                                    */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 51 });
+  jouer(P, 160, 51);
+  const v = P.lire(`(function(){
+    const liens=SALLE.liens||{};
+    const n=Object.keys(liens).length;
+    const pros=Object.keys(MESGARS).filter(k=>!MESGARS[k].amateur&&!MESGARS[k].retraite);
+    if(pros.length<2)return {pasAssez:true};
+    const a=pros[0], b=pros[1];
+    MMA.vestiaire.poser(liens,a,b,t.jour,"le sparring ensemble",90);
+    ouvrirFiche(a);
+    const h1=$("fiche").innerHTML;
+    const ficheChaud=h1.indexOf("Le vestiaire")>=0&&h1.indexOf("Inséparable")>=0;
+    MMA.vestiaire.poser(liens,a,b,t.jour,"la démolition en duel interne",-260);
+    ouvrirFiche(b);
+    const ficheFroid=$("fiche").innerHTML.indexOf("Irréconciliable")>=0;
+    /* Le chef : on lui donne les faits (neuf cents jours de maison,
+       entente haute, les autres arrivent aujourd'hui) — il emerge. */
+    const l=MESGARS[a];
+    l.arriveLe=t.jour-900; l.entente.valeur=75;
+    for(const k of pros)if(k!==a)MESGARS[k].arriveLe=t.jour;
+    synchroniserMonde();
+    const chefBon=SALLE.chef===a;
+    /* Et son depart fait vaciller. */
+    bloque=null; l.combatPrevu=null;
+    quitterLaSalle(a,"Parti — le banc le regarde partir.");
+    const vacille=SALLE.chef===null&&SALLE.vestiaireVacille>t.jour;
+    return {n,plafond:Object.keys(liens).length<=MMA.vestiaire.MAX_LIENS,
+      ficheChaud,ficheFroid,chefBon,vacille};
+  })()`);
+  dit("sur une saison, le sparring tisse des liens — sous le plafond",
+      !!v && !v.pasAssez && v.n > 0 && v.plafond,
+      v ? `${v.n} paires` : "");
+  dit("la fiche dit le chaud et le froid — en mots, jamais un chiffre",
+      !!v && v.ficheChaud && v.ficheFroid);
+  dit("le chef de vestiaire émerge des faits, personne ne le nomme",
+      !!v && v.chefBon);
+  dit("et son départ fait vaciller le vestiaire un mois",
+      !!v && v.vacille);
+  dit("aucune exception dans le vestiaire", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

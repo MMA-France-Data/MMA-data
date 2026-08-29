@@ -12609,3 +12609,43 @@ adversaires de tes gars, pas du bruit. Le rang lu est celui DU SOIR
 Le parametre `suivies` est OPTIONNEL : sans lui, le filtre d'avant,
 inchange — et c'est le jeu qui construit la fenetre a chaque jour
 (l'homme parti ou retraite ne laisse pas sa categorie ouverte).
+
+## CAS 146 — LE VESTIAIRE VIVANT EST BRANCHE (chantier N ferme, 28/08)
+Les 4 arbitrages de Mael (28/08) + le 5e pose par la session :
+ 1. VISIBILITE : LES DEUX — bloc « Le vestiaire » sur la fiche (mots,
+    jamais un chiffre, comme l'entente) ET le coach qui interpelle
+    QUAND un palier se franchit (le signal `franchi` de poser()) ;
+ 2. LE CHEF EMERGE des faits (anciennete >= 1 an + entente >= 55 +
+    resultats — bareme dans vestiaire.leader()), personne ne le nomme ;
+ 3. DES PAIRES seulement — les clans se liront d'eux-memes ;
+ 4. LA MANIERE COMPTE au duel interne : arret au 1er round = demolition
+    (froid -18), tout le reste = combat propre (respect +8) ;
+ 5. LE PLAFOND : 24 paires, la plus faible s'efface (a rejuger en jouant).
+LE MODULE (vestiaire.js, banc 32) : pur, zero tirage, zero DOM. Paires
+dans SALLE.liens (UNE source, voyage avec la sauvegarde). Paliers :
+proches >= 30, inseparables >= 60, froid <= -30, irreconciliables <= -60.
+Usure 1,5 %/semaine ; une paire retombee a rien s'efface.
+LES BRANCHEMENTS (demo_jeu.html) :
+ - le sparring ensemble tisse (+0,4 par seance partagee, pros) ;
+ - une paire liee s'entraine mieux ENSEMBLE (x1,15 au sparring) ;
+ - un FROID refuse le tapis : la seance perd un des deux ;
+ - le duel interne marque (effetDuel, a l'encaissement) ;
+ - la jalousie du passage pro (-6 par amateur au bilan comparable) ;
+ - le depart efface les paires, ceux qui etaient lies le disent ; si
+   c'etait LE CHEF : SALLE.vestiaireVacille un mois (seances x0,93) ;
+ - tant que le chef est la, les autres pros rendent x1,03.
+RESTE POUR PLUS TARD (gravé, pas oublié) : l'ecart de bourse qui ronge,
+l'anciennete partagee, le combattant au coin d'un autre (l'au_coin du
+staff a etendre), les demandes branchees sur le VRAI pote/froid.
+
+## CAS 147 — LA LECTURE D'ENTENTE QUI RENDAIT TOUJOURS undefined (28/08)
+Trouve en branchant le chef de vestiaire : SIX sites lisaient
+`MMA.entente.lire(l.entente).valeur` — or lire() prend une VALEUR et
+rend un PALIER {seuil, mot} : passer l'etat entier rendait le dernier
+palier, et `.valeur` dessus = undefined. Consequence silencieuse :
+`ent>=60` toujours faux — les adieux de fin de contrat toujours froids,
+deux lectures de l'endgame mortes, et mes trois sites recents (renvoi,
+vestiaire) nes avec le meme defaut par IMITATION du site malade.
+La bonne lecture : `l.entente.valeur` (l'etat la porte en clair).
+Lecon gravee : IMITER UN CALL-SITE EXISTANT PROPAGE SES BUGS — verifier
+la signature du module, pas le voisin.
