@@ -12649,3 +12649,29 @@ vestiaire) nes avec le meme defaut par IMITATION du site malade.
 La bonne lecture : `l.entente.valeur` (l'etat la porte en clair).
 Lecon gravee : IMITER UN CALL-SITE EXISTANT PROPAGE SES BUGS — verifier
 la signature du module, pas le voisin.
+
+## CAS 148 — L'EMBALLAGE ANDROID (chantier P ouvert, 28/08)
+Mael : la cible de sortie est LE PLAY STORE, avec a terme « la save par
+Google ». Decisions gravees :
+ - LE JEU NE SAIT RIEN D'ANDROID : demo_jeu.html tourne pareil au
+   navigateur, en visionneuse et en WebView. L'emballage vit dans
+   appli/ ; www/ y est un ARTEFACT fabrique par synchroniser.sh depuis
+   jeu/ (une seule source, jamais edite a la main — meme regle que
+   l'apercu). Le SEUL ajout est pont_android.js, annexe au sed, garde :
+   hors appli il ne fait rien et ne leve pas ;
+ - v1 : save LOCALE (celle d'aujourd'hui) + export/import en filet.
+   v1.1 : la save Google Play Jeux — l'interface window.PONT_SAVE est
+   RESERVEE (lire/ecrire une chaine MMALZ1|), le jeu n'aura rien a
+   reecrire parce que la sauvegarde est deja UNE chaine ;
+ - bouton retour Android : fiche ouverte -> fermerFiche(), sinon
+   l'appli se range (minimize) — jamais de fermeture seche ;
+ - l'APK de test se construit par GitHub Actions (pas de SDK Android
+   sur la machine de session) : artefact mma-manager-debug-apk ;
+ - appId fr.mmadata.mmamanager — DEFINITIF a la premiere montee sur le
+   Play Store : A CONFIRMER PAR MAEL AVANT (modifiable avant, jamais
+   apres). Nom affiche : « MMA Manager ». Icone : octogone or + gant
+   (icone.svg, rendue par fabriquer_icones.js — remplacable par un
+   design Canva) ;
+ - le chemin Play Store cote Mael : compte console (25 $), test ferme
+   impose (~12 testeurs, 14 jours, compte personnel), politique de
+   confidentialite (rien n'est collecte, tout reste sur l'appareil).

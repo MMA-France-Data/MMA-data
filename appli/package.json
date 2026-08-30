@@ -1,0 +1,16 @@
+{
+  "name": "mma-manager-appli",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Emballage Android (Capacitor) du jeu jeu/demo_jeu.html — le jeu reste la seule source, www/ est généré par synchroniser.sh.",
+  "scripts": {
+    "sync": "sh synchroniser.sh && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^6.2.1",
+    "playwright-core": "^1.62.1"
+  }
+}

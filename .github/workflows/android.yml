@@ -1,0 +1,41 @@
+# android.yml — fabrique l'APK de test (debug) de l'appli Android.
+# La machine de session n'a pas le SDK Android : c'est CE workflow qui
+# construit. Lancement : a la main (onglet Actions -> android -> Run
+# workflow) ou a chaque poussee touchant appli/.
+# L'APK sort en artefact "mma-manager-debug-apk" — installable sur un
+# telephone Android (sideload). La version Play Store (AAB signee)
+# viendra avec le compte Play Console.
+name: android
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "claude/finish-app-wncmjt" ]
+    paths: [ "appli/**" ]
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Dépendances Capacitor
+        working-directory: appli
+        run: npm ci --no-fund --no-audit
+      - name: Fabriquer www/ depuis jeu/ (la seule source)
+        working-directory: appli
+        run: sh synchroniser.sh
+      - name: Synchroniser le projet Android
+        working-directory: appli
+        run: npx cap sync android
+      - name: Construire l'APK de test
+        working-directory: appli/android
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mma-manager-debug-apk
+          path: appli/android/app/build/outputs/apk/debug/app-debug.apk

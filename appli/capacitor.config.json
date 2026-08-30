@@ -1,0 +1,11 @@
+{
+  "appId": "fr.mmadata.mmamanager",
+  "appName": "MMA Manager",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

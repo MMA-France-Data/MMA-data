@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <!-- icone.svg — l'identité de l'appli : l'octogone or sur fond sombre,
+       le gant stylisé. Rendue en PNG par fabriquer_icones.js (Chromium),
+       jamais éditée en PNG à la main. -->
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d232e"/>
+      <stop offset="1" stop-color="#10141b"/>
+    </linearGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8c15a"/>
+      <stop offset="1" stop-color="#b8892c"/>
+    </linearGradient>
+  </defs>
+  <rect width="108" height="108" fill="url(#fond)"/>
+  <!-- l'octogone (la cage), inscrit dans la zone sûre adaptive (66 %) -->
+  <g transform="translate(54,54)">
+    <polygon points="0,-30 21.2,-21.2 30,0 21.2,21.2 0,30 -21.2,21.2 -30,0 -21.2,-21.2"
+      fill="none" stroke="url(#or)" stroke-width="4.5" stroke-linejoin="miter"/>
+    <!-- le gant : poing fermé stylisé -->
+    <g fill="url(#or)">
+      <rect x="-11" y="-9" width="22" height="16" rx="7"/>
+      <rect x="-13" y="-3" width="7" height="12" rx="3.2"/>
+      <rect x="-4" y="4" width="15" height="8" rx="4"/>
+    </g>
+  </g>
+</svg>
