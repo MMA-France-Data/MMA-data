@@ -12675,3 +12675,10 @@ Google ». Decisions gravees :
  - le chemin Play Store cote Mael : compte console (25 $), test ferme
    impose (~12 testeurs, 14 jours, compte personnel), politique de
    confidentialite (rien n'est collecte, tout reste sur l'appareil).
+
+## CAS 148 bis — L'APK TESTE SUR VRAI TELEPHONE : « c'est nickel » (Mael, 30/08)
+Premier build CI (90 s), premiere installation, premier essai reel :
+retour, sauvegarde locale, confort — rien a signaler. L'emballage v1
+est valide sur appareil. Restent COTE MAEL : la campagne de jeu longue,
+la confirmation de l'appId fr.mmadata.mmamanager, le compte Play
+Console et les ~12 testeurs du test ferme.
