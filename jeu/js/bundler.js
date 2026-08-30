@@ -39,7 +39,9 @@ const RACINES = ["engine.js", "generator.js", "traducteur.js", "mesure.js",
                  // les liens entre tes hommes (chantier N, 28/08).
                  "vestiaire.js",
                  // la soiree vecue : les conversations au bord de la cage.
-                 "soiree.js"];
+                 "soiree.js",
+                 // du log a la scene 3D (proto, cas 150).
+                 "choregraphie.js"];
 
 const ici = __dirname;
 const RE_REQUIRE = /require\(\s*["']\.\/([\w.-]+)["']\s*\)/g;
@@ -132,6 +134,7 @@ ${morceaux.join("\n")}
     endgame:    require("./endgame.js"),
     vestiaire:  require("./vestiaire.js"),
     soiree:     require("./soiree.js"),
+    choregraphie: require("./choregraphie.js"),
     require: require
   };
 })(typeof window !== "undefined" ? window : globalThis);

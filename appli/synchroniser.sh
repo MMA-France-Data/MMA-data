@@ -8,7 +8,7 @@ ici="$(cd "$(dirname "$0")" && pwd)"
 jeu="$ici/../jeu"
 rm -rf "$ici/www"
 mkdir -p "$ici/www/js"
-cp "$jeu/js/moteur.bundle.js" "$jeu/js/ecran.gabarit.js" "$jeu/js/assets.js" "$ici/www/js/"
+cp "$jeu/js/moteur.bundle.js" "$jeu/js/ecran.gabarit.js" "$jeu/js/assets.js" "$jeu/js/trois.js" "$ici/www/js/"
 # index.html = demo_jeu.html + le pont, rien d'autre.
 sed 's#</body>#<script src="pont_android.js"></script></body>#' "$jeu/demo_jeu.html" > "$ici/www/index.html"
 cp "$ici/pont_android.js" "$ici/www/pont_android.js"

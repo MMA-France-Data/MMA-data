@@ -25,7 +25,7 @@ let html = fs.readFileSync(page, "utf8");
 /* /!\ assets.js EN FAIT PARTIE (25/08) : sans lui dans la liste, l'apercu
    autonome partait SANS les visuels — et l'erreur "il reste un script
    externe" l'aurait dit, mais autant le dire ici aussi. */
-const aInliner = ["js/moteur.bundle.js", "js/ecran.gabarit.js", "js/assets.js"];
+const aInliner = ["js/moteur.bundle.js", "js/ecran.gabarit.js", "js/assets.js", "js/trois.js"];
 for (const rel of aInliner) {
   const abs = path.join(R, rel);
   if (!fs.existsSync(abs)) {

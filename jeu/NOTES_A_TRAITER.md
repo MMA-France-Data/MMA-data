@@ -12718,3 +12718,32 @@ mort (cas 121). ficheDepuisSoiree() RANGE la page, ouvre la fiche, et
 fermerFiche() ROUVRE la page (RETOUR_SOIREE).
 L'ancien ecran-rapport (ouvrirSoiree) reste en lecture, mais la carte
 de l'onglet Monde ouvre la page vecue.
+
+## CAS 150 — LA VUE 3D, PROTOTYPE (chantier Q ouvert, Mael, 30/08 : « go 3D »)
+LA REGLE 7 JUSQU'AU BOUT : la 3D est UNE CAMERA POSEE SUR LE REEL, pas
+un deuxieme moteur. Les etapes du traducteur portaient deja TOUT (les
+positions des deux hommes dans la cage — centre (180,180), rayon 148 —
+la phase, qui encaisse et ou, le texte) : choregraphie.js (banc 34) les
+RELIT en temps de scene, il n'invente ni un pas ni un coup.
+ - la partition (r.c3d) se pose sur la carte a l'encaissement — SEUL LE
+   DERNIER combat la garde (proto : quelques Ko, pas toute une carriere) ;
+ - bouton « 🎥 Revoir en 3D » sur la carte ; la vue : octogone, cage en
+   fil d'or, deux silhouettes en primitives (rouge/bleu), camera qui
+   orbite, LE TEXTE DU LOG en sous-titre — la 3D et les mots racontent
+   le meme combat ;
+ - gestes : garde (respiration), frappe (bras/jambe selon la zone du
+   dmg, recul de l'encaisse), amenee/sol/soumission (dessus-dessous par
+   ctrl), chute au KO — le bon bonhomme tombe (assertion du banc) ;
+ - trois.js r147 (UMD, 600 Ko) VENDU dans js/trois.js — jamais edite,
+   inline dans l'apercu, copie dans l'APK (synchroniser.sh) ;
+ - gardes : pas de THREE => on le dit ; pas de WebGL => on le dit.
+ARBITRAGE MOTEURS (Mael a demande « lier Blender et Godot ») :
+ - GODOT : NON — greffer un moteur de jeu sur le notre = deux runtimes
+   dans l'APK (~40 Mo), un pont fragile, la visionneuse perdue. Notre
+   valeur est le moteur de combat ; la 3D n'est qu'une camera.
+ - BLENDER : OUI, comme ATELIER — un GLB (glTF) exporte de Blender ou
+   Mixamo se chargera dans Three.js et REMPLACERA les silhouettes sans
+   toucher la partition. Pas de liaison : des fichiers suffisent.
+A JUGER EN JOUANT : la cadence (1,15 s/temps), la lisibilite des
+silhouettes, l'envie d'un GLB. Le proto decide si on creuse ou si on
+reste sur l'ecran 2D.
