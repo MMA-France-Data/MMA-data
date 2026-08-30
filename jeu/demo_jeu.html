@@ -167,6 +167,35 @@ h2 .plus{color:var(--doux);font-weight:400;text-transform:none;letter-spacing:0;
 .cc-voir:hover{filter:brightness(1.08)}
 #surcouche{position:fixed;inset:0;z-index:90;background:#000;display:none}
 #surcouche.ouvert{display:block}
+/* ==== LA SOIREE VECUE (chantier O bis) : la page annexe, comme le
+   combat — plein ecran, son propre monde. ==== */
+#soiree-page{position:fixed;inset:0;z-index:88;display:none;overflow-y:auto;
+  background:linear-gradient(180deg,#12161f 0%,#0b0e14 40%,#000 100%)}
+#soiree-page.ouvert{display:block}
+.so-dedans{max-width:480px;margin:0 auto;padding:16px 14px 90px}
+.so-tete{display:flex;align-items:center;gap:12px;padding:10px 2px 16px;
+  border-bottom:1px solid var(--or)}
+.so-tete .t{flex:1}
+.so-tete .quand{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--doux)}
+.so-tete .nom{font-size:19px;font-weight:800}
+.so-compteurs{display:flex;gap:14px;margin:10px 0 4px;font-size:12px;color:var(--doux)}
+.so-combat{background:var(--carte);border:1px solid var(--bord);border-radius:12px;
+  padding:12px 13px;margin-top:10px}
+.so-combat .place{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--or)}
+.so-combat .aff{font-size:15.5px;font-weight:700;margin:2px 0}
+.so-combat .res{font-size:13px;color:var(--doux)}
+.so-bord{margin-top:16px;padding:12px 13px;border:1px dashed var(--or);border-radius:12px}
+.so-bord h4{margin:0 0 8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--or)}
+.so-parle{background:var(--carte2,var(--carte));border-left:3px solid var(--or);
+  border-radius:10px;padding:11px 13px;margin-top:12px}
+.so-parle .lui{font-style:italic;line-height:1.5;margin-bottom:10px}
+.so-parle .toi{display:flex;flex-direction:column;gap:7px}
+.so-suivant{display:block;width:100%;margin-top:16px;padding:13px;border-radius:12px;
+  border:1px solid var(--or);background:transparent;color:var(--or);
+  font-weight:700;font-size:15px;cursor:pointer}
+.so-fermer{position:fixed;top:10px;right:12px;z-index:2;width:34px;height:34px;
+  border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);
+  color:#fff;font-size:19px;line-height:1;cursor:pointer}
 #surcouche iframe{width:100%;height:100%;border:0;display:block}
 #sc-fermer{position:absolute;top:10px;right:12px;z-index:2;width:34px;height:34px;
   border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);
@@ -444,6 +473,9 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
   <button id="sc-fermer" onclick="fermerEcran()" title="Fermer" style="display:none">×</button>
   <iframe id="sc-cadre" title="Écran de combat"></iframe>
 </div>
+<!-- LA SOIREE VECUE — la page annexe, remplie par rendreSoireePage(). -->
+<div id="soiree-page"><button class="so-fermer" onclick="fermerSoireePage()">×</button>
+  <div class="so-dedans" id="so-dedans"></div></div>
 <div id="toast"></div>
 
 <!-- ===================================================================
@@ -3014,6 +3046,11 @@ function jouerJournee(jour,echeances){
         }
         if(SALLE.vestiaireVacille&&jour<SALLE.vestiaireVacille)g*=0.93;
         else if(SALLE.chef&&f.id!==SALLE.chef&&f.gr==="pro")g*=1.03;
+        /* Un homme du monde en visite (soiree, cas 149) : le sparring
+           de SA division en profite — l'etalon vit dans soiree.js. */
+        if(SALLE.visiteur&&SALLE.visiteur.jusqua>jour&&titre.startsWith("Sparring")
+           &&f.gr==="pro"&&MESGARS[f.id]&&MESGARS[f.id].division===SALLE.visiteur.division)
+          g*=MMA.soiree.BOOST_VISITE;
       }catch(e){ console.error("vestiaire/seance :",e); }
       /* /!\ LE TRAVAIL TOUCHE VRAIMENT LA FICHE, ET L'ECRAN DIT CE QUI A
          ATTERRI (Mael, 10/08 : "+0.4 a la seance, +0 dans ses stats").
@@ -5473,6 +5510,17 @@ function synchroniserMonde(){
     DEPECHES=d.slice(-40).concat(DEPECHES).slice(0,60);
   }
   traiterSoiree(r.resultats);
+  /* La visite d'un homme du monde se termine — et laisse sa trace. */
+  try{
+    if(SALLE.visiteur&&t.jour>=SALLE.visiteur.jusqua){
+      const vi=SALLE.visiteur; SALLE.visiteur=null;
+      const p=MONDE&&MONDE.pros.get(vi.id);
+      if(p&&!p.retraite){
+        MMA.soiree.poserContact(p,t.jour,"une semaine chez toi",8);
+        raconter(t.jour,[`◆ ${lienMonde(vi.id,vi.nom)} repart après sa semaine à la salle. Poignée de main appuyée — il sait où te trouver.`],true);
+      }
+    }
+  }catch(e){ console.error("soiree/visite :",e); }
   /* ==== LE VESTIAIRE AU QUOTIDIEN (chantier N) : le chef emerge des
      faits, et l'usure du temps passe une fois par semaine. */
   try{
@@ -7421,7 +7469,9 @@ function ouvrirFiche(id){
        <div class="f-sous">Total : <span style="color:var(--vert);font-weight:700">+${eff.total7.toFixed(1)}</span> · ${eff.gains7.length} séances</div>`:"");
   $("voile").classList.add("ouvert");
 }
-function fermerFiche(){$("voile").classList.remove("ouvert");}
+function fermerFiche(){$("voile").classList.remove("ouvert");
+  if(RETOUR_SOIREE){RETOUR_SOIREE=false;
+    if(SALLE.soiree){rendreSoireePage();$("soiree-page").classList.add("ouvert");}}}
 
 /* ==== UN ESPOIR SE PRESENTE ====
    /!\ IL SORT DU VIVIER AMATEUR DU MONDE : de vraies stats, un vrai age,
@@ -8175,15 +8225,28 @@ function traiterSoiree(resultats){
   const v=SALLE.voyage; if(!v||!MONDE)return;
   const dus=(resultats||[]).filter(x=>x.org===v.org&&x.jour===v.jour);
   if(dus.length){
-    SALLE.soiree={org:v.org,jour:v.jour,vus:[],approches:0,
+    SALLE.soiree={org:v.org,jour:v.jour,vus:[],approches:0,pas:0,
       combats:dus.map(x=>({a:x.a,b:x.b,vainqueur:x.vainqueur,methode:x.methode,
         round:x.round,detail:x.detail,titre:!!x.titre,place:x.place||"",
         nomA:(MONDE.pros.get(x.a)||{nom:"?"}).nom,nomB:(MONDE.pros.get(x.b)||{nom:"?"}).nom}))};
     SALLE.voyage=null;
     /* Se montrer aux matchmakers : le meme geste que "on discute". */
     try{completerRelation();MMA.relation.bouger(RELATION,v.org,"echange_juste");}catch(e){ console.error("soiree/relation :",e); }
-    raconter(t.jour,[`🎟️ Tu étais à la soirée ${(MMA.classement.ORGS[v.org]||{}).nom||v.org} — `
-      +`${dus.length} combats sous tes yeux. <b>Ton rapport t'attend</b> (onglet Monde).`],true);
+    /* /!\ LA SOIREE SE VIT, ELLE NE SE LIT PAS (Mael, 30/08 : "pas super
+       fan du mode scouting — une page annexe comme le combat"). Le soir
+       venu, la porte s'ouvre par un blocage ; "suivre de loin" revele
+       tout et laisse le rapport dans l'onglet Monde. */
+    const nomO=(MMA.classement.ORGS[v.org]||{}).nom||v.org;
+    raconter(t.jour,[`🎟️ Tu es à la soirée ${nomO} — ${dus.length} combats au programme.`],true);
+    bloque={id:"soiree",titre:`La soirée ${nomO} commence`,
+      texte:`Ton billet est contrôlé, la salle gronde déjà. ${dus.length} combats au
+        programme — et entre les affiches, le bord de la cage est à toi.`,
+      choix:[
+        {lab:"Entrer dans la salle",faire:()=>{bloque=null;ouvrirSoireePage();rendre();}},
+        {lab:"Suivre de loin — le rapport attendra (onglet Monde)",faire:()=>{
+          const s=SALLE.soiree; if(s)s.pas=s.combats.length;
+          bloque=null;rendre();}},
+      ]};
   } else if(t.jour>v.jour){
     /* La soiree n'a pas eu lieu (carte introuvable) : billet rembourse. */
     argent+=v.cout; SALLE.voyage=null;
@@ -8250,31 +8313,25 @@ function observerScout(id){
   s.vus.push(id);
   l.scoute={jour:t.jour,org:s.org,est};
   toast(`${l.nom} observé — rapport ajouté à sa fiche.`);
-  ouvrirFicheMonde(id,s.org);
+  if($("soiree-page").classList.contains("ouvert")){rendreSoireePage();ficheDepuisSoiree(id);}
+  else ouvrirFicheMonde(id,s.org);
 }
 
-/* L'approche au bord de la cage : DEUX par soiree. Les portes du "pro
-   qui frappe" tiennent ici aussi — cas 143 pour les internationaux ;
-   pour le reste, ta reputation face a sa notoriete decide. */
-function approcherBackstage(id){
-  const s=SALLE.soiree; if(!s)return;
-  if(s.approches>=2){ouvrirSoiree();return toast("Tu as déjà fait le tour du backstage.");}
-  const l=MONDE.pros.get(id);
-  if(!l||l.salle||l.retraite)return;
-  s.approches++;
+/* LA DECISION DE RECRUTEMENT — une seule regle pour les deux chemins
+   (le bouton du rapport ET le dialogue de la soiree vecue) : la porte
+   des internationales (cas 143), puis ta reputation ET CE QU'IL SAIT DE
+   TOI (le contact, cas 149) contre sa notoriete. */
+function decisionRecrutement(l){
   const o=l.org?(MMA.classement.ORGS[l.org]||{}):null;
-  let accepte;
-  if(o&&o.niveau==="internationale"&&!preuveInternationale())accepte=false;
-  else{
-    const chance=Math.max(0.05,Math.min(0.9,((SALLE.reputation||0)+25-(l.notoriete||0))/100));
-    accepte=alea()<chance;
-  }
-  if(!accepte){
-    raconter(t.jour,[`Tu abordes ${l.nom} au bord de la cage. Il t'écoute poliment — « J'ai déjà ce qu'il me faut. »`],false);
-    ouvrirSoiree();return;
-  }
-  fermerFiche();
-  const orgO=o||{};
+  if(o&&o.niveau==="internationale"&&!preuveInternationale())return false;
+  const contactV=(l.contact&&l.contact.v)||0;
+  const chance=Math.max(0.05,Math.min(0.9,
+    ((SALLE.reputation||0)+25+contactV*0.4-(l.notoriete||0))/100));
+  return alea()<chance;
+}
+function poserBloqueFrappeSoiree(l){
+  const s=SALLE.soiree||{};
+  const orgO=l.org?(MMA.classement.ORGS[l.org]||{}):{};
   bloque={id:"frappe",titre:"Il veut voir ta salle",
     texte:`<b>${lienMonde(l.id,l.nom)}</b>, ${l.age} ans, ${l.bilan.v}-${l.bilan.d}
       (${String(l.division).replace(/_/g," ")})${l.org?`, ${orgO.nom||l.org}`:", libre"}.
@@ -8291,7 +8348,168 @@ function approcherBackstage(id){
         raconter(t.jour,[`Tu le remercies pour la discussion. ${l.nom} restera où il est.`],true);
         bloque=null;rendre();}},
     ]};
+}
+/* L'approche au bord de la cage (chemin du RAPPORT) : DEUX par soiree. */
+function approcherBackstage(id){
+  const s=SALLE.soiree; if(!s)return;
+  if(s.approches>=2){ouvrirSoiree();return toast("Tu as déjà fait le tour du backstage.");}
+  const l=MONDE.pros.get(id);
+  if(!l||l.salle||l.retraite)return;
+  s.approches++;
+  if(!decisionRecrutement(l)){
+    raconter(t.jour,[`Tu abordes ${l.nom} au bord de la cage. Il t'écoute poliment — « J'ai déjà ce qu'il me faut. »`],false);
+    ouvrirSoiree();return;
+  }
+  fermerFiche();
+  poserBloqueFrappeSoiree(l);
   allerOnglet("salle");rendre();
+}
+
+/* ==== LA SOIREE VECUE (chantier O bis, Mael, 30/08 : "je m'inscris et
+   ça m'ouvre une page annexe comme le combat, avec l'évent — parler
+   aux combattants avec des dialogues riches, les inviter à la salle,
+   créer des liens, recruter s'ils n'ont plus de club"). ====
+   /!\ La page est un ECRAN, pas une fiche : la carte se déroule combat
+   par combat, et entre les affiches le bord de la cage est à toi. Les
+   répliques sortent de soiree.js (banc 33) — choisies par l'état réel,
+   jamais décoratives, et le CONTACT qu'elles laissent est un résidu sur
+   l'homme du monde qui pèse ensuite (invitation, recrutement). */
+/* /!\ LA FICHE PASSE DEVANT LA PAGE (le voile est sous elle) : depuis
+   la soiree, ouvrir une fiche RANGE la page et la ROUVRE a la
+   fermeture — le clic repond toujours (cas 121 quinquies). */
+let RETOUR_SOIREE=false;
+function ficheDepuisSoiree(id){
+  $("soiree-page").classList.remove("ouvert");
+  RETOUR_SOIREE=true;
+  ouvrirFicheMonde(id,"");
+}
+function ouvrirSoireePage(){
+  const s=SALLE.soiree; if(!s)return toast("Aucune soirée pour l'instant — réserve un billet (onglet Monde).");
+  if(s.pas===undefined)s.pas=s.combats.length;   /* vieux rapports : tout est déjà public */
+  s.dialogueAvec=null; s.dit=null;
+  rendreSoireePage();
+  $("soiree-page").classList.add("ouvert");
+}
+function fermerSoireePage(){
+  $("soiree-page").classList.remove("ouvert");
+  const s=SALLE.soiree; if(s){s.dialogueAvec=null;s.dit=null;}
+  rendre();
+}
+function soireeSuivant(){
+  const s=SALLE.soiree; if(!s)return;
+  s.pas=Math.min(s.combats.length,(s.pas||0)+1);
+  s.dialogueAvec=null; s.dit=null;
+  rendreSoireePage();
+}
+/* La situation d'un homme, telle que la soiree la connait A CE MOMENT :
+   un combat pas encore déroulé (pas) n'existe pas pour le dialogue. */
+function ctxSoiree(id){
+  const s=SALLE.soiree; if(!s||!MONDE)return null;
+  const l=MONDE.pros.get(id); if(!l)return null;
+  const i=s.combats.findIndex(x=>x.a===id||x.b===id);
+  const aCombattu=i>=0&&i<(s.pas||0);
+  const c=aCombattu?s.combats[i]:null;
+  const aGagne=c?c.vainqueur===id:null;
+  const finish=c?(c.methode==="KO"||c.methode==="TKO"||c.methode==="SOUMISSION"):false;
+  const o=l.org?(MMA.classement.ORGS[l.org]||{}):null;
+  return {id,nom:l.nom,aCombattu,aGagne,finish,
+    serre:!!(c&&!aGagne&&!finish),
+    libre:!l.org,finContrat:!!(l.org&&l.vie&&l.vie.restants<=0),
+    orgNom:o?o.nom:null,niveauInter:!!(o&&o.niveau==="internationale"),
+    rang:l.rang,notoriete:l.notoriete||0,
+    contactV:(l.contact&&l.contact.v)||0,
+    reputation:SALLE.reputation||0,preuve:preuveInternationale(),
+    salleNom:SALLE.nom||"ta salle",jeton:(Math.abs(id)*31+s.jour)|0};
+}
+function parlerSoiree(id){
+  const s=SALLE.soiree; if(!s)return;
+  s.dialogueAvec=id; s.dit=null;
+  rendreSoireePage();
+}
+const TRACE_SOIREE={feliciter:"félicité après son combat",relever:"relevé après sa défaite",
+  sonder:"pris des nouvelles",inviter:"invité à la salle",recruter:"offert une place"};
+function direSoiree(id,cle){
+  const s=SALLE.soiree; if(!s||!MONDE)return;
+  const l=MONDE.pros.get(id); if(!l)return;
+  const ctx=ctxSoiree(id); if(!ctx)return;
+  try{
+    const r=MMA.soiree.repondre(cle,ctx);
+    if(r.dContact)MMA.soiree.poserContact(l,t.jour,TRACE_SOIREE[cle]||cle,r.dContact);
+    s.dit={qui:id,texte:r.dit};
+    if(r.effet==="partir"){s.dialogueAvec=null;s.dit=null;}
+    else if(r.effet==="inviter"){
+      SALLE.visiteur={id,nom:l.nom,division:l.division,jusqua:t.jour+MMA.soiree.VISITE_JOURS};
+      raconter(t.jour,[`🤝 ${lienMonde(id,l.nom)} viendra s'entraîner une semaine à la salle — le sparring de sa division va en profiter.`],true);
+    } else if(r.effet==="recruter"){
+      if(s.approches>=2)
+        s.dit={qui:id,texte:r.dit+" … Mais tu as déjà promis deux places ce soir. Une parole, ça se compte."};
+      else{
+        s.approches++;
+        if(decisionRecrutement(l)){
+          poserBloqueFrappeSoiree(l);
+          s.dit={qui:id,texte:r.dit+" On en reparle sérieusement en sortant — viens me trouver."};
+        } else
+          s.dit={qui:id,texte:r.dit+" … Puis il secoue la tête. « Pas encore. Fais tes preuves, et reviens me voir. »"};
+      }
+    }
+  }catch(e){ console.error("soiree/dire :",e); }
+  rendreSoireePage();
+}
+function rendreSoireePage(){
+  const s=SALLE.soiree; const z=$("so-dedans"); if(!s||!z)return;
+  const o=MMA.classement.ORGS[s.org]||{};
+  const pas=s.pas||0, regards=3-s.vus.length, approches=2-s.approches;
+  const combats=s.combats.slice(0,pas).map(c=>{
+    const oeil=(id,nom)=>s.vus.indexOf(id)>=0
+      ?`<button class="puce actif" onclick="ficheDepuisSoiree(${id})">🔍 ${nom} ✓</button>`
+      :regards<=0?"":`<button class="puce" onclick="observerScout(${id})">🔍 ${nom}</button>`;
+    const gagneA=c.vainqueur===c.a;
+    return `<div class="so-combat">
+      ${c.place==="main_event"||c.titre?`<div class="place">${c.titre?"ceinture en jeu":"main event"}</div>`:""}
+      <div class="aff">${c.nomA} c. ${c.nomB}</div>
+      <div class="res">${c.vainqueur===null?"Match nul":`${gagneA?c.nomA:c.nomB} l'emporte`} — ${c.detail||c.methode} · R${c.round}</div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">${oeil(c.a,c.nomA)}${oeil(c.b,c.nomB)}</div>
+    </div>`;}).join("");
+  /* Le bord de la cage : les deux du dernier combat déroulé, plus les
+     libres et fins de contrat de la carte. */
+  const bord=[];
+  if(pas>0){const c=s.combats[pas-1];bord.push(c.a,c.b);}
+  for(const id of new Set(s.combats.flatMap(c=>[c.a,c.b]))){
+    const l=MONDE&&MONDE.pros.get(id);
+    if(l&&!l.salle&&!l.retraite&&(!l.org||(l.vie&&l.vie.restants<=0))&&bord.indexOf(id)<0)bord.push(id);
+  }
+  const bordH=bord.slice(0,4).map(id=>{
+    const l=MONDE&&MONDE.pros.get(id); if(!l||l.salle||l.retraite)return "";
+    const m=MMA.soiree.motContact((l.contact&&l.contact.v)||0);
+    return `<div class="f-combat"><span class="f-adv" style="cursor:pointer"
+        onclick="ficheDepuisSoiree(${id})">${l.nom}${m?` <span style="color:var(--or);font-size:11px">· ${m}</span>`:""}</span>
+      <span class="f-meth"><button class="puce ${s.dialogueAvec===id?"actif":""}"
+        onclick="parlerSoiree(${id})">Lui parler</button></span></div>`;}).join("");
+  let parle="";
+  if(s.dialogueAvec!==null&&s.dialogueAvec!==undefined){
+    const id=s.dialogueAvec,l=MONDE&&MONDE.pros.get(id),ctx=ctxSoiree(id);
+    if(l&&ctx){
+      const texte=s.dit&&s.dit.qui===id?s.dit.texte:MMA.soiree.ouverture(ctx);
+      let choix=MMA.soiree.choixPour(ctx);
+      if(SALLE.visiteur&&SALLE.visiteur.jusqua>t.jour)choix=choix.filter(x=>x.cle!=="inviter");
+      parle=`<div class="so-parle">
+        <div class="cc-quand">${l.nom} · ${l.bilan.v}-${l.bilan.d}${l.org?" · "+l.org:" · <b>libre</b>"}${l.rang!=null?` · n°${l.rang}`:""}</div>
+        <div class="lui">« ${texte} »</div>
+        <div class="toi">${choix.map(x=>`<button class="puce" style="text-align:left"
+          onclick="direSoiree(${id},'${x.cle}')">${x.lab}</button>`).join("")}</div></div>`;
+    }
+  }
+  z.innerHTML=`<div class="so-tete">${logoOrga(s.org,44)}
+      <div class="t"><div class="quand">soirée · jour ${s.jour}</div>
+      <div class="nom">${o.nom||s.org}</div></div></div>
+    <div class="so-compteurs"><span>🔍 ${regards>0?regards+" regard"+(regards>1?"s":""):"l'œil est épuisé"}</span>
+      <span>🤝 ${approches>0?approches+" place"+(approches>1?"s":"")+" à promettre":"plus de promesse ce soir"}</span>
+      <span>${pas}/${s.combats.length} combats</span></div>
+    ${combats||`<div class="repos" style="margin-top:14px">Les vestiaires s'échauffent — le premier combat arrive.</div>`}
+    ${pas>0?`<div class="so-bord"><h4>Au bord de la cage</h4>${bordH||`<div class="f-sous">Personne ne traîne pour l'instant.</div>`}${parle}</div>`:""}
+    ${pas<s.combats.length
+      ?`<button class="so-suivant" onclick="soireeSuivant()">Combat suivant ›</button>`
+      :`<button class="so-suivant" onclick="fermerSoireePage()">Rentrer — la soirée est finie</button>`}`;
 }
 
 function rendreMonde(){
@@ -8303,7 +8521,7 @@ function rendreMonde(){
         <div class="cc-affiche">${(MMA.classement.ORGS[v.org]||{}).nom||v.org}</div>
         <div class="cc-sous">Billet payé : ${v.cout.toLocaleString("fr-FR")} €</div>
         <button class="puce" style="margin-top:7px" onclick="annulerVoyage()">Annuler — moitié remboursée</button></div>`:"")
-      +(SALLE.soiree?`<div class="carte-combat cliquable" onclick="ouvrirSoiree()">
+      +(SALLE.soiree?`<div class="carte-combat cliquable" onclick="ouvrirSoireePage()">
         <div class="cc-quand">ton dernier rapport</div>
         <div class="cc-affiche">Soirée ${(MMA.classement.ORGS[SALLE.soiree.org]||{}).nom||SALLE.soiree.org} <span class="cc-fleche">›</span></div>
         <div class="cc-sous">${SALLE.soiree.combats.length} combats · l'œil du scout et le backstage t'attendent</div></div>`:"");

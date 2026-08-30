@@ -12682,3 +12682,39 @@ retour, sauvegarde locale, confort — rien a signaler. L'emballage v1
 est valide sur appareil. Restent COTE MAEL : la campagne de jeu longue,
 la confirmation de l'appId fr.mmadata.mmamanager, le compte Play
 Console et les ~12 testeurs du test ferme.
+
+## CAS 149 — LA SOIREE VECUE (chantier O bis, Mael, 30/08)
+« Pas super fan du mode scouting — je m'inscris et ça m'ouvre une page
+annexe comme le combat, avec l'évent ; parler aux combattants avec des
+dialogues riches, les inviter à la salle pour s'entraîner, créer des
+liens, recruter s'ils n'ont plus de club. » Le rapport-fiche devient
+une PAGE (plein écran, comme l'écran de combat) :
+ - le soir venu, un blocage ouvre la porte (« Entrer dans la salle » /
+   « Suivre de loin » — qui laisse le rapport dans l'onglet Monde) ;
+ - la carte SE DEROULE combat par combat (« Combat suivant › ») — les
+   resultats sont ceux que le monde a deja tires, la page ne rejoue
+   rien ; l'oeil du scout (3 regards) vit dedans ;
+ - AU BORD DE LA CAGE : les deux du dernier combat deroule + les libres
+   et fins de contrat de la carte. « Lui parler » ouvre le dialogue.
+LE DIALOGUE (module soiree.js, banc 33) — meme doctrine que dialogue.js :
+ - la replique sort de l'etat REEL (son resultat du soir, son contrat,
+   sa notoriete, ce qu'il sait de toi) et n'est JAMAIS decorative ;
+ - meme homme, meme soir = meme phrase (le jeton decide, pas un tirage) ;
+ - LE CONTACT est un residu pose sur l'homme du monde (p.contact, mots
+   jamais chiffres : « il te situe » / « il te connait » / « en
+   confiance ») — il voyage avec lui et PESE : sur l'invitation ET sur
+   le recrutement (decisionRecrutement : +0,4 par point de contact) ;
+ - L'INVITATION : une semaine a la salle (VISITE_JOURS), le sparring de
+   SA division rend x1,2 (BOOST_VISITE) ; un seul visiteur a la fois ;
+   la semaine finie rend +8 de contact et se raconte. Un contracte
+   d'internationale sans la preuve refuse MEME la visite (cas 143) ;
+ - LE RECRUTEMENT par le dialogue passe par LA MEME decision que le
+   bouton du rapport (decisionRecrutement — pas deux exemplaires) et le
+   MEME budget (2 promesses par soiree) ; accepte => le blocage
+   « frappe » attend a la sortie de la page.
+/!\ PIEGE D'EMPILEMENT REGLE : le voile des fiches (z=10) passe SOUS la
+page (z=88) — une fiche ouverte depuis la soiree aurait ete un clic
+mort (cas 121). ficheDepuisSoiree() RANGE la page, ouvre la fiche, et
+fermerFiche() ROUVRE la page (RETOUR_SOIREE).
+L'ancien ecran-rapport (ouvrirSoiree) reste en lecture, mais la carte
+de l'onglet Monde ouvre la page vecue.

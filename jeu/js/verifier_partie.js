@@ -1091,6 +1091,39 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
   dit("deux approches par soirée, la troisième est refusée",
       !!back && back.deux && back.stop,
       back && back.adopte ? "et l'un d'eux a voulu voir la salle" : "");
+  /* LA SOIREE VECUE (cas 149) : la page annexe, le dialogue, le contact,
+     l'invitation et sa semaine. */
+  const dial = P.lire(`(function(){
+    const s=SALLE.soiree; if(!s)return null;
+    const ids=[...new Set(s.combats.flatMap(c=>[c.a,c.b]))];
+    const id=ids[2]; const l=MONDE.pros.get(id);
+    if(!l)return null;
+    s.pas=s.combats.length;
+    ouvrirSoireePage();
+    const page=$("so-dedans").innerHTML.length>200&&$("soiree-page").classList.contains("ouvert");
+    parlerSoiree(id);
+    const ouvertD=$("so-dedans").innerHTML.indexOf("so-parle")>=0;
+    const av=(l.contact&&l.contact.v)||0;
+    direSoiree(id,"sonder");
+    const ap=(l.contact&&l.contact.v)||0;
+    const svR=SALLE.reputation, svN=l.notoriete, svO=l.org;
+    SALLE.reputation=80; l.notoriete=5; l.org=null; SALLE.visiteur=null;
+    direSoiree(id,"inviter");
+    const invite=!!SALLE.visiteur&&SALLE.visiteur.id===id;
+    let rendu=false;
+    if(SALLE.visiteur){SALLE.visiteur.jusqua=t.jour;
+      const c1=(l.contact&&l.contact.v)||0;
+      synchroniserMonde();
+      rendu=((l.contact&&l.contact.v)||0)>c1&&!SALLE.visiteur;}
+    SALLE.reputation=svR; l.notoriete=svN; l.org=svO;
+    bloque=null; fermerSoireePage();
+    return {page,ouvertD,contactMonte:ap>av,invite,rendu};
+  })()`);
+  dit("la soirée s'ouvre en page annexe, comme un écran", !!dial && dial.page);
+  dit("« lui parler » ouvre le dialogue au bord de la cage", !!dial && dial.ouvertD);
+  dit("chaque réplique laisse du contact sur l'homme du monde", !!dial && dial.contactMonte);
+  dit("l'invitation acceptée pose une semaine de visite", !!dial && dial.invite);
+  dit("la semaine finie rend du contact et s'efface", !!dial && dial.rendu);
   dit("aucune exception pendant le scouting", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }

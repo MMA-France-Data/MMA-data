@@ -37,7 +37,9 @@ const RACINES = ["engine.js", "generator.js", "traducteur.js", "mesure.js",
                  // ce qui reste quand les annees passent.
                  "endgame.js",
                  // les liens entre tes hommes (chantier N, 28/08).
-                 "vestiaire.js"];
+                 "vestiaire.js",
+                 // la soiree vecue : les conversations au bord de la cage.
+                 "soiree.js"];
 
 const ici = __dirname;
 const RE_REQUIRE = /require\(\s*["']\.\/([\w.-]+)["']\s*\)/g;
@@ -129,6 +131,7 @@ ${morceaux.join("\n")}
     demandes_staff: require("./demandes_staff.js"),
     endgame:    require("./endgame.js"),
     vestiaire:  require("./vestiaire.js"),
+    soiree:     require("./soiree.js"),
     require: require
   };
 })(typeof window !== "undefined" ? window : globalThis);
