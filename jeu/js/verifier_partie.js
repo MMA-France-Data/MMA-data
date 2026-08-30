@@ -904,13 +904,8 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
     const casse=jouer(["Dur","Durand"]);
     return {sain:{inverse:sain&&sain.inverse,graine:sain&&sain.graine},
             casse:{inverse:casse&&casse.inverse},
-            taille:JSON.stringify(casse||{}).length,
-            c3dDernier:!!(RESULTATS[0].c3d&&RESULTATS[0].c3d.length),
-            c3dUnSeul:RESULTATS.filter(x=>x.c3d&&x.c3d.length).length};
+            taille:JSON.stringify(casse||{}).length};
   })()`);
-  dit("le dernier combat porte sa partition 3D — et lui seul (proto, cas 150)",
-      !!auto && auto.c3dDernier && auto.c3dUnSeul === 1,
-      auto ? `${auto.c3dUnSeul} carte(s) avec partition` : "");
   dit("un combat sain porte son rapport, sans alerte",
       !!auto && auto.sain.inverse === false && auto.sain.graine === 88);
   dit("l'inversion fabriquée fait sonner l'alerte de la carte",

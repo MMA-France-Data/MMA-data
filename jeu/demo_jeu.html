@@ -196,15 +196,6 @@ h2 .plus{color:var(--doux);font-weight:400;text-transform:none;letter-spacing:0;
 .so-fermer{position:fixed;top:10px;right:12px;z-index:2;width:34px;height:34px;
   border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);
   color:#fff;font-size:19px;line-height:1;cursor:pointer}
-/* ==== LA VUE 3D (proto, cas 150) ==== */
-#vue3d{position:fixed;inset:0;z-index:92;display:none;background:#04060a}
-#vue3d.ouvert{display:block}
-#vue3d canvas{display:block;width:100%;height:100%}
-#v3d-tete{position:absolute;top:12px;left:14px;right:60px;color:var(--doux);
-  font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;pointer-events:none}
-#v3d-com{position:absolute;left:12px;right:12px;bottom:18px;background:rgba(10,13,20,.85);
-  border:1px solid var(--bord);border-left:3px solid var(--or);border-radius:10px;
-  padding:10px 13px;font-size:14px;line-height:1.45;min-height:20px}
 #surcouche iframe{width:100%;height:100%;border:0;display:block}
 #sc-fermer{position:absolute;top:10px;right:12px;z-index:2;width:34px;height:34px;
   border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);
@@ -485,9 +476,6 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
 <!-- LA SOIREE VECUE — la page annexe, remplie par rendreSoireePage(). -->
 <div id="soiree-page"><button class="so-fermer" onclick="fermerSoireePage()">×</button>
   <div class="so-dedans" id="so-dedans"></div></div>
-<!-- LA VUE 3D (proto, cas 150) — remplie par ouvrirVue3D(). -->
-<div id="vue3d"><button class="so-fermer" onclick="fermerVue3D()">×</button>
-  <div id="v3d-tete"></div><div id="v3d-com"></div></div>
 <div id="toast"></div>
 
 <!-- ===================================================================
@@ -504,10 +492,6 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
 <script src="js/ecran.gabarit.js"></script>
 <!-- Les visuels (Canva / secours SVG), embarques par js/gen_assets.js. -->
 <script src="js/assets.js"></script>
-<!-- /!\ trois.js = three.js r147 (UMD), VENDU tel quel — la 3D du proto
-     (cas 150). Jamais edite ; remplace par une version plus recente en
-     bloc si besoin. -->
-<script src="js/trois.js"></script>
 
 <script>
 /* ==== temps.js inline, INCHANGE ==== */
@@ -1890,135 +1874,6 @@ function simulerCombat(){
   }
   fermerEcran();rendre();
 }
-/* ==== LA VUE 3D (proto, cas 150 — Mael : "go 3D") ====================
-   /!\ REGLE 7 JUSQU'AU BOUT : la scene JOUE la partition de
-   choregraphie.js — les positions, phases et impacts relus du log.
-   Elle n'invente ni un pas ni un coup ; elle ne fait que les montrer.
-   Les silhouettes sont des primitives (le jour ou un GLB sorti de
-   Blender/Mixamo arrive dans assets/, il les remplace SANS toucher a
-   la partition). Trois gardes : pas de THREE => on le dit ; pas de
-   WebGL => on le dit ; jamais un ecran mort. */
-let V3D=null;
-function bonhomme3D(couleur){
-  const mat=new THREE.MeshStandardMaterial({color:couleur});
-  const peau=new THREE.MeshStandardMaterial({color:0xd9a066});
-  const g=new THREE.Group(), corps=new THREE.Group(); g.add(corps);
-  const torse=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.62,0.3),mat);
-  torse.position.y=1.05;corps.add(torse);
-  const tete=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),peau);
-  tete.position.y=1.55;corps.add(tete);
-  const jG=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.07,0.75,8),mat);
-  jG.position.set(-0.14,0.37,0);corps.add(jG);
-  const jD=jG.clone();jD.position.x=0.14;corps.add(jD);
-  const brG=new THREE.Group();brG.position.set(-0.31,1.3,0);corps.add(brG);
-  const avG=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.055,0.52,8),peau);
-  avG.position.y=-0.26;brG.add(avG);
-  const gant=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,8),mat);
-  gant.position.y=-0.55;brG.add(gant);
-  const brD=brG.clone();brD.position.x=0.31;corps.add(brD);
-  brG.rotation.x=-1.1;brD.rotation.x=-1.1;   /* la garde */
-  return {g,corps,tete,brG,brD,jG,jD,
-    cible:{pos:new THREE.Vector3(),couche:0,coup:0,coupBras:"brD",coupJambe:false}};
-}
-function poserBeat3D(i){
-  const V=V3D; if(!V)return;
-  const b=V.beats[i], ge=MMA.choregraphie.geste(b);
-  const [xa,ya]=MMA.choregraphie.normaliser(b.a);
-  const [xb,yb]=MMA.choregraphie.normaliser(b.b);
-  V.A.cible.pos.set(xa*V.R,0,ya*V.R); V.B.cible.pos.set(xb*V.R,0,yb*V.R);
-  const auSol=ge.type==="sol"||ge.type==="soumission"||ge.type==="amenee";
-  V.A.cible.couche=auSol?(ge.qui==="A"?1:2):(ge.type==="chute"&&ge.qui==="A"?2:0);
-  V.B.cible.couche=auSol?(ge.qui==="B"?1:2):(ge.type==="chute"&&ge.qui==="B"?2:0);
-  if(ge.type==="frappe"){
-    const F=ge.qui==="A"?V.A:V.B;
-    F.cible.coup=performance.now();
-    F.cible.coupJambe=ge.zone==="jambes";
-    F.cible.coupBras=(i%2)?"brG":"brD";
-  }
-  $("v3d-com").innerHTML=`<span style="color:var(--doux);font-size:11px">${i+1}/${V.beats.length}</span> `
-    +(b.com||"…")+(b.fl?' <span style="color:var(--or)">✦</span>':"");
-}
-function boucle3D(){
-  const V=V3D; if(!V)return;
-  const now=performance.now(), dt=Math.min(50,now-(V.tCadre||now)); V.tCadre=now;
-  if(!V.fini&&now-V.tPas>1150){
-    V.i++; V.tPas=now;
-    if(V.i>=V.beats.length){V.fini=true;
-      $("v3d-com").innerHTML+=` <b style="color:var(--or)">— fin du combat.</b>`;}
-    else poserBeat3D(V.i);
-  }
-  for(const [P,O] of [[V.A,V.B],[V.B,V.A]]){
-    P.g.position.lerp(P.cible.pos,0.08);
-    const dx=O.g.position.x-P.g.position.x, dz=O.g.position.z-P.g.position.z;
-    if(dx*dx+dz*dz>0.0001){
-      const vise=Math.atan2(dx,dz);
-      let d=vise-P.g.rotation.y; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
-      P.g.rotation.y+=d*0.1;
-    }
-    const c=P.cible.couche;
-    const rx=c?-1.35:0, py=c===1?0.34:c===2?0.04:0;
-    P.corps.rotation.x+=(rx-P.corps.rotation.x)*0.08;
-    P.corps.position.y+=(py+((c===0)?Math.sin(now/380+P.g.position.x)*0.02:0)-P.corps.position.y)*0.1;
-    if(P.cible.coup&&now-P.cible.coup<450){
-      const ph=Math.sin((now-P.cible.coup)/450*Math.PI);
-      if(P.cible.coupJambe)P.jD.rotation.x=-ph*1.3;
-      else P[P.cible.coupBras].rotation.x=-1.1-ph*0.75;
-      O.corps.rotation.z=ph*0.09;
-    } else {
-      P.brG.rotation.x+=(-1.1-P.brG.rotation.x)*0.15;
-      P.brD.rotation.x+=(-1.1-P.brD.rotation.x)*0.15;
-      P.jD.rotation.x*=0.85; P.corps.rotation.z*=0.85;
-    }
-  }
-  V.angle+=0.00016*dt;
-  const mi=V.A.g.position.clone().add(V.B.g.position).multiplyScalar(0.5);
-  V.cam.position.set(mi.x+Math.cos(V.angle)*7.0,3.3,mi.z+Math.sin(V.angle)*7.0);
-  V.cam.lookAt(mi.x,0.9,mi.z);
-  V.ren.render(V.scene,V.cam);
-  V.raf=requestAnimationFrame(boucle3D);
-}
-function ouvrirVue3D(ri){
-  const r=RESULTATS[ri];
-  if(!r||!r.c3d||!r.c3d.length)return toast("Pas de partition 3D ici — seul le dernier combat la garde (proto).");
-  if(typeof THREE==="undefined")return toast("La 3D n'est pas embarquée dans cette version.");
-  if(V3D)fermerVue3D();
-  let ren;
-  try{ren=new THREE.WebGLRenderer({antialias:true});}
-  catch(e){ console.error("vue3d :",e); return toast("Pas de WebGL sur cet écran — la 3D ne peut pas s'ouvrir."); }
-  const z=$("vue3d");
-  const L=z.clientWidth||window.innerWidth, H=z.clientHeight||window.innerHeight;
-  ren.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
-  ren.setSize(L,H);
-  z.insertBefore(ren.domElement,z.firstChild);
-  const scene=new THREE.Scene();
-  scene.fog=new THREE.Fog(0x04060a,9,22);
-  const cam=new THREE.PerspectiveCamera(46,L/H,0.1,60);
-  scene.add(new THREE.AmbientLight(0x8899bb,0.75));
-  const spot=new THREE.PointLight(0xffe8b0,1.15,30);
-  spot.position.set(0,7,0);scene.add(spot);
-  const R=3.4;
-  const sol=new THREE.Mesh(new THREE.CylinderGeometry(R+0.5,R+0.5,0.12,8),
-    new THREE.MeshStandardMaterial({color:0x1a2029}));
-  sol.position.y=-0.06;scene.add(sol);
-  const cage=new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.CylinderGeometry(R+0.5,R+0.5,2.0,8,1,true)),
-    new THREE.LineBasicMaterial({color:0xb8892c}));
-  cage.position.y=1.0;scene.add(cage);
-  const A=bonhomme3D(0xc23b3b), B=bonhomme3D(0x2f6fd0);
-  scene.add(A.g);scene.add(B.g);
-  $("v3d-tete").textContent=String(r.affiche||"").replace(/[{}]/g,"")+" · la 3D rejoue le réel";
-  V3D={ren,scene,cam,A,B,R,beats:r.c3d,i:0,tPas:performance.now(),fini:false,raf:0,angle:0.6};
-  poserBeat3D(0);
-  z.classList.add("ouvert");
-  boucle3D();
-}
-function fermerVue3D(){
-  if(V3D){cancelAnimationFrame(V3D.raf);
-    try{V3D.ren.dispose();V3D.ren.domElement.remove();}catch(e){}
-    V3D=null;}
-  $("vue3d").classList.remove("ouvert");
-}
-
 function ouvrirEcran(){
   if(!COMBAT1)return;
   if(typeof MMA_ECRAN==="undefined")
@@ -2815,19 +2670,10 @@ function encaisserResultat(){
      sauvegarde : elle survit au rechargement. */
   const susp=r.autopsie&&r.autopsie.inverse
     ?` <span style="color:var(--accent)" title="Les compteurs de l'écran et le compte du moteur divergent — copie le rapport technique depuis cette carte.">⚠ compteurs suspects</span>`:"";
-  /* /!\ LA PARTITION 3D (cas 150) : les temps de scene, compactes par
-     choregraphie.js DEPUIS les etapes du traducteur — regle 7, la vue
-     ne montre jamais un coup que le moteur n'a pas tire. SEUL LE
-     DERNIER combat la garde (proto) : la partition pese quelques Ko,
-     la sauvegarde n'a pas a transporter toute une carriere en 3D. */
-  let c3d=null;
-  try{ c3d=r.etapes&&r.etapes.length?MMA.choregraphie.beats(r.etapes):null;
-       for(const x of RESULTATS)delete x.c3d; }
-  catch(e){ console.error("choregraphie :",e); }
   if(carte){carte.res=res;carte.enAttente=false;carte.rejouable=true;
-    carte.detail=detail+susp;carte.autopsie=r.autopsie||null;carte.c3d=c3d;}
+    carte.detail=detail+susp;carte.autopsie=r.autopsie||null;delete carte.c3d;}
   else RESULTATS.unshift({quand:t.jour,affiche:`{${r.a}} c. {${r.b}}`,res,
-    rejouable:true,detail:detail+susp,autopsie:r.autopsie||null,c3d});
+    rejouable:true,detail:detail+susp,autopsie:r.autopsie||null});
 
   /* /!\ L'ADVERSAIRE N'EST PLUS FORCEMENT DANS FICHES (branchement du
      09/08) : contre le monde, r.b est un IDENTIFIANT NUMERIQUE et sa vie
@@ -6037,10 +5883,10 @@ function rendreCombats(){
   $("cb-offres").innerHTML=cartesOffres.length?cartesOffres.join("")
     :`<div class="repos">Aucune offre en attente.</div>`;
   $("cb-resultats").innerHTML=RESULTATS.length
-    ? RESULTATS.map((r,ri)=>`<div class="carte-combat"><div class="cc-quand">${JOURS_SEMAINE[r.quand%7]} ${dateDe(r.quand).getUTCDate()} ${MOIS[dateDe(r.quand).getUTCMonth()]}</div>
+    ? RESULTATS.map(r=>`<div class="carte-combat"><div class="cc-quand">${JOURS_SEMAINE[r.quand%7]} ${dateDe(r.quand).getUTCDate()} ${MOIS[dateDe(r.quand).getUTCMonth()]}</div>
         <div class="cc-affiche">${texte(r.affiche)}</div><div class="cc-res">${r.detail}</div>
         ${r.enAttente&&COMBAT1&&r.graine===COMBAT1.graine
-            ?`<button class="cc-voir" onclick="ouvrirEcran()">▶ Lancer le combat</button>`:""}${r.rejouable?resumeFrappes(COMBAT1)+`<button class="cc-voir" onclick="ouvrirEcran()">▶ Revoir le combat</button>`:""}${r.c3d&&r.c3d.length?`<button class="cc-voir" style="margin-top:6px" onclick="ouvrirVue3D(${ri})">🎥 Revoir en 3D</button>`:""}${r.autopsie?`<button class="cc-voir" style="margin-top:6px;${r.autopsie.inverse?"border-color:var(--accent);color:var(--accent)":""}" onclick='copierRapport(${JSON.stringify(JSON.stringify(r.autopsie))})'>🔬 Copier le rapport technique</button>`:""}</div>`).join("")
+            ?`<button class="cc-voir" onclick="ouvrirEcran()">▶ Lancer le combat</button>`:""}${r.rejouable?resumeFrappes(COMBAT1)+`<button class="cc-voir" onclick="ouvrirEcran()">▶ Revoir le combat</button>`:""}${r.autopsie?`<button class="cc-voir" style="margin-top:6px;${r.autopsie.inverse?"border-color:var(--accent);color:var(--accent)":""}" onclick='copierRapport(${JSON.stringify(JSON.stringify(r.autopsie))})'>🔬 Copier le rapport technique</button>`:""}</div>`).join("")
     : `<div class="repos">Pas encore de résultats.</div>`;
 
   /* ==== LES CLASSEMENTS (branchement du 09/08) ====

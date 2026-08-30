@@ -12747,3 +12747,22 @@ ARBITRAGE MOTEURS (Mael a demande « lier Blender et Godot ») :
 A JUGER EN JOUANT : la cadence (1,15 s/temps), la lisibilite des
 silhouettes, l'envie d'un GLB. Le proto decide si on creuse ou si on
 reste sur l'ecran 2D.
+
+## CAS 150 bis — LE PROTO 3D JUGE ET RETIRE (Mael, 30/08 : « c'est vraiment nul, faudra faire autrement »)
+Le verdict du seul juge qui compte. RETRAIT PROPRE, pas un revert
+aveugle :
+ - SORTI DU JEU : les silhouettes en primitives, la vue, le bouton
+   « Revoir en 3D », la partition sur les cartes, et three.js (600 Ko
+   rendus a l'apercu et a l'APK). L'encaissement PURGE les c3d des
+   vieilles sauvegardes ;
+ - GARDE : choregraphie.js + banc 34 — la lecture du log (positions,
+   phases, gestes, le bon bonhomme tombe au KO) est independante de
+   tout rendu. La prochaine tentative repartira d'ici. EN DORMANCE,
+   marque comme tel dans son en-tete ;
+ - LECON : la partition etait juste, le COSTUME ne l'etait pas — des
+   primitives ne suffisent pas a porter un combat. « On reflechira » :
+   pistes pour plus tard, a discuter AVANT de coder cette fois —
+   sprites 2D dessines (l'esthetique se controle), GLB Mixamo/Blender
+   (le realisme, mais le sol restera dur), ou assumer le 2D actuel qui
+   raconte deja bien. AUCUNE ne se lance sans une maquette validee par
+   Mael d'abord.

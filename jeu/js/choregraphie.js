@@ -1,5 +1,12 @@
 /**
- * choregraphie.js — DU LOG A LA SCENE (proto 3D, Mael, 30/08 : "go 3D").
+ * choregraphie.js — DU LOG A LA SCENE.
+ *
+ * /!\ EN DORMANCE (cas 150 bis, 30/08) : le proto 3D en primitives a
+ * ete juge par Mael ("vraiment nul") et RETIRE — bonshommes, three.js,
+ * bouton, tout le visible est sorti du jeu. CE MODULE RESTE : c'est la
+ * lecture du log (positions, phases, gestes), independante de tout
+ * rendu — la prochaine tentative (sprites, GLB, autre idee) repartira
+ * d'ici sans rien recalculer. Le banc 34 le tient au chaud.
  *
  * LA REGLE 7, APPLIQUEE A LA 3D : la scene ne montre JAMAIS un coup que
  * le moteur n'a pas tire. Ce module ne cree rien — il RELIT les etapes
