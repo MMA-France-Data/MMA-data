@@ -128,6 +128,22 @@ public class LecteurPartition : MonoBehaviour
             // La partition commande les positions, pas l'animation :
             // sans ca, un clip qui avance ferait deriver le combattant.
             an.applyRootMotion = false;
+            // /!\ L'ECHELLE NE SE DEVINE PAS : les exports (Tripo,
+            // Mixamo, Blender) arrivent en m, cm ou pouces. Un homme de
+            // 100 m avale la camera et l'ecran est noir. On MESURE, et
+            // on ramene a 1,80 m.
+            var rends = inst.GetComponentsInChildren<Renderer>();
+            if (rends.Length > 0)
+            {
+                var bornes = rends[0].bounds;
+                foreach (var r in rends) bornes.Encapsulate(r.bounds);
+                float h = bornes.size.y;
+                if (h > 0.01f && (h < 1.2f || h > 2.6f))
+                {
+                    inst.transform.localScale *= 1.8f / h;
+                    Debug.Log($"[MMA] {nom} mesurait {h:F1} m — ramené à 1,80 m.");
+                }
+            }
             return inst.transform;
         }
         var caps = GameObject.CreatePrimitive(PrimitiveType.Capsule);
