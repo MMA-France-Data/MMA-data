@@ -4,6 +4,28 @@ Salut. Tu es sur la machine de Maël, avec Unity ouvert et le serveur MCP
 Unity actif. Une autre session Claude (dans le cloud) tient le jeu
 lui-même ; toi tu as les yeux sur l'éditeur. Voilà le contexte.
 
+## Comment tu travailles (PAS de MCP)
+Le package `com.unity.ai.assistant` n'existe pas pour la version de Maël
+(Unity 6000.0.32f1) et l'alternative communautaire demandait Python +
+uv : **abandonné le 31/08**. Tu n'as donc pas d'yeux directs dans
+l'éditeur. Ta boucle :
+1. tu modifies les scripts C# ;
+2. tu demandes à Maël d'appuyer sur **Play** dans Unity ;
+3. il te colle sa capture d'écran directement dans le terminal (Claude
+   Code lit les images collées) et le texte rouge de la Console ;
+4. tu corriges, et on recommence.
+Tu peux aussi lire le journal d'Unity, qui contient les erreurs de
+compilation et les Debug.Log sans que Maël copie quoi que ce soit :
+`%LOCALAPPDATA%\Unity\Editor\Editor.log`
+Et si `Assets/Scripts/RapportMMA.cs` est présent, le Play écrit tout
+seul un rapport + cinq captures dans `RapportMMA/` à côté du projet :
+lis-les directement, c'est le plus rapide.
+
+/!\ MAËL N'EST PAS DÉVELOPPEUR. Vocabulaire simple, une action à la
+fois, et tu attends sa confirmation avant l'étape suivante. Il a déjà
+passé une journée sur de la plomberie : épargne-lui tout ce que tu peux
+faire toi-même.
+
 ## Ce qu'est ce projet
 `unity/` est un **projet compagnon**, pas le jeu. Le jeu est un HTML
 unique (`jeu/demo_jeu.html`) avec un moteur de combat MMA maison, 34
