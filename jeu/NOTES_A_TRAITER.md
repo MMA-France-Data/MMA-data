@@ -12808,3 +12808,37 @@ invariant qui bouge. La methode, gravee :
    varier un libelle de commande embrouillerait le joueur.
 Total : ~130 formulations nouvelles, zero effet change, zero tirage
 ajoute.
+
+## CAS 153 — LE PONT CLAUDE ↔ UNITY EST ETABLI (chantier Q2, 31/08)
+« Si je pouvais te lier avec Unity ça serait plus simple. » C'est fait —
+mais pas par la session cloud : par CLAUDE CODE INSTALLE SUR LE PC DE
+MAEL. Le serveur MCP est local (127.0.0.1) ; une session en conteneur
+n'a aucune route vers sa machine. Resultat : UnityMCP · connected ·
+48 outils. Le Claude local voit la scene, lance le Play, corrige ; la
+session cloud garde le jeu, l'app et le carnet.
+LA PROCEDURE, GRAVEE (deux heures de plomberie, qu'on ne refera pas a
+l'aveugle) :
+ 1. la voie OFFICIELLE ECHOUE : com.unity.ai.assistant n'existe pas
+    pour Unity 6000.0.32f1 (« unable to find the package ») ;
+ 2. voie COPLAY : prerequis git + uv + Python 3.10+. Python etait la,
+    git et uv installes par `winget install --id Git.Git -e ;
+    winget install --id astral-sh.uv -e` ;
+ 3. l'installation par l'UI du Package Manager n'a rien ecrit : la
+    ligne a ete posee A LA MAIN dans Packages/manifest.json
+    ("com.coplaydev.unity-mcp": "https://github.com/CoplayDev/
+    unity-mcp.git?path=/MCPForUnity#main") — et LA, Unity l'a vue ;
+ 4. /!\ « No git executable was found » : Unity et le HUB avaient ete
+    lances AVANT l'installation de git — le Hub survit en arriere-plan
+    et transmet son vieil environnement. REDEMARRAGE DU PC. (Au
+    passage, Library corrompue par le Quit en pleine resolution :
+    « Rebuild Library », c'est du cache, rien ne se perd.)
+ 5. fenetre Ctrl+Shift+M : « Start Server » (session active), puis
+    Client -> CLAUDE CODE (le menu proposait Antigravity par defaut)
+    -> Configure ;
+ 6. /!\ LE PIEGE FINAL : la config MCP est ATTACHEE AU DOSSIER. Claude
+    Code lance depuis C:\Users\maelu ne voyait pas Unity. Il faut le
+    lancer DEPUIS unity/.
+LECON DE LA JOURNEE, valable au-dela d'Unity : j'ai remplace un
+manifest au lieu de le completer et j'ai fait disparaitre des packages
+du projet. Un fichier de configuration qu'on n'a pas ecrit, on
+l'AJOUTE, on ne le REECRIT pas.
