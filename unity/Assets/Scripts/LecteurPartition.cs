@@ -98,10 +98,38 @@ public class LecteurPartition : MonoBehaviour
         cibleA = A.position; cibleB = B.position;
     }
 
+    static GameObject modeleCache;
+    static RuntimeAnimatorController ctrlCache;
+    static bool rechercheFaite;
+
     Transform TrouverOuCreer(string nom, Color couleur)
     {
         var existant = GameObject.Find(nom);
         if (existant != null) return existant.transform;
+        // LA VOIE AUTOMATIQUE (31/08) : si un personnage vit dans
+        // Resources/Combattants (depose par l'importateur), on
+        // l'instancie nous-memes — plus rien a glisser dans la scene.
+        if (!rechercheFaite)
+        {
+            rechercheFaite = true;
+            ctrlCache = Resources.Load<RuntimeAnimatorController>("Combattants/Combattant");
+            foreach (var go in Resources.LoadAll<GameObject>("Combattants"))
+                if (go.GetComponentInChildren<SkinnedMeshRenderer>() != null)
+                { modeleCache = go; break; }
+        }
+        if (modeleCache != null)
+        {
+            var inst = Instantiate(modeleCache);
+            inst.name = nom;
+            var an = inst.GetComponentInChildren<Animator>();
+            if (an == null) an = inst.AddComponent<Animator>();
+            if (an.runtimeAnimatorController == null && ctrlCache != null)
+                an.runtimeAnimatorController = ctrlCache;
+            // La partition commande les positions, pas l'animation :
+            // sans ca, un clip qui avance ferait deriver le combattant.
+            an.applyRootMotion = false;
+            return inst.transform;
+        }
         var caps = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         caps.name = nom;
         caps.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
@@ -133,11 +161,26 @@ public class LecteurPartition : MonoBehaviour
         Jouer(animB, b, "B");
     }
 
+    static bool AEtat(Animator an, string nom) =>
+        an.HasState(0, Animator.StringToHash(nom));
+
     static void Jouer(Animator anim, Temps b, string cote)
     {
-        if (anim == null) return;
-        string etat = (b.qui == cote) ? b.geste : (b.geste == "frappe" ? "garde" : b.geste);
-        try { anim.CrossFade(etat, 0.15f); } catch { /* etat absent : pas grave */ }
+        if (anim == null || anim.runtimeAnimatorController == null) return;
+        string etat;
+        if (b.qui == cote)
+        {
+            etat = b.geste;
+            if (b.geste == "frappe" && b.zone == "jambes" && AEtat(anim, "kick"))
+                etat = "kick";
+        }
+        else etat = (b.geste == "frappe" || b.geste == "garde") ? "garde" : b.geste;
+        if (!AEtat(anim, etat))
+        {
+            if (!AEtat(anim, "garde")) return;
+            etat = "garde";
+        }
+        anim.CrossFade(etat, 0.15f);
     }
 
     void Update()

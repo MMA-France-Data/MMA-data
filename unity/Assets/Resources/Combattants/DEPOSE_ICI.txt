@@ -1,0 +1,6 @@
+Dépose ICI tes fichiers Mixamo (FBX for Unity) :
+ - le PERSONNAGE (téléchargé sans animation, T-pose)
+ - chaque ANIMATION (téléchargée « Without Skin »)
+L'importateur fait le reste tout seul : rig Humanoid, textures,
+boucles, Animator. Puis ▶ Play — le lecteur pose les deux
+combattants lui-même.

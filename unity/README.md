@@ -18,7 +18,26 @@ Unity ne décide de rien — il **montre** (règle 7 du carnet).
    (rouge/bleu) rejouent le combat, la phrase du traducteur défile en
    bas. *(Le lecteur se lance tout seul — aucun objet à poser.)*
 
-## Remplacer les capsules par un vrai personnage (l'étape qui compte)
+## La voie AUTOMATIQUE (recommandée — depuis le 31/08)
+
+Tout l'atelier est scripté. Ton seul travail :
+
+1. Sur Mixamo : télécharge le PERSONNAGE (sans animation, **FBX for
+   Unity**, T-pose) puis chaque ANIMATION (**FBX for Unity**, Skin :
+   **Without Skin**). Suggestions : Bouncing Fight Idle, Cross Punch,
+   Mma Kick, Knocked Out, Victory, Standing Grapple.
+2. Dans Unity : dépose TOUS ces fichiers dans
+   **`Assets/Resources/Combattants/`** (le dossier existe, il contient
+   DEPOSE_ICI.txt). L'importateur règle le rig, extrait les textures,
+   construit l'Animator — regarde la Console : il annonce ce qu'il a
+   branché.
+3. ▶ **Play**. Le lecteur instancie les deux combattants tout seul.
+
+Le nom des fichiers guide le branchement (idle→garde, punch→frappe,
+kick→kick, knock/hit→chute, victory→fin, grapple→clinch…) — garde les
+noms Mixamo, ils conviennent.
+
+## Remplacer les capsules à la main (l'ancienne voie, toujours valable)
 
 C'est ça qu'on veut juger — pas les capsules.
 
