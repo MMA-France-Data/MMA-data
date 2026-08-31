@@ -12842,3 +12842,30 @@ LECON DE LA JOURNEE, valable au-dela d'Unity : j'ai remplace un
 manifest au lieu de le completer et j'ai fait disparaitre des packages
 du projet. Un fichier de configuration qu'on n'a pas ecrit, on
 l'AJOUTE, on ne le REECRIT pas.
+
+## CAS 154 — LA 3D EST CLOSE (Mael, 31/08, troisieme et dernier verdict)
+Trois tentatives, trois fois le meme mot de Mael :
+ 1. proto three.js en primitives (cas 150) : « vraiment nul » ;
+ 2. son propre combattant (photo -> Tripo -> rig Mixamo) + animations
+    Mixamo : « c'est horrible » ;
+ 3. un pack d'animations de combat du store : « encore pire ».
+LE DIAGNOSTIC, ecrit une fois pour toutes pour qu'on ne recommence pas
+dans six mois : LE PROBLEME N'EST NI LE CODE NI LE MODELE, C'EST LA
+MATIERE. Le debout se rattraperait avec un pack mocap serieux (Kubold,
+MoCap Online, ~40-60 €) — mais LE SOL, JAMAIS : une amenee, un passage
+de garde, une soumission exigent de la mocap A DEUX ACTEURS EN CONTACT
+PERMANENT. Ca ne se vend pas ; les studios qui font de vrais jeux de MMA
+la tournent eux-memes, avec des combattants et un budget. Or notre
+moteur simule le sol EN DETAIL — c'est meme une de ses forces. La 3D
+montrerait donc MAL ce que le jeu fait de MIEUX. C'etait annonce des la
+premiere discussion (« le sol, c'est le cimetiere des jeux de MMA ») ;
+c'est desormais MESURE par le seul juge qui compte.
+CE QUI RESTE (rien n'est perdu) :
+ - choregraphie.js + banc 34 : la lecture du log en partition, en
+   dormance, independante de tout rendu ;
+ - unity/ : le projet compagnon, le lecteur, l'importateur, le briefing,
+   et le pont MCP installe (cas 153) ;
+ - la procedure complete, si un jour un vrai budget d'animation existe.
+CE QU'ON NE REFAIT PAS SANS BUDGET MOCAP : la 3D. Le combat se raconte
+par l'ecran 2D, qui dit ce qui se passe VRAIMENT — et c'est ce que le
+jeu a de plus fort.
