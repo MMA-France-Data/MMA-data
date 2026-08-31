@@ -1,0 +1,51 @@
+# Le combat sous Unity — projet compagnon (chantier Q2)
+
+Tu ouvres, tu appuies sur **Play**, un **vrai combat du moteur** se
+rejoue : positions réelles dans la cage, sous-titres du traducteur.
+Unity ne décide de rien — il **montre** (règle 7 du carnet).
+
+## Ouvrir le projet (jamais touché Unity ? suis dans l'ordre)
+
+1. Installe **Unity Hub** : https://unity.com/download — puis ouvre-le
+   et connecte-toi (compte Unity gratuit, licence *Personal*).
+2. Dans le Hub : **Projects → Add → Add project from disk** → choisis
+   CE dossier (`unity/` du dépôt — bouton vert *Code → Download ZIP*
+   sur GitHub si tu n'as pas cloné).
+3. Le Hub te proposera d'installer l'éditeur qu'il faut (version
+   6000.x « LTS ») — accepte, c'est long la première fois (~10 min).
+4. Ouvre le projet. Si Unity propose de « upgrade », accepte.
+5. Appuie sur **▶ Play** en haut. C'est tout : deux capsules
+   (rouge/bleu) rejouent le combat, la phrase du traducteur défile en
+   bas. *(Le lecteur se lance tout seul — aucun objet à poser.)*
+
+## Remplacer les capsules par un vrai personnage (l'étape qui compte)
+
+C'est ça qu'on veut juger — pas les capsules.
+
+1. Va sur **mixamo.com** (gratuit, compte Adobe) → onglet *Characters*
+   → choisis un personnage → **Download** (format **FBX for Unity**).
+2. Glisse le fichier téléchargé dans la fenêtre *Project* d'Unity
+   (dossier Assets).
+3. Glisse le personnage DEUX FOIS dans la scène (fenêtre *Hierarchy*).
+4. Renomme les deux objets **exactement** : `CombattantA` et
+   `CombattantB` (clic droit → Rename).
+5. ▶ Play : le lecteur les utilise à la place des capsules.
+
+### (Optionnel) De vraies animations
+Sur Mixamo, télécharge des animations (Boxing, Kick, Knocked Down…),
+importe-les, crée un **Animator Controller** sur le personnage avec des
+états nommés exactement :
+`garde` · `frappe` · `amenee` · `sol` · `soumission` · `chute` · `clinch` · `fin`
+Le lecteur les déclenche par leur nom. Sans Animator, tout marche
+quand même (positions + élans).
+
+## Changer de combat
+Sur le PC, dans le dépôt : `node jeu/js/exporter_partition.js 77`
+(le nombre = la graine) — ça réécrit
+`unity/Assets/StreamingAssets/partition.json`. Node requis
+(https://nodejs.org).
+
+## La suite (décision APRÈS ton verdict visuel)
+Si le rendu te convainc ici, l'étape « dans l'app téléphone » passe par
+**Unity as a Library** : ~+40 Mo d'APK et un pont entre les deux
+mondes. On ne s'y engage que si ce que tu vois sur PC te plaît.

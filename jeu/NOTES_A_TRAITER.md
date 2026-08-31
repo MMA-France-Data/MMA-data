@@ -12766,3 +12766,26 @@ aveugle :
    (le realisme, mais le sol restera dur), ou assumer le 2D actuel qui
    raconte deja bien. AUCUNE ne se lance sans une maquette validee par
    Mael d'abord.
+
+## CAS 151 — LE COMBAT SOUS UNITY, PROJET COMPAGNON (chantier Q2, Mael, 31/08)
+« On peut tenter le module combat sous Unity ? » Les deux reponses de
+Mael qui cadrent tout : il a UN PC MAIS N'A JAMAIS TOUCHE UNITY, et il
+vise « dans l'app telephone a terme ». Decisions gravees :
+ - LE MOTEUR NE BOUGE PAS D'ICI. Unity est un LECTEUR : il joue la
+   partition (choregraphie.js — la dormance du cas 150 bis paie deja),
+   exportee en JSON NEUTRE par jeu/js/exporter_partition.js (positions
+   deja normalisees, gestes deja tranches — Unity ne connait ni le log
+   ni la cage (180,180), regle 7 de bout en bout) ;
+ - unity/ = projet compagnon PC : Amorce (le lecteur se lance seul dans
+   n'importe quelle scene), LecteurPartition (capsules par defaut,
+   REMPLACABLES par un personnage nomme CombattantA/B — Mixamo — et
+   Animator optionnel avec etats nommes garde/frappe/amenee/sol/
+   soumission/chute/clinch/fin), README ecrit pour un debutant complet ;
+ - VERDICT VISUEL D'ABORD : l'etape « dans l'app » = Unity as a
+   Library, ~+40 Mo d'APK et un pont — elle ne se decide QU'APRES que
+   le rendu PC (avec un vrai personnage Mixamo, pas les capsules) a plu
+   a Mael. La lecon du cas 150 bis appliquee : pas d'engagement avant
+   une maquette validee ;
+ - je code ce projet EN AVEUGLE (pas d'editeur Unity sur la machine de
+   session) : les yeux de Mael sont le banc d'essai — les erreurs
+   console Unity se collent ici comme n'importe quel rapport.
