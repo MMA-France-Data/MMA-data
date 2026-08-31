@@ -18,6 +18,24 @@ Unity ne décide de rien — il **montre** (règle 7 du carnet).
    (rouge/bleu) rejouent le combat, la phrase du traducteur défile en
    bas. *(Le lecteur se lance tout seul — aucun objet à poser.)*
 
+## Le pont Claude ↔ Unity (MCP)
+
+Unity 6 expose l'éditeur comme serveur MCP : Claude Code, lancé SUR LA
+MÊME MACHINE, peut alors inspecter et piloter l'éditeur en direct.
+
+1. `Window → Package Manager` → **+** → *Install package by name…* →
+   `com.unity.ai.assistant` → Install.
+   /!\ Sans ce package, la section AI des Project Settings n'existe pas.
+   (Le manifest minimal écrit le 31/08 pour réparer l'erreur `Animator`
+   l'avait retiré — leçon : un manifest se complète, il ne se remplace
+   pas.)
+2. `Edit → Project Settings → AI → Unity MCP Server` → vérifier
+   **Unity Bridge : Running** → *Integrations* → **Claude Code** →
+   **Configure**.
+3. Redémarrer Claude Code (`/exit` puis `claude` dans le dossier du
+   projet), vérifier avec `/mcp`.
+4. Lui donner `unity/BRIEFING.md` à lire — il contient tout le contexte.
+
 ## La voie AUTOMATIQUE (recommandée — depuis le 31/08)
 
 Tout l'atelier est scripté. Ton seul travail :
