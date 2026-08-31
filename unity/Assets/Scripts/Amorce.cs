@@ -12,6 +12,9 @@ public static class Amorce
         {
             var go = new GameObject("Lecteur de partition");
             go.AddComponent<LecteurPartition>();
+            // Le pont avec Claude : Unity ecrit lui-meme ce qu'il voit
+            // (rapport + captures dans RapportMMA/ a cote du projet).
+            go.AddComponent<RapportMMA>();
         }
     }
 }
