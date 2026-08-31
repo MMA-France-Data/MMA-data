@@ -65,57 +65,76 @@ const SEUILS = {
  */
 function faits(f, ctx = {}) {
   const L = [];
-  const P = (cle, gravite, signe, mot, levier) => L.push({ cle, gravite, signe, mot, levier });
+  /* /!\ LES MOTS SONT DOUBLES (Mael, 31/08 : "enrichir les dialogues").
+     Chaque fait garde SON seuil et SON levier — seule la formulation se
+     decline, departagee par le jeton (regle 4 : derive de l'etat,
+     jamais tire — meme combat, meme phrase). */
+  const jet = jeton(f, (ctx.round || 1));
+  const V = (mots) => mots[(jet + L.length) % mots.length];
+  const P = (cle, gravite, signe, mots, levier) =>
+    L.push({ cle, gravite, signe, mot: V(mots), levier });
 
   /* La tete d'abord : c'est ce qui finit les combats. */
   const t = f.head_damage || 0;
   if (t >= SEUILS.tete.casse)
     P("tete", 1.0, "le regard part en arrière, il cligne trop",
-      "Je ne les vois plus partir. Ils arrivent, c'est tout.", { cible: "corps" });
+      ["Je ne les vois plus partir. Ils arrivent, c'est tout.",
+       "C'est flou. Je te vois double, là, maintenant."], { cible: "corps" });
   else if (t >= SEUILS.tete.dur)
     P("tete", 0.75, "la tête est marquée, une pommette gonfle",
-      "J'en ai pris. Ça cogne derrière les yeux.", { allure: "eco" });
+      ["J'en ai pris. Ça cogne derrière les yeux.",
+       "Sa droite passe. Chaque fois au même endroit, et ça s'accumule."], { allure: "eco" });
   else if (t >= SEUILS.tete.gene)
     P("tete", 0.4, "il a mangé quelques mains propres",
-      "Il touche. Il faut que je remonte la garde.", null);
+      ["Il touche. Il faut que je remonte la garde.",
+       "Il m'a trouvé deux fois. Pas fort, mais il m'a trouvé."], null);
 
   /* Le reservoir. */
   const c = f.cardio === undefined ? 100 : f.cardio;
   if (c <= SEUILS.cardio.vide)
     P("cardio", 0.95, "il souffle par la bouche, les mains sur les cuisses",
-      "Je n'ai plus rien. Plus rien du tout.", { allure: "eco" });
+      ["Je n'ai plus rien. Plus rien du tout.",
+       "Les bras ne montent plus. Je te jure qu'ils ne montent plus."], { allure: "eco" });
   else if (c <= SEUILS.cardio.court)
     P("cardio", 0.7, "la poitrine se soulève vite, il met du temps à répondre",
-      "Je suis court. Il faut que je gère.", { allure: "eco" });
+      ["Je suis court. Il faut que je gère.",
+       "Le réservoir descend vite. Trouve-moi trente secondes quelque part."], { allure: "eco" });
   else if (c <= SEUILS.cardio.tire)
     P("cardio", 0.35, "il respire fort mais il tient",
-      "Ça tire, mais je tiens.", null);
+      ["Ça tire, mais je tiens.",
+       "Je sens la pente, mais j'ai encore de quoi faire."], null);
 
   /* Le corps : ce qui vide le reservoir sans se voir. */
   const b = (f.body && f.body.degats_corps) || 0;
   if (b >= SEUILS.corps.dur)
     P("corps", 0.8, "il garde le coude collé aux côtes",
-      "Il me démonte le corps. Je n'arrive plus à respirer à fond.", { plan: "clinch" });
+      ["Il me démonte le corps. Je n'arrive plus à respirer à fond.",
+       "Les côtes. Chaque inspiration coûte. Ne me demande pas de sourire."], { plan: "clinch" });
   else if (b >= SEUILS.corps.gene)
     P("corps", 0.45, "la garde descend d'un cran à chaque coup au corps",
-      "Il travaille le corps. Ça commence à peser.", null);
+      ["Il travaille le corps. Ça commence à peser.",
+       "Il investit au corps, le fourbe. Je le paierai au 3e si on ne change rien."], null);
 
   /* Les jambes : la mobilite, donc tout le reste. */
   const j = f.legs ? (f.legs.total ? f.legs.total() : (f.legs.gauche || 0) + (f.legs.droite || 0)) : 0;
   if (j >= SEUILS.jambes.dur)
     P("jambes", 0.85, "il boite en revenant au coin",
-      "La jambe est morte. Je ne peux plus m'appuyer dessus.", { plan: "lutte" });
+      ["La jambe est morte. Je ne peux plus m'appuyer dessus.",
+       "L'appui est parti. Je boxe sur une jambe, là."], { plan: "lutte" });
   else if (j >= SEUILS.jambes.gene)
     P("jambes", 0.4, "il change d'appui trop souvent",
-      "Il me mange la cuisse. Il faut que je la sorte.", null);
+      ["Il me mange la cuisse. Il faut que je la sorte.",
+       "Encore deux low kicks comme ça et je vais le sentir longtemps."], null);
 
   /* Ce qui ne se discute pas. */
   if ((f.sonne || 0) > 0)
     P("sonne", 1.0, "il est encore dedans, il regarde à côté de toi",
-      "Ça va. Ça va, je te dis.", { allure: "eco" });
+      ["Ça va. Ça va, je te dis.",
+       "Quoi ? Oui. On est à quel round ?"], { allure: "eco" });
   if ((f.knockdowns || 0) > 0)
     P("knockdown", 0.9, "il a touché la toile ce round",
-      "Il m'a eu une fois. Il ne m'aura pas deux.", null);
+      ["Il m'a eu une fois. Il ne m'aura pas deux.",
+       "C'était un accident de parcours. Il ne retrouvera pas cette ouverture."], null);
 
   L.sort((a, b2) => b2.gravite - a.gravite);
   return L;
@@ -162,6 +181,9 @@ const RIEN = [
   "Ça va. Je le sens, je le lis. Laisse-moi y aller.",
   "Il ne me fait rien. Dis-moi juste où appuyer.",
   "Je suis bien. Le round est à moi, non ?",
+  "Tout va bien. Donne-moi juste l'eau et un angle.",
+  "Il est exactement comme sur les vidéos. Aucun piège.",
+  "Je respire bien, je vois tout. Qu'est-ce que tu as vu, toi ?",
 ];
 
 /**
@@ -194,7 +216,8 @@ function ressenti(f, ctx = {}) {
     /* /!\ MEME FRAIS, IL A UN AVIS — sinon le coin d'un homme qui domine
        est muet, et c'est justement la qu'on gagne les combats. */
     if (ctx.gagne === false)
-      dit = "Le round est parti. Je le sais. Dis-moi quoi changer.";
+      dit = ["Le round est parti. Je le sais. Dis-moi quoi changer.",
+             "Je lui ai laissé le round. Pas le prochain. Parle-moi."][jeton(f, round) % 2];
   } else if (lu >= 0.55) {
     dit = pire.mot;
     demande = pire.levier ? { ...pire.levier, mot: pire.mot } : null;
@@ -207,7 +230,9 @@ function ressenti(f, ctx = {}) {
   } else {
     /* Il ne se lit pas. Il dit que ca va — et les signes disent le
        contraire. C'est au coach de trancher. */
-    dit = grave >= 0.85 ? "Ça va. Renvoie-moi." : "Ça va bien. Je le tiens.";
+    dit = grave >= 0.85
+      ? ["Ça va. Renvoie-moi.", "C'est rien. Renvoie-moi, je te dis."][jeton(f, round) % 2]
+      : ["Ça va bien. Je le tiens.", "Tout va bien. Il est à moi."][jeton(f, round) % 2];
     lucide = false;
   }
 
@@ -222,10 +247,15 @@ function ressenti(f, ctx = {}) {
       " Je le sens plier.",
       " Il recule. C'est bon signe.",
       " Je suis en train de le user.",
+      " Son coin crie plus fort que lui. Mauvais signe pour eux.",
+      " Il respire mal. Je l'entends d'ici.",
+      " Chaque échange me revient. Continue comme ça.",
+      " Il ne tente plus rien. Il attend la cloche.",
     ];
     dit += MOMENTUM[jeton(f, round) % MOMENTUM.length];
   } else if (ctx.gagne === false && lu >= 0.55 && F.length)
-    dit += " Et il a pris le round.";
+    dit += [" Et il a pris le round.",
+            " Et le round est pour lui, je ne me raconte pas d'histoire."][jeton(f, round) % 2];
 
   return { etat, dit, signes: signes(f, ctx), demande, lucide, faits: F };
 }

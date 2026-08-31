@@ -12789,3 +12789,22 @@ vise « dans l'app telephone a terme ». Decisions gravees :
  - je code ce projet EN AVEUGLE (pas d'editeur Unity sur la machine de
    session) : les yeux de Mael sont le banc d'essai — les erreurs
    console Unity se collent ici comme n'importe quel rapport.
+
+## CAS 152 — LES DIALOGUES DOUBLES (Mael, 31/08 : « enrichir les dialogues, les doubler au moins »)
+La doctrine du 10/08 tient : PAS UNE LIGNE DECORATIVE, et pas un
+invariant qui bouge. La methode, gravee :
+ - dialogue.js (les 7 approches, 44 entrees) : chaque entree garde SA
+   condition et SES effets — t devient une LISTE de formulations, et
+   c'est LE JOUR qui departage (t[jour % n]). Deterministe : meme etat
+   meme jour = meme phrase ; un autre jour varie. L'ordre des conditions
+   ne bouge pas (l'anti-farm du moral du banc entente est intact) ;
+ - ressenti.js : chaque FAIT garde son seuil et son levier — les mots se
+   declinent, departages par le jeton (regle 4 : zero tirage). RIEN 3->6,
+   MOMENTUM 4->8, les phrases du non-lucide et du round perdu doublees ;
+ - soiree.js : ouvertures 18->36, reponses 27->52, et l'invariant du banc
+   tenu de force : TOUTE ouverture « connu » porte {salle} — la 4e ecrite
+   sans a ete reprise, pas le banc ;
+ - cris.js PAS TOUCHE : ce sont des ordres-boutons, pas des dialogues —
+   varier un libelle de commande embrouillerait le joueur.
+Total : ~130 formulations nouvelles, zero effet change, zero tirage
+ajoute.
