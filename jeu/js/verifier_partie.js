@@ -1176,6 +1176,70 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* DEMANDER AU MATCHMAKER (cas 157, Mael, 01/09) : le nom que l'homme    */
+/* reclame se transmet, la demande coute, et la faveur CHANGE l'offre.   */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 63 });
+  jouer(P, 120, 63);
+  const r = P.lire(`(function(){
+    completerRelation();
+    const cle=Object.keys(MESGARS).find(k=>MESGARS[k]&&MESGARS[k].org&&!MESGARS[k].amateur);
+    if(!cle)return {pasDeGars:true};
+    const l=MESGARS[cle], org=l.org;
+    const e=RELATION[org];
+    /* 1. L'ECRAN EXISTE ET LISTE MES HOMMES DE CETTE ORGA. */
+    delete e.demandeLe; e.valeur=75;
+    ouvrirDemandeMatch(org);
+    const ecran=$("fiche").innerHTML;
+    const listeOk=ecran.indexOf(l.nom)>=0&&ecran.indexOf("demanderAuMatch")>=0;
+    /* 2. LE NOM RECLAME PAR L'HOMME EST PROPOSE (le manque de Mael). */
+    const adv=[...MONDE.pros.values()].find(p=>!p.salle&&p.org===org&&p.division===l.division);
+    l.cibleReclamee={id:adv.id,nom:adv.nom,jour:t.jour};
+    ouvrirDemandeMatch(org);
+    const reclameVu=$("fiche").innerHTML.indexOf(adv.nom)>=0;
+    /* 3. LA DEMANDE PASSE, ET ELLE COUTE. */
+    const avant=e.valeur;
+    demanderAuMatch(org,cle,"adversaire",adv.id);
+    const faveur=l.faveurMatch;
+    const aCoute=e.valeur!==avant, dateNotee=e.demandeLe===t.jour;
+    /* 4. ON NE DEMANDE PAS DEUX FOIS DE SUITE. */
+    ouvrirDemandeMatch(org);
+    const barre=$("fiche").innerHTML.indexOf("laisse passer")>=0;
+    /* 5. LA FAVEUR "affiche" CHANGE VRAIMENT L'OFFRE SUIVANTE. */
+    delete e.demandeLe; e.valeur=90;
+    l.faveurMatch=MMA.matchmaker.faveur("affiche",t.jour,null);
+    l.combatPrevu=null; l.camp=null; l.renego=null;
+    l.vie.dispo=0; delete l.derniereOffre;
+    OFFRES.length=0;
+    let vue=null;
+    for(let g=0;g<400&&!vue;g++){ t.jour++; proposerOffres();
+      const o=OFFRES.find(x=>x.cle===cle); if(o)vue=o; }
+    return {listeOk,reclameVu,aCoute,dateNotee,barre,
+      faveurPosee:!!faveur&&faveur.quoi==="adversaire"&&faveur.cible===adv.id,
+      reclameEfface:!l.cibleReclamee,
+      offre:vue?{place:vue.place,faveur:vue.faveur||null}:null,
+      consommee:!l.faveurMatch};
+  })()`);
+  dit("l'écran des demandes liste tes hommes de cette organisation",
+      !!r && !r.pasDeGars && r.listeOk);
+  dit("le nom que ton combattant réclame se propose au matchmaker",
+      !!r && r.reclameVu, "c'était le manque : il demandait un nom, tu ne pouvais pas le transmettre");
+  dit("la demande acceptée pose une faveur nominative et efface la réclamation",
+      !!r && r.faveurPosee && r.reclameEfface);
+  dit("demander coûte du crédit, et la date est retenue",
+      !!r && r.aCoute && r.dateNotee);
+  dit("et on ne redemande pas dans la foulée", !!r && r.barre);
+  dit("une faveur « haut de carte » change VRAIMENT l'offre suivante",
+      !!r && !!r.offre && r.offre.place === "main_event" && !!r.offre.faveur,
+      r && r.offre ? `${r.offre.place} · ${r.offre.faveur}` : "aucune offre reçue");
+  dit("et elle se consomme — un oui ne vaut pas pour toute la carrière",
+      !!r && r.consommee);
+  dit("aucune exception chez le matchmaker", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

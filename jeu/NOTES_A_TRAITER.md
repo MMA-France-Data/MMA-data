@@ -12927,3 +12927,40 @@ disparition — et elle est branchee aux DEUX sorties (raccrocher et
 quitterLaSalle), parce qu'un homme peut partir de deux facons.
 LECON : c'est la MESURE qui a trouve le bug, pas la lecture. Un
 mecanisme qu'on debloque reveille tout ce qui dormait derriere.
+
+## CAS 157 — ON PEUT ENFIN DEMANDER AU MATCHMAKER (Mael, 01/09)
+« Les relations avec le matchmaker… même des fois un combattant me
+demande un nom par ex, je peux pas le demander en retour. »
+LE MANQUE, en deux morceaux :
+ 1. LA RELATION ETAIT SUBIE. Elle montait et descendait sur ce qui se
+    passait (accepter, refuser, finir, rater une pesee), et on pouvait
+    PARLER au matchmaker — quatre repliques qui bougent la relation —
+    mais on ne pouvait RIEN DEMANDER.
+ 2. /!\ ET LE PIRE, LA PLAIE DU CARNET UNE FOIS DE PLUS : quand un
+    combattant reclamait un adversaire (demande `cet_adversaire`), le jeu
+    posait `l.cibleVoulue = true`… et CETTE VARIABLE N'ETAIT LUE NULLE
+    PART. La demande mourait la. « Une chose branchee nulle part ne fait
+    rien et ne leve pas » — cinquieme fois qu'elle nous prend.
+CE QUI EST CONSTRUIT (module matchmaker.js, banc 35) :
+ - quatre demandes : une DATE (seuil de relation 30), un ADVERSAIRE
+   NOMME (48, + 6 par rang au-dessus — viser plus haut est plus dur,
+   meme principe que la montee), le HAUT DE CARTE (62), la BOURSE (55) ;
+ - ON DEMANDE, ON N'EXIGE PAS : la decision SE CALCULE (meme relation,
+   meme reponse — le joueur peut apprendre les regles), jamais un tirage ;
+ - DEMANDER COUTE : `echange_juste` ou `exigence` quand ca passe,
+   toujours une exigence quand ca rate ; une demande par orga tous les
+   40 jours, sinon un manager qui appelle sans arret n'est plus ecoute ;
+ - LA FAVEUR EST UN DU DATE, et elle CHANGE LA PROCHAINE OFFRE : la date
+   coupe l'attente de moitie, l'adversaire vise passe AVANT la cible du
+   joueur, le haut de carte pose main_event + 5 rounds + 25 % de bourse,
+   la bourse ajoute 18 %. Elle SE CONSOMME a l'usage — un oui ne vaut pas
+   pour toute la carriere — et le matchmaker oublie au bout de 90-120
+   jours ;
+ - le contexte porte maintenant `rivalId` en plus de `rival` : le NOM ne
+   suffisait pas, il fallait l'identifiant pour aller le demander.
+LE CHEMIN COMPLET, ferme : ton homme reclame un nom -> tu dis oui ->
+l.cibleReclamee retient QUI -> l'ecran du matchmaker te le propose en
+tete -> il accepte -> l'offre suivante vise cet homme -> et le recit le
+dit (« 🤝 L'adversaire que tu reclamais »).
+Banc 27 : huit assertions de plus, dont la seule qui compte vraiment —
+une faveur « haut de carte » sort une offre en main event.

@@ -487,7 +487,7 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
      =================================================================== -->
 <script>/* inline de js/moteur.bundle.js — voir js/apercu.js */
 /* moteur.bundle.js — GENERE PAR bundler.js, NE PAS EDITER A LA MAIN.
- * Modules embarques (ordre de dependance) : alea.js, stance.js, body.js, tables.js, striking_v2.js, clinch.js, ground_v2.js, engine.js, generator.js, traducteur.js, mesure.js, temps.js, fiches.js, verdict.js, profil.js, chrono.js, feuille.js, coin.js, classement.js, grappling.js, etoiles.js, carriere.js, vivier.js, cartes.js, entente.js, salle.js, relation.js, offres.js, dialogue.js, demandes.js, contrats.js, cris.js, ressenti.js, demandes_staff.js, endgame.js, vestiaire.js, soiree.js, choregraphie.js
+ * Modules embarques (ordre de dependance) : alea.js, stance.js, body.js, tables.js, striking_v2.js, clinch.js, ground_v2.js, engine.js, generator.js, traducteur.js, mesure.js, temps.js, fiches.js, verdict.js, profil.js, chrono.js, feuille.js, coin.js, classement.js, grappling.js, etoiles.js, carriere.js, vivier.js, cartes.js, entente.js, salle.js, relation.js, offres.js, dialogue.js, demandes.js, contrats.js, cris.js, ressenti.js, demandes_staff.js, endgame.js, vestiaire.js, soiree.js, choregraphie.js, matchmaker.js
  * Regenerer apres toute modification d'un module : node js/bundler.js
  */
 (function (racine) {
@@ -13005,6 +13005,130 @@ module.exports = { CAGE, PHASES, ZONES, beat, beats, normaliser, geste };
 
 });
 
+/* ===== matchmaker.js ================================================= */
+__def("matchmaker.js", function (module, exports, require) {
+/**
+ * matchmaker.js — CE QU'ON PEUT LUI DEMANDER (Mael, 01/09).
+ *
+ * « Les relations avec le matchmaker… même, des fois un combattant me
+ * demande un nom, par exemple, et je peux pas le demander en retour. »
+ *
+ * LE MANQUE : la relation aux organisations était SUBIE. Elle montait et
+ * descendait sur ce qui se passait (accepter, refuser, gagner, rater une
+ * pesée), et le joueur pouvait PARLER au matchmaker — quatre répliques
+ * qui bougent la relation — mais il ne pouvait RIEN DEMANDER. Pire :
+ * quand un combattant réclamait un adversaire (demande `cet_adversaire`),
+ * le jeu posait `l.cibleVoulue = true`… et cette variable n'était lue
+ * NULLE PART. La plaie du carnet : une chose branchée nulle part ne fait
+ * rien et ne lève pas.
+ *
+ * ===================================================================
+ * LES QUATRE RÈGLES DU MODULE
+ * ===================================================================
+ * 1. ON DEMANDE, ON N'EXIGE PAS. Le matchmaker répond oui ou non selon
+ *    CE QUE TU VAUX POUR LUI (la relation) et selon ce que tu demandes.
+ *    Rien n'est jamais garanti : c'est lui qui fait les cartes.
+ * 2. DEMANDER COÛTE. Chaque demande dépense du crédit — un peu si elle
+ *    passe (il y trouve son compte), plus si elle est refusée (tu as
+ *    demandé quelque chose que tu ne méritais pas). C'est ce qui empêche
+ *    de tout demander tous les jours.
+ * 3. UNE DEMANDE PAR ORGANISATION À LA FOIS, et un délai entre deux.
+ *    Un manager qui appelle toutes les semaines n'est plus écouté.
+ * 4. LA RÉPONSE EST UNE FAVEUR RÉELLE, PAS UN MOT. Accepté, ça change la
+ *    PROCHAINE OFFRE — l'adversaire visé, la date avancée, la place sur
+ *    la carte, la bourse. Une faveur qui ne change rien serait une
+ *    étiquette, et le carnet a un mot pour ça.
+ *
+ * Module PUR : aucun tirage (la décision se calcule), aucun DOM, aucun
+ * état global. Banc 35.
+ */
+
+/** Le délai entre deux demandes à la MÊME organisation. */
+const DELAI = 40;
+
+/**
+ * CE QU'ON PEUT DEMANDER.
+ *  seuil   : la relation minimale pour espérer un oui
+ *  cout    : l'entrée de relation quand ça PASSE
+ *  coutNon : l'entrée quand il refuse (toujours plus cher)
+ *  duree   : combien de temps la faveur reste due
+ */
+const DEMANDES = {
+  date: {
+    lab: "« Il lui faut un combat, et vite. »",
+    seuil: 30, cout: "echange_juste", coutNon: "exigence", duree: 90,
+    oui: (n) => `« Je t'ai entendu. Je regarde ce que j'ai. »`,
+    non: (n) => `« Tout le monde veut une date. Prends ton tour. »`,
+  },
+  adversaire: {
+    lab: "« Je veux ce nom-là. »",
+    seuil: 48, cout: "exigence", coutNon: "exigence", duree: 120,
+    oui: (n) => `« ${n} ? … Ça peut se vendre. Je vais voir son camp. »`,
+    non: (n) => `« ${n} a d'autres plans. Et toi, tu n'as pas encore le poids pour choisir. »`,
+  },
+  affiche: {
+    lab: "« Mets-le en haut de carte. »",
+    seuil: 62, cout: "exigence", coutNon: "exigence", duree: 120,
+    oui: (n) => `« Le main event, rien que ça. Bon. Qu'il le mérite, alors. »`,
+    non: (n) => `« Le haut de carte, ça se gagne. Reviens quand on parlera de lui dehors. »`,
+  },
+  bourse: {
+    lab: "« Sa bourse ne suit plus. »",
+    seuil: 55, cout: "exigence_argent", coutNon: "exigence_argent", duree: 120,
+    oui: (n) => `« Je peux trouver un peu. Ne le crie pas sur les toits. »`,
+    non: (n) => `« Mes budgets sont ce qu'ils sont. Gagne, et on rediscute. »`,
+  },
+};
+
+/** Peut-on demander quelque chose aujourd'hui à cette organisation ? */
+function peutDemander(etatOrg, jour) {
+  if (!etatOrg) return { peut: false, mot: "Tu ne travailles pas avec eux." };
+  const d = etatOrg.demandeLe;
+  if (d !== undefined && jour - d < DELAI)
+    return { peut: false, reste: DELAI - (jour - d),
+             mot: `Tu l'as déjà sollicité récemment — laisse passer ${DELAI - (jour - d)} jours.` };
+  return { peut: true, mot: "" };
+}
+
+/**
+ * LA DÉCISION. Elle se CALCULE, elle ne se tire pas : même relation,
+ * même demande, même réponse — le joueur peut apprendre les règles.
+ * @param {string} quoi     clé de DEMANDES
+ * @param {number} valeur   la relation (0-100)
+ * @param {object} ctx      { rangEcart } — pour `adversaire` : de combien
+ *                          de rangs l'homme visé est AU-DESSUS (0 si égal
+ *                          ou moins bien classé). Viser plus haut est
+ *                          plus dur : c'est le même principe que la
+ *                          montée dans faveurs().
+ */
+function juger(quoi, valeur, ctx = {}) {
+  const d = DEMANDES[quoi];
+  if (!d) throw new Error(`matchmaker.js : demande inconnue "${quoi}"`);
+  let seuil = d.seuil;
+  if (quoi === "adversaire") seuil += Math.max(0, (ctx.rangEcart || 0)) * 6;
+  const accepte = valeur >= seuil;
+  return { accepte, seuil,
+           trace: accepte ? d.cout : d.coutNon,
+           duree: d.duree };
+}
+
+/**
+ * La faveur accordée, telle que le jeu la posera sur l'homme. C'est un
+ * DÛ daté : le matchmaker s'en souvient un temps, puis oublie.
+ */
+function faveur(quoi, jour, cible) {
+  const d = DEMANDES[quoi];
+  return { quoi, depuis: jour, jusqua: jour + d.duree,
+           cible: cible === undefined ? null : cible };
+}
+
+/** La faveur est-elle encore due ? */
+const dueEncore = (f, jour) => !!f && jour <= f.jusqua;
+
+module.exports = { DELAI, DEMANDES, peutDemander, juger, faveur, dueEncore };
+
+});
+
 
   racine.MMA = {
     alea:       require("./alea.js"),
@@ -13041,6 +13165,7 @@ module.exports = { CAGE, PHASES, ZONES, beat, beats, normaliser, geste };
     vestiaire:  require("./vestiaire.js"),
     soiree:     require("./soiree.js"),
     choregraphie: require("./choregraphie.js"),
+    matchmaker: require("./matchmaker.js"),
     require: require
   };
 })(typeof window !== "undefined" ? window : globalThis);
@@ -18365,7 +18490,13 @@ function proposerOffres(){
        longtemps pour avoir la date. 30 jours quand tout va bien, jusqu'a
        75 quand il ne veut plus te voir. */
     const fav=MMA.relation.faveurs(completerRelation(),l.org);
-    const attente=30+(fav.durete||0)*9;
+    let attente=30+(fav.durete||0)*9;
+    /* /!\ LA FAVEUR ACCORDEE AGIT ICI (cas 157) : « il lui faut une date »
+       obtenue, c'est l'attente coupee de moitie. Sans ce branchement, la
+       demande au matchmaker ne serait qu'un dialogue de plus. */
+    const fM=l.faveurMatch;
+    const dueDate=fM&&fM.quoi==="date"&&MMA.matchmaker.dueEncore(fM,t.jour);
+    if(dueDate)attente=Math.round(attente*0.5);
     if(l.derniereOffre!==undefined&&t.jour-l.derniereOffre<attente)continue;
     if((t.jour+Math.abs(l.id)*7)%18!==0)continue;
     /* ==== LA REVANCHE (chantier du 26/08) ==============================
@@ -18377,6 +18508,14 @@ function proposerOffres(){
        de la rivalite sont deja branches plus bas — ici on ne fait que
        VISER. */
     let cibleOffre=cibleId();
+    /* La faveur "adversaire" passe AVANT la cible du joueur : c'est le
+       matchmaker qui a dit oui, il tient parole tant qu'il s'en
+       souvient. */
+    try{
+      if(fM&&fM.quoi==="adversaire"&&fM.cible!==null
+         &&MMA.matchmaker.dueEncore(fM,t.jour)&&MONDE.pros.get(fM.cible))
+        cibleOffre=fM.cible;
+    }catch(e){ console.error("faveur/cible :",e); }
     try{
       if(cibleOffre==null){
         /* /!\ LE SEUIL EST vivante(), PAS UN CHIFFRE A MOI (attrape au
@@ -18397,6 +18536,24 @@ function proposerOffres(){
       if(!o)continue;
       o.cle=cle; o.nomGars=l.nom;
       l.derniereOffre=t.jour;
+      /* /!\ CE QUI A ETE PROMIS SE VOIT SUR L'AFFICHE (cas 157). Une
+         faveur se CONSOMME : elle a servi, elle s'efface — sinon un seul
+         "oui" vaudrait pour toute la carriere. */
+      try{
+        if(fM&&MMA.matchmaker.dueEncore(fM,t.jour)){
+          if(fM.quoi==="affiche"){
+            o.place="main_event"; o.rounds=5;
+            o.bourse=Math.round(o.bourse*1.25);
+            o.faveur="Haut de carte — tu l'as demandé.";
+          } else if(fM.quoi==="bourse"){
+            o.bourse=Math.round(o.bourse*1.18);
+            o.faveur="Bourse revue — tu l'as demandé.";
+          } else if(fM.quoi==="adversaire"&&o.adversaire===fM.cible){
+            o.faveur="L'adversaire que tu réclamais.";
+          }
+          if(fM.quoi!=="date")delete l.faveurMatch;
+        }
+      }catch(e){ console.error("faveur/offre :",e); }
       /* /!\ UNE RIVALITE SE VEND (endgame.js). Elle ne touche PAS au
          moteur — on ne truque pas un combat parce qu'il y a une histoire.
          Elle agit sur ce qui se negocie AUTOUR : la bourse d'abord. Sans
@@ -18415,7 +18572,8 @@ function proposerOffres(){
       raconter(t.jour,[estRevanche
         ?`💥 <b>LA REVANCHE.</b> ${l.org} propose ${lienGars(cle)} c. ${lienMonde(o.adversaire,o.trace.nom)} — ${o.rivalite}`
         :`✉ ${l.org} propose un combat à ${lienGars(cle)}.`
-        +(o.rivalite?` — <b>${o.rivalite}</b>`:"")],true);
+        +(o.rivalite?` — <b>${o.rivalite}</b>`:"")
+        +(o.faveur?` <span style="color:var(--or)">🤝 ${o.faveur}</span>`:"")],true);
     }catch(e){}
   }
 }
@@ -19938,7 +20096,9 @@ function parlerMatchmaker(org,i){
       <div class="f-statut">« ${mm.mot} »</div>
       <div class="f-sous" style="margin:10px 0">${MMA.contrats.avisMatchmaker(MONDE,org,null).mot}</div>
       ${REPLIQUES.map((x,k)=>`<button class="cc-voir" style="width:100%;margin-top:8px"
-        onclick="parlerMatchmaker('${org}',${k})">${x.q}</button>`).join("")}`;
+        onclick="parlerMatchmaker('${org}',${k})">${x.q}</button>`).join("")}
+      <button class="cc-voir" style="width:100%;margin-top:14px;border-color:var(--or);color:var(--or)"
+        onclick="ouvrirDemandeMatch('${org}')">🤝 Lui demander quelque chose</button>`;
     $("voile").classList.add("ouvert");
     return;
   }
@@ -19958,6 +20118,103 @@ function parlerMatchmaker(org,i){
     <button class="cc-voir" style="width:100%;margin-top:12px"
       onclick="parlerMatchmaker('${org}')">Continuer</button>`;
   $("voile").classList.add("ouvert");
+}
+
+/* ==== DEMANDER QUELQUE CHOSE AU MATCHMAKER (cas 157, Mael, 01/09) ====
+   « Les relations avec le matchmaker… des fois un combattant me demande
+   un nom et je peux pas le demander en retour. »
+   /!\ ON DEMANDE, ON N'EXIGE PAS : le module matchmaker.js decide selon
+   la relation, la demande coute du credit, et la faveur accordee CHANGE
+   LA PROCHAINE OFFRE (adversaire vise, date avancee, place sur la carte,
+   bourse). Une faveur qui ne changerait rien serait une etiquette. */
+function ouvrirDemandeMatch(org){
+  completerRelation();
+  const e=RELATION[org]||{valeur:50};
+  const mm=MMA.classement.matchmakerDe(org);
+  const pd=MMA.matchmaker.peutDemander(e,t.jour);
+  const miens=Object.entries(MESGARS).filter(([,l])=>l&&l.org===org&&!l.retraite&&!l.amateur);
+  const tete=`<div class="f-tete"><div class="f-nom">${mm.nom}</div>
+    <div class="f-sous">${MMA.classement.ORGS[org].nom} · ${MMA.relation.lire(e.valeur).mot}</div>
+    <button class="f-fermer" onclick="parlerMatchmaker('${org}')">Retour</button></div>`;
+  if(!pd.peut||!miens.length){
+    $("fiche").innerHTML=tete+`<div class="f-statut">${
+      miens.length?pd.mot:"Aucun de tes hommes n'est sous contrat chez eux."}</div>`;
+    $("voile").classList.add("ouvert");return;
+  }
+  /* Ce que TES hommes reclament passe en tete : c'est le point de depart
+     de la demande de Mael. */
+  const lignes=miens.map(([cle,l])=>{
+    const rec=l.cibleReclamee;
+    const boutons=[];
+    if(rec&&MONDE&&MONDE.pros.get(rec.id))
+      boutons.push(`<button class="cc-voir" style="width:100%;margin-top:6px;border-color:var(--accent)"
+        onclick="demanderAuMatch('${org}','${cle}','adversaire',${rec.id})">« Je veux ${rec.nom} pour lui. » <span style="color:var(--doux)">— il le réclame</span></button>`);
+    else if(CIBLE&&cibleId()!==null)
+      boutons.push(`<button class="cc-voir" style="width:100%;margin-top:6px"
+        onclick="demanderAuMatch('${org}','${cle}','adversaire',${cibleId()})">« Je veux ${CIBLE} pour lui. »</button>`);
+    for(const q of ["date","affiche","bourse"])
+      boutons.push(`<button class="cc-voir" style="width:100%;margin-top:6px"
+        onclick="demanderAuMatch('${org}','${cle}','${q}')">${MMA.matchmaker.DEMANDES[q].lab}</button>`);
+    const f=l.faveurMatch;
+    return `<div class="carte-combat" style="margin-top:10px">
+      <div class="cc-quand">${l.rang!=null?`n°${l.rang} · `:""}${l.bilan.v}-${l.bilan.d}</div>
+      <div class="cc-affiche">${l.nom}</div>
+      ${f&&MMA.matchmaker.dueEncore(f,t.jour)
+        ?`<div class="cc-sous" style="color:var(--or)">Il te doit encore quelque chose sur lui.</div>`:""}
+      ${boutons.join("")}</div>`;}).join("");
+  $("fiche").innerHTML=tete
+    +`<div class="f-sous" style="margin:10px 0">Une demande à la fois, et pas deux
+      coup sur coup — ${MMA.matchmaker.DELAI} jours entre deux. Ce que tu obtiens
+      se paie sur le reste.</div>`+lignes;
+  $("voile").classList.add("ouvert");
+}
+
+function demanderAuMatch(org,cle,quoi,cibleIdVoulue){
+  const l=MESGARS[cle]; if(!l)return;
+  completerRelation();
+  const e=RELATION[org]||{valeur:50};
+  if(!MMA.matchmaker.peutDemander(e,t.jour).peut)return ouvrirDemandeMatch(org);
+  const mm=MMA.classement.matchmakerDe(org);
+  const D=MMA.matchmaker.DEMANDES[quoi];
+  /* L'ecart de rang : viser plus haut est plus dur. Un homme non classe
+     vise "loin" par definition. */
+  let ecart=0, nomCible="lui";
+  if(quoi==="adversaire"){
+    const b=MONDE&&MONDE.pros.get(cibleIdVoulue);
+    if(!b)return toast("Cet homme n'est plus dans le monde.");
+    nomCible=b.nom;
+    const rMien=(l.rang===null||l.rang===undefined)?20:l.rang;
+    const rLui=(b.rang===null||b.rang===undefined)?20:b.rang;
+    ecart=Math.max(0,rMien-rLui);   /* rang 1 = meilleur */
+  }
+  const j=MMA.matchmaker.juger(quoi,e.valeur,{rangEcart:ecart});
+  e.demandeLe=t.jour;
+  let mv=null;
+  try{ mv=MMA.relation.bouger(RELATION,org,j.trace); }catch(err){ console.error("match/relation :",err); }
+  if(j.accepte){
+    l.faveurMatch=MMA.matchmaker.faveur(quoi,t.jour,quoi==="adversaire"?cibleIdVoulue:null);
+    if(quoi==="adversaire"&&l.cibleReclamee&&l.cibleReclamee.id===cibleIdVoulue)
+      delete l.cibleReclamee;
+    raconter(t.jour,[`🤝 <b>${mm.nom}</b> accepte : ${
+      quoi==="adversaire"?`il cherche ${nomCible} pour ${lienGars(cle)}.`
+      :quoi==="date"?`une date arrive plus vite pour ${lienGars(cle)}.`
+      :quoi==="affiche"?`${lienGars(cle)} montera plus haut sur la carte.`
+      :`la bourse de ${lienGars(cle)} sera revue.`}`],true);
+  } else {
+    raconter(t.jour,[`✖ ${mm.nom} refuse la demande pour ${lienGars(cle)}.`],false);
+  }
+  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${mm.nom}</div>
+      <button class="f-fermer" onclick="ouvrirDemandeMatch('${org}')">Retour</button></div>
+    <div class="f-statut" style="border-color:${j.accepte?"var(--vert)":"var(--accent)"}">
+      « ${j.accepte?D.oui(nomCible):D.non(nomCible)} »</div>
+    ${mv&&mv.commentaire?`<div class="f-sous" style="margin-top:8px">${mv.commentaire}</div>`:""}
+    <div class="f-sous" style="margin-top:10px;color:var(--doux)">${j.accepte
+      ?"Il s'en souviendra le temps de faire une carte — pas éternellement."
+      :"Demander sans avoir le poids, ça se retient aussi."}</div>
+    <button class="cc-voir" style="width:100%;margin-top:12px"
+      onclick="ouvrirOrga('${org}')">Continuer</button>`;
+  $("voile").classList.add("ouvert");
+  rendre();
 }
 
 function ouvrirFicheMonde(id,org,div){
@@ -21474,6 +21731,15 @@ function contexteDe(l){
       const R=MMA.endgame.rivalitesDe(rivalitesTable(),cle,t.jour);
       return R.length?R[0].nomB:null;
     }catch(e){return null;}})(),
+    /* /!\ ET SON IDENTIFIANT (cas 157) : le NOM ne suffisait pas. Quand
+       l'homme reclamait "celui-la", le jeu savait le dire et rien de
+       plus — impossible d'aller le demander au matchmaker. */
+    rivalId:(function(){try{
+      const cle=Object.keys(MESGARS).find(k=>MESGARS[k]===l);
+      if(!cle)return null;
+      const R=MMA.endgame.rivalitesDe(rivalitesTable(),cle,t.jour);
+      return R.length?R[0].b:null;
+    }catch(e){return null;}})(),
     /* /!\ LE CALENDRIER ENTRE AU CONTEXTE (Mael, 26/08 : "il me dit camp
        court alors qu'il a deja une date") : une demande qui veut une date
        doit SAVOIR s'il en a une. */
@@ -21802,8 +22068,17 @@ function appliquerEffet(cle,effet){
     break;}
 
   case "cible_adversaire":{
+    /* /!\ LE NOM SE RETIENT MAINTENANT (cas 157). Avant, on posait
+       `cibleVoulue = true` — un booleen que PERSONNE ne lisait : le
+       joueur ne pouvait pas aller demander ce combat, et la demande
+       mourait la. On garde QUI il reclame, et l'ecran du matchmaker le
+       propose. */
+    const ctxA=contexteDe(l);
     l.cibleVoulue=true;
-    out.push("Tu iras voir le matchmaker pour ce nom-là.");
+    if(ctxA&&ctxA.rivalId!==null&&ctxA.rivalId!==undefined){
+      l.cibleReclamee={id:ctxA.rivalId,nom:ctxA.rival||"lui",jour:t.jour};
+      out.push(`Tu iras voir le matchmaker pour ${ctxA.rival||"ce nom-là"}.`);
+    } else out.push("Tu iras voir le matchmaker pour ce nom-là.");
     out.push("Demander un adversaire précis, ça se retiendra sur le reste.");
     break;}
 

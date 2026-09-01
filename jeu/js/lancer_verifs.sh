@@ -43,6 +43,7 @@ node verifier_endgame.js
 node verifier_vestiaire.js
 node verifier_soiree.js
 node verifier_choregraphie.js
+node verifier_matchmaker.js
 node bundler.js               && node verifier_bundle.js
 node verifier_assets.js
 # BANC 27 — le singe : il charge demo_jeu.html et JOUE. Il vient APRES le
