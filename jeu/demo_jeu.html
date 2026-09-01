@@ -1039,6 +1039,13 @@ function imageDe(id){
   return IMAGE[id];
 }
 const bornes=(x)=>Math.max(0,Math.min(100,Math.round(x*10)/10));
+/* /!\ L'AGE S'AFFICHE EN ANNEES ENTIERES, PARTOUT (Mael, 01/09 :
+   « 27.589041095890412 ans » sur une fiche de scouting). Les hommes du
+   MONDE vieillissent en continu — leur age est un nombre a virgule, et
+   une vingtaine d'endroits l'affichaient tel quel. UNE SEULE fonction,
+   pas vingt rustines : on a 27 ans jusqu'a son anniversaire, donc on
+   tronque, on n'arrondit pas. */
+const ansDe=(a)=>Math.floor(Number(a)||0);
 
 const MEDIA=[];            /* le fil, du plus recent au plus ancien */
 let credibilite=70;        /* 0-100 : ce que vaut notre parole */
@@ -2986,10 +2993,10 @@ function jouerJournee(jour,echeances){
       if(espoir){
         VISITE=espoir;
         bloque={id:"visite",qui:`${espoir.nom} se présente à la salle`,
-          quoi:`${espoir.age} ans, ${espoir.bilanTexte} chez les amateurs. `
+          quoi:`${ansDe(espoir.age)} ans, ${espoir.bilanTexte} chez les amateurs. `
             +`Il cherche un club. Tu le prends ?`,
           faire:null};
-        cr.evenements.push(`👤 <b>${espoir.nom}</b> pousse la porte — ${espoir.age} ans, `
+        cr.evenements.push(`👤 <b>${espoir.nom}</b> pousse la porte — ${ansDe(espoir.age)} ans, `
           +`${espoir.bilanTexte}. Il attend ta réponse.`);
       } else cr.evenements.push(texte(e.donnees.h));
       continue;
@@ -3898,7 +3905,7 @@ function anniversaires(jour){
     if(jourAnniversaire(cle,l)!==jda)continue;
     const r=vieillirDunAn(cle);
     if(!r)continue;
-    let mot=`🎂 ${lienGars(cle)} a ${r.age} ans.`;
+    let mot=`🎂 ${lienGars(cle)} a ${ansDe(r.age)} ans.`;
     if(r.age>=36)mot+=" À cet âge, chaque camp coûte plus qu'il ne rapporte.";
     else if(r.age>=33)mot+=" Le corps commence à réclamer son dû.";
     else if(r.age<=21)mot+=" Il a tout le temps devant lui.";
@@ -3951,7 +3958,7 @@ function penseARaccrocher(cle){
   const bil=fi&&fi.bilan?fi.bilan.join("-"):`${l.bilan.v}-${l.bilan.d}`;
   const ent=l.entente?l.entente.valeur:50;
   bloque={id:"retraite_pense",titre:`${l.nom} parle de raccrocher`,
-    texte:`${l.age} ans, ${bil}. Il passe te voir après l'entraînement : `
+    texte:`${ansDe(l.age)} ans, ${bil}. Il passe te voir après l'entraînement : `
       +`« Je sens que c'est bientôt la fin. » Il attend que tu lui dises `
       +`quelque chose.`,
     choix:[
@@ -4111,10 +4118,10 @@ function raccrocher(cle,cause){
   const bil=fi&&fi.bilan?fi.bilan.join("-"):`${l.bilan.v}-${l.bilan.d}`;
   const titres=(l.faits||[]).filter(f=>/Champion/.test(f.quoi)).length;
   bloque={id:"retraite",titre:`${l.nom} raccroche`,
-    texte:`${l.age} ans, ${bil}${titres?` · ${titres} fois champion`:""}. `
+    texte:`${ansDe(l.age)} ans, ${bil}${titres?` · ${titres} fois champion`:""}. `
       +`Il te l'annonce lui-même — il ne remontera plus dans la cage.`,
     action:"Voir sa fiche",faire:()=>{bloque=null;ouvrirFiche(cle);}};
-  raconter(t.jour,[`🏁 ${lienGars(cle)} raccroche — ${l.age} ans, ${bil}.`],true);
+  raconter(t.jour,[`🏁 ${lienGars(cle)} raccroche — ${ansDe(l.age)} ans, ${bil}.`],true);
   depeche(t.jour,"event",`${l.nom} met un terme à sa carrière (${bil}).`,"");
   /* La presse salue un homme de la maison (22/08). */
   /* /!\ LE MUR PARLE A SA PLACE QUAND IL Y ENTRE : sans ca l'article
@@ -4122,7 +4129,7 @@ function raccrocher(cle,cause){
   const plaque=accrocherAuMur(cle,l,fi);
   if(!l.amateur&&!plaque)ecrireArticle("retraiteMaison",l,{titres:(l.faits||[]).filter(f=>/Champion/.test(f.quoi)).length});
   l.retraite=true; l.combatPrevu=null; l.camp=null;
-  if(fi){fi.gr="retraite";fi.statut=`A raccroché à ${l.age} ans.`;}
+  if(fi){fi.gr="retraite";fi.statut=`A raccroché à ${ansDe(l.age)} ans.`;}
   /* Le fil du carnet : les pros qui raccrochent deviennent des coachs. */
   try{devenirCoach(cle,l,fi);}catch(e){console.error("devenirCoach :",e);}
   const i=EFFECTIF.findIndex(x=>x.id===cle); if(i>=0)EFFECTIF.splice(i,1);
@@ -4141,12 +4148,12 @@ function legendesQuiRaccrochent(){
   const l=MONDE.legendes.shift();
   FICHES[l.nom]=FICHES[l.nom]||{nom:l.nom,gr:"retraite",age:l.age,
     div:DIV_TEXTE[l.division]||"—",style:"Ancien champion",
-    statut:`A raccroché à ${l.age} ans — ${l.bilan}.`,
+    statut:`A raccroché à ${ansDe(l.age)} ans — ${l.bilan}.`,
     bilan:l.bilan.split("-").map(Number),combats:[],faits:l.faits||[]};
   depeche(t.jour,"event",
     `${l.nom} raccroche — ${l.bilan}${l.titres?`, ${l.titres} fois champion ${l.org}`:""}.`,"");
   raconter(t.jour,[`🏁 ${lien(l.nom)} raccroche. `
-    +`${l.age} ans, ${l.bilan}${l.titres?` — il laisse ${l.titres} règne(s) à ${l.org}.`:"."}`],true);
+    +`${ansDe(l.age)} ans, ${l.bilan}${l.titres?` — il laisse ${l.titres} règne(s) à ${l.org}.`:"."}`],true);
 }
 
 /* ==== LES BLESSURES (conception de Mael, 10/08) =========================
@@ -7124,7 +7131,7 @@ function ouvrirFeuille(id){
      ${imageDe(d.a).pression>0?`<div class="f-statut">⚠ ${A.nom} a encaissé le trash talk — <b>−${Math.round(imageDe(d.a).pression*100)} %</b> sur le mental et le cardio le jour J.</div>`:""}
 
      <h3 class="fc-h">L'adversaire</h3>
-     <div class="f-sous">${B.age} ans · <b>${B.style}</b> · bilan ${B.bilan[0]}-${B.bilan[1]}</div>
+     <div class="f-sous">${ansDe(B.age)} ans · <b>${B.style}</b> · bilan ${B.bilan[0]}-${B.bilan[1]}</div>
      ${palmares||'<div class="repos">Aucun combat connu.</div>'}
 
      <h3 class="fc-h">Sur le papier</h3>
@@ -7486,12 +7493,14 @@ function ouvrirDemandeMatch(org){
   const lignes=miens.map(([cle,l])=>{
     const rec=l.cibleReclamee;
     const boutons=[];
-    if(rec&&MONDE&&MONDE.pros.get(rec.id))
-      boutons.push(`<button class="cc-voir" style="width:100%;margin-top:6px;border-color:var(--accent)"
-        onclick="demanderAuMatch('${org}','${cle}','adversaire',${rec.id})">« Je veux ${rec.nom} pour lui. » <span style="color:var(--doux)">— il le réclame</span></button>`);
-    else if(CIBLE&&cibleId()!==null)
-      boutons.push(`<button class="cc-voir" style="width:100%;margin-top:6px"
-        onclick="demanderAuMatch('${org}','${cle}','adversaire',${cibleId()})">« Je veux ${CIBLE} pour lui. »</button>`);
+    /* /!\ ON CHOISIT LE NOM SUR PLACE (Mael, 01/09 : « quand je propose,
+       ça serait bien que ça m'ouvre les gars de la catégorie dont il
+       parle et qu'on règle ça en direct — le lendemain il s'est rien
+       passé »). Le bouton n'envoie plus une demande dans le vide : il
+       OUVRE LA LISTE de la division, et la réponse tombe tout de suite. */
+    boutons.push(`<button class="cc-voir" style="width:100%;margin-top:6px${rec?";border-color:var(--accent)":""}"
+      onclick="ouvrirChoixAdversaire('${org}','${cle}')">« Je veux quelqu'un de précis pour lui. »${
+        rec?` <span style="color:var(--doux)">— il réclame ${rec.nom}</span>`:""}</button>`);
     for(const q of ["date","affiche","bourse"])
       boutons.push(`<button class="cc-voir" style="width:100%;margin-top:6px"
         onclick="demanderAuMatch('${org}','${cle}','${q}')">${MMA.matchmaker.DEMANDES[q].lab}</button>`);
@@ -7531,12 +7540,23 @@ function demanderAuMatch(org,cle,quoi,cibleIdVoulue){
   e.demandeLe=t.jour;
   let mv=null;
   try{ mv=MMA.relation.bouger(RELATION,org,j.trace); }catch(err){ console.error("match/relation :",err); }
+  let direct=null;
   if(j.accepte){
     l.faveurMatch=MMA.matchmaker.faveur(quoi,t.jour,quoi==="adversaire"?cibleIdVoulue:null);
     if(quoi==="adversaire"&&l.cibleReclamee&&l.cibleReclamee.id===cibleIdVoulue)
       delete l.cibleReclamee;
+    /* /!\ ON NE RENVOIE PLUS LE JOUEUR ATTENDRE (cas 159). Un nom
+       accepté, c'est une affiche qu'on monte TOUT DE SUITE — l'offre
+       part par le chemin normal, et s'il ne peut pas l'avoir, il le dit
+       à table plutôt que de laisser le lendemain vide. */
+    if(quoi==="adversaire"){
+      direct=offreSurLeChamp(cle,cibleIdVoulue);
+      if(direct&&direct.o)delete l.faveurMatch;   /* servie, donc consommée */
+    }
     raconter(t.jour,[`🤝 <b>${mm.nom}</b> accepte : ${
-      quoi==="adversaire"?`il cherche ${nomCible} pour ${lienGars(cle)}.`
+      quoi==="adversaire"?(direct&&direct.o
+        ?`<b>${lienGars(cle)} c. ${lienMonde(cibleIdVoulue,nomCible)}</b> — l'offre est sur la table.`
+        :`il cherche ${nomCible} pour ${lienGars(cle)}.`)
       :quoi==="date"?`une date arrive plus vite pour ${lienGars(cle)}.`
       :quoi==="affiche"?`${lienGars(cle)} montera plus haut sur la carte.`
       :`la bourse de ${lienGars(cle)} sera revue.`}`],true);
@@ -7546,8 +7566,18 @@ function demanderAuMatch(org,cle,quoi,cibleIdVoulue){
   $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${mm.nom}</div>
       <button class="f-fermer" onclick="ouvrirDemandeMatch('${org}')">Retour</button></div>
     <div class="f-statut" style="border-color:${j.accepte?"var(--vert)":"var(--accent)"}">
-      « ${j.accepte?D.oui(nomCible):D.non(nomCible)} »</div>
+      ${/* /!\ PAS DE GUILLEMETS ICI : les repliques de matchmaker.js les
+           portent deja. Les ajouter donnait « « ... » » a l'ecran. */
+        j.accepte?D.oui(nomCible):D.non(nomCible)}</div>
     ${mv&&mv.commentaire?`<div class="f-sous" style="margin-top:8px">${mv.commentaire}</div>`:""}
+    ${direct&&direct.o?`<div class="f-statut" style="border-color:var(--or);margin-top:10px">
+        📄 <b>L'offre est déjà là</b> — ${lienGars(cle)} c. ${lienMonde(direct.o.adversaire,nomCible)},
+        ${direct.o.bourse.toLocaleString("fr-FR")} € · dans ${direct.o.jourCombat-t.jour} j.
+        <div class="f-actions" style="margin-top:8px">
+          <button class="chaud" onclick="repondreOffre('${cle}',true);ouvrirOrga('${org}')">Accepter</button>
+          <button onclick="repondreOffre('${cle}',false);ouvrirOrga('${org}')">Refuser</button></div></div>`
+      :direct&&direct.non?`<div class="f-sous" style="margin-top:10px;color:var(--cuir)">
+        Il décroche son téléphone, parle deux minutes, revient : « ${direct.non}. On garde l'idée. »</div>`:""}
     <div class="f-sous" style="margin-top:10px;color:var(--doux)">${j.accepte
       ?"Il s'en souviendra le temps de faire une carte — pas éternellement."
       :"Demander sans avoir le poids, ça se retient aussi."}</div>
@@ -7555,6 +7585,78 @@ function demanderAuMatch(org,cle,quoi,cibleIdVoulue){
       onclick="ouvrirOrga('${org}')">Continuer</button>`;
   $("voile").classList.add("ouvert");
   rendre();
+}
+
+/* ==== CHOISIR L'ADVERSAIRE À TABLE (cas 159, Mael, 01/09) ====
+   La demande d'un nom ne part plus en aveugle : on voit LA CATÉGORIE de
+   son homme dans cette organisation, avec ce qu'on sait de chacun, et on
+   désigne. Ce qui n'est pas jouable est dit AVANT le clic (indisponible,
+   déjà affronté la dernière fois, coéquipier refusé) — pas après. */
+function ouvrirChoixAdversaire(org,cle){
+  const l=MESGARS[cle]; if(!l||!MONDE)return;
+  const mm=MMA.classement.matchmakerDe(org);
+  const rec=l.cibleReclamee;
+  const roster=((MONDE.rosters[org]||{})[l.division])||[];
+  const liste=roster.map(id=>MONDE.pros.get(id))
+    .filter(x=>x&&x.id!==l.id&&!x.retraite)
+    .sort((a,b)=>{
+      const ra=(a.rang===null||a.rang===undefined)?99:a.rang;
+      const rb=(b.rang===null||b.rang===undefined)?99:b.rang;
+      return ra-rb;
+    });
+  const pasJouable=(x)=>{
+    if(l.vie&&l.vie.advPrec===x.id)return "il sort de ce combat-là";
+    let dispo=0; try{ dispo=(MMA.cartes.vitaliser(MONDE,x).dispo)||0; }catch(e){ dispo=(x.vie&&x.vie.dispo)||0; }
+    if(t.jour<dispo)return "il n'est pas remis";
+    if(x.salle&&REFUS_INTERNES.indexOf(x.id)>=0)return "tu as refusé ce duel";
+    return null;
+  };
+  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">Pour ${l.nom}</div>
+      <div class="f-sous">${(DIV_TEXTE[l.division]||l.division||"").replace(/_/g," ")} · ${MMA.classement.ORGS[org].nom}</div>
+      <button class="f-fermer" onclick="ouvrirDemandeMatch('${org}')">Retour</button></div>
+    <div class="f-sous" style="margin:10px 0">« Qui, exactement ? » ${mm.nom} attend un nom.</div>
+    ${liste.length?liste.map(x=>{
+      const non=pasJouable(x);
+      const vu=x.scoute?" 🔍":"";
+      const reclame=rec&&rec.id===x.id;
+      return `<div class="f-combat" style="align-items:flex-start">
+        <span class="f-res" style="min-width:34px;color:var(--or)">${x.rang!=null?"#"+x.rang:"—"}</span>
+        <span class="f-adv">${x.nom}${x.champion?" 🏆":""}${vu}${x.salle?' <span style="color:var(--accent)">★ à toi</span>':""}
+          ${reclame?'<div style="color:var(--accent);font-size:11.5px">c\'est lui qu\'il réclame</div>':""}
+          <div style="color:var(--doux);font-size:11.5px">${x.bilan.v}-${x.bilan.d}${
+            non?` · <span style="color:var(--cuir)">${non}</span>`:""}</div></span>
+        <span class="f-meth">${non?"":`<button class="puce"
+          onclick="demanderAuMatch('${org}','${cle}','adversaire',${x.id})">Le demander</button>`}</span></div>`;
+    }).join(""):`<div class="repos">Personne d'autre dans cette catégorie chez eux.</div>`}`;
+  $("voile").classList.add("ouvert");
+}
+
+/* /!\ ET LE COMBAT SE CALE À TABLE. C'était le vrai reproche : la faveur
+   était accordée, puis il ne se passait rien — proposerOffres ne repasse
+   que tous les trente jours et pouvait viser ailleurs. Quand il dit oui
+   à un nom, l'offre est fabriquée SUR-LE-CHAMP, par le même chemin que
+   les autres (MMA.offres.fabriquer) : mêmes règles, même bourse, même
+   refus si ce n'est pas jouable. */
+function offreSurLeChamp(cle,cibleIdVoulue){
+  const l=MESGARS[cle]; if(!l)return null;
+  if(l.combatPrevu)return {non:"il a déjà une date"};
+  const i=OFFRES.findIndex(o=>o.cle===cle);
+  if(i>=0)OFFRES.splice(i,1);   /* une offre en attente est remplacée */
+  try{
+    const o=MMA.offres.fabriquer(MONDE,RELATION,l,l.org,t.jour,t.jour+42,
+      {cible:cibleIdVoulue,refusInternes:REFUS_INTERNES});
+    if(!o)return {non:"la carte ne s'y prête pas"};
+    if(o.adversaire!==cibleIdVoulue)return {non:"il n'a pas pu l'avoir"};
+    o.cle=cle; o.nomGars=l.nom; o.faveur="Le nom que tu as demandé.";
+    l.derniereOffre=t.jour;
+    try{
+      const R=rivalitesTable()[MMA.endgame.clefRiv(cle,o.adversaire)];
+      const eff=R?MMA.endgame.effetsDuCombat(R,t.jour):null;
+      if(eff){ o.bourse=Math.round(o.bourse*eff.bourse); o.rivalite=MMA.endgame.mot(R,t.jour); }
+    }catch(e){ console.error("rivalite/offre directe :",e); }
+    OFFRES.push(o);
+    return {o};
+  }catch(e){ console.error("offre directe :",e); return {non:"la carte ne s'y prête pas"}; }
 }
 
 function ouvrirFicheMonde(id,org,div){
@@ -7568,7 +7670,7 @@ function ouvrirFicheMonde(id,org,div){
   $("fiche").innerHTML=`<div class="f-tete">
       <div class="f-nom">${l.nom} <span style="color:var(--or)">${rang}</span></div>
       <button class="f-fermer" onclick="${org?`ouvrirOrga('${org}','${div}')`:"fermerFiche()"}">Retour</button></div>
-    <div class="f-sous">${paysDe(l.pays)} · ${l.age} ans ·
+    <div class="f-sous">${paysDe(l.pays)} · ${ansDe(l.age)} ans ·
       ${(DIV_TEXTE[l.division]||l.division||"").replace(/_/g," ")}
       · ${l.org||"libre"}${l.champion?" · 🏆 champion":""}</div>
     ${(function(){let mt="";try{mt=morphoTexte(MMA.salle.ficheDe(MONDE,l.id));}catch(e){}
@@ -7659,7 +7761,7 @@ function ouvrirFiche(id){
   $("fiche").innerHTML=
     `<div class="f-tete"><div class="f-nom">${f.nom}</div>
      <button class="f-fermer" onclick="fermerFiche()">Fermer</button></div>
-     <div class="f-sous">${paysDe(paysFiche(id))} · ${f.age} ans${f.div!=="—"?" · "+f.div:""} · <b>${f.style}</b> · ${f.gr==="adversaire"?"extérieur":f.gr}</div>
+     <div class="f-sous">${paysDe(paysFiche(id))} · ${ansDe(f.age)} ans${f.div!=="—"?" · "+f.div:""} · <b>${f.style}</b> · ${f.gr==="adversaire"?"extérieur":f.gr}</div>
      ${morphoDeCle(id)?`<div class="f-sous">${morphoDeCle(id)}</div>`:""}
      ${(function(){
        /* /!\ L'ESTIMATION SUR LA FICHE DU COACH (Mael, 10/08 :
@@ -7917,7 +8019,7 @@ function ouvrirClasse(id){
   $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${l.nom}</div>
       <div class="f-sous">${l.org||"sans organisation"} ·
         ${l.rang!==null?(l.champion?"champion":"#"+l.rang):"non classé"} ·
-        ${l.division.replace(/_/g," ")} · ${l.age} ans</div></div>
+        ${l.division.replace(/_/g," ")} · ${ansDe(l.age)} ans</div></div>
     <div class="bloc" style="margin:12px 0">
       <div class="f-combat"><span class="f-adv">Bilan</span>
         <span class="f-meth">${l.bilan.v}-${l.bilan.d}</span></div>
@@ -8089,7 +8191,7 @@ function ouvrirDetailStats(id,axe){
   }
   $("fiche").innerHTML=html
     +(MESGARS[id]?`<div class="f-sous" style="margin-top:10px">
-        Né le ${dateAnniversaire(id,MESGARS[id])} · ${MESGARS[id].age} ans
+        Né le ${dateAnniversaire(id,MESGARS[id])} · ${ansDe(MESGARS[id].age)} ans
         ${morphoDeCle(id)?" · "+morphoDeCle(id):""}</div>`:"")
     +`<div class="f-sous" style="margin-top:10px;color:var(--doux)">
         ${l.progres&&Object.keys(l.progres).length
@@ -8601,7 +8703,7 @@ function poserBloqueFrappeSoiree(l){
   const s=SALLE.soiree||{};
   const orgO=l.org?(MMA.classement.ORGS[l.org]||{}):{};
   bloque={id:"frappe",titre:"Il veut voir ta salle",
-    texte:`<b>${lienMonde(l.id,l.nom)}</b>, ${l.age} ans, ${l.bilan.v}-${l.bilan.d}
+    texte:`<b>${lienMonde(l.id,l.nom)}</b>, ${ansDe(l.age)} ans, ${l.bilan.v}-${l.bilan.d}
       (${String(l.division).replace(/_/g," ")})${l.org?`, ${orgO.nom||l.org}`:", libre"}.
       Tu l'as abordé au bord de la cage — ta réputation a fait le reste :
       « Montre-moi ta salle. » ${l.org?"Son contrat d'organisation le suit ; le":"Le"}
@@ -9905,7 +10007,7 @@ function diagnostic(){
     }catch(e){ niv="LEVE "+e.message.slice(0,30); }
     /* ronds/total : une fiche REFABRIQUEE sort des entiers, une fiche
        entrainee porte des decimales. C'est la signature qu'on cherche. */
-    L.push(`${cle} · ${l.age} ans · niv ${niv} · fiche ${l.fiche?"oui":"NON"}`
+    L.push(`${cle} · ${ansDe(l.age)} ans · niv ${niv} · fiche ${l.fiche?"oui":"NON"}`
       +` · salle ${l.salle?"oui":"NON"} · entiers ${ronds}/${total}`
       +` · ${l.bilan.v}-${l.bilan.d} · org ${l.org||"—"} · rang ${l.rang===null?"NC":l.rang}`);
   }
@@ -11012,7 +11114,7 @@ function proQuiFrappe(){
         bourseTxt=` Son contrat actuel : <b>~${Math.round(b).toLocaleString("fr-FR")} €</b> la bourse`
           +`${p.vie&&p.vie.restants?`, ${p.vie.restants} combat${p.vie.restants>1?"s":""} restant`
           +`${p.vie.restants>1?"s":""} au contrat`:""}.`;}catch(e){}
-      return `<b>${lienMonde(p.id,p.nom)}</b>, ${p.age} ans, ${p.bilan.v}-${p.bilan.d}
+      return `<b>${lienMonde(p.id,p.nom)}</b>, ${ansDe(p.age)} ans, ${p.bilan.v}-${p.bilan.d}
       (${String(p.division).replace(/_/g," ")}), ${p.rang!=null?`n°${p.rang} `:""}chez
       <b>${orgO.nom||p.org}</b>.${bourseTxt} Son manager t'appelle : « Ta réputation est arrivée
       jusqu'à lui — il veut préparer ses combats chez toi. » Son contrat d'organisation

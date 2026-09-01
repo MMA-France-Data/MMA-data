@@ -18,6 +18,9 @@
  * debordement, un bouton illisible — ca reste le terrain de Mael.
  */
 const { ouvrirPartie, trancherBlocage, coffreMemoire } = require("./bac_partie.js");
+/* Le module du matchmaker se lit aussi en direct : certaines regles se
+   verifient sans monter une partie (cas 157). */
+const MATCH = require("./matchmaker.js");
 
 let echecs = 0;
 const dit = (n, ok, i) => { console.log(`  ${ok ? "ok  " : "ECHEC"} ${n}${i ? " — " + i : ""}`); if (!ok) echecs++; };
@@ -1189,19 +1192,41 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
     if(!cle)return {pasDeGars:true};
     const l=MESGARS[cle], org=l.org;
     const e=RELATION[org];
-    /* 1. L'ECRAN EXISTE ET LISTE MES HOMMES DE CETTE ORGA. */
-    delete e.demandeLe; e.valeur=75;
+    /* 1. L'ECRAN EXISTE ET LISTE MES HOMMES DE CETTE ORGA.
+       /!\ 95 ET NON 75 (01/09) : le seuil d'une demande d'adversaire
+       MONTE de six par rang au-dessus (cas 157). A 75, le banc passait
+       tant que le tirage donnait un adversaire de rang proche — le
+       recalibrage du monde (cas 155) a change ce tirage et le
+       matchmaker s'est mis a refuser A JUSTE TITRE. Un banc ne doit pas
+       dependre de la chance du tirage : on se met a une relation qui
+       couvre tous les ecarts, et on teste ce qu'on veut tester. */
+    delete e.demandeLe; e.valeur=95;
     ouvrirDemandeMatch(org);
     const ecran=$("fiche").innerHTML;
     const listeOk=ecran.indexOf(l.nom)>=0&&ecran.indexOf("demanderAuMatch")>=0;
-    /* 2. LE NOM RECLAME PAR L'HOMME EST PROPOSE (le manque de Mael). */
-    const adv=[...MONDE.pros.values()].find(p=>!p.salle&&p.org===org&&p.division===l.division);
+    /* 2. LE NOM RECLAME PAR L'HOMME EST PROPOSE (le manque de Mael).
+       /!\ ON VISE QUELQU'UN D'ATTEIGNABLE (01/09) : le seuil monte de
+       six par rang AU-DESSUS, donc un homme non classe qui reclame le
+       top 5 se fait refuser — et c'est LA REGLE, pas un defaut. Le banc
+       teste donc une demande realiste, et le refus a sa propre
+       assertion juste apres. */
+    const rMien=(l.rang===null||l.rang===undefined)?20:l.rang;
+    const memeDiv=[...MONDE.pros.values()].filter(p=>!p.salle&&p.org===org&&p.division===l.division);
+    const adv=memeDiv.find(p=>((p.rang===null||p.rang===undefined)?20:p.rang)>=rMien)||memeDiv[0];
     l.cibleReclamee={id:adv.id,nom:adv.nom,jour:t.jour};
     ouvrirDemandeMatch(org);
     const reclameVu=$("fiche").innerHTML.indexOf(adv.nom)>=0;
     /* 3. LA DEMANDE PASSE, ET ELLE COUTE. */
     const avant=e.valeur;
     demanderAuMatch(org,cle,"adversaire",adv.id);
+    /* /!\ ON CAPTURE ICI, PAS A LA FIN (01/09). L'etape 5 vide OFFRES
+       pour tester la faveur "affiche" — lire l'offre directe apres coup
+       la trouvait donc TOUJOURS absente, et le banc accusait le jeu d'un
+       defaut qui etait le sien. Un etat se releve au moment ou il est
+       vrai. */
+    const offreDirecte=OFFRES.some(o=>o.cle===cle&&o.adversaire===adv.id);
+    const faveurPoseeIci=!!l.faveurMatch&&l.faveurMatch.quoi==="adversaire";
+    const reclameEffaceIci=!l.cibleReclamee;
     const faveur=l.faveurMatch;
     const aCoute=e.valeur!==avant, dateNotee=e.demandeLe===t.jour;
     /* 4. ON NE DEMANDE PAS DEUX FOIS DE SUITE. */
@@ -1217,8 +1242,7 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
     for(let g=0;g<400&&!vue;g++){ t.jour++; proposerOffres();
       const o=OFFRES.find(x=>x.cle===cle); if(o)vue=o; }
     return {listeOk,reclameVu,aCoute,dateNotee,barre,
-      faveurPosee:!!faveur&&faveur.quoi==="adversaire"&&faveur.cible===adv.id,
-      reclameEfface:!l.cibleReclamee,
+      faveurPosee:faveurPoseeIci, offreDirecte, reclameEfface:reclameEffaceIci,
       offre:vue?{place:vue.place,faveur:vue.faveur||null}:null,
       consommee:!l.faveurMatch};
   })()`);
@@ -1226,17 +1250,97 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       !!r && !r.pasDeGars && r.listeOk);
   dit("le nom que ton combattant réclame se propose au matchmaker",
       !!r && r.reclameVu, "c'était le manque : il demandait un nom, tu ne pouvais pas le transmettre");
-  dit("la demande acceptée pose une faveur nominative et efface la réclamation",
-      !!r && r.faveurPosee && r.reclameEfface);
+  /* /!\ REECRITE LE 01/09 : elle exigeait une faveur EN ATTENTE. Depuis
+     le cas 159, un nom accepté est servi À TABLE — l'offre part
+     sur-le-champ et la faveur est consommée dans la foulée. Les deux
+     issues sont bonnes ; ce qui compte, c'est que la demande ABOUTISSE
+     et que la réclamation de l'homme soit effacée. */
+  dit("la demande acceptée aboutit — offre immédiate ou faveur en attente — et efface la réclamation",
+      !!r && (r.offreDirecte || r.faveurPosee) && r.reclameEfface,
+      r ? (r.offreDirecte ? "servie à table"
+           : r.faveurPosee ? "faveur posée, à honorer"
+           : "REFUSÉE — la relation ne suffisait pas") : "");
   dit("demander coûte du crédit, et la date est retenue",
       !!r && r.aCoute && r.dateNotee);
   dit("et on ne redemande pas dans la foulée", !!r && r.barre);
+  /* /!\ ET LE REFUS EST UNE REGLE, PAS UN ACCIDENT : viser bien plus
+     haut que son rang se fait refuser, meme avec une excellente
+     relation. C'est ce qui empeche le ciblage de devenir un menu. */
+  dit("viser un homme bien mieux classé se fait refuser — même en étant apprécié",
+      MATCH.juger("adversaire", 95, { rangEcart: 12 }).accepte === false
+      && MATCH.juger("adversaire", 95, { rangEcart: 1 }).accepte === true,
+      "le ciblage n'est pas un menu déroulant");
   dit("une faveur « haut de carte » change VRAIMENT l'offre suivante",
       !!r && !!r.offre && r.offre.place === "main_event" && !!r.offre.faveur,
       r && r.offre ? `${r.offre.place} · ${r.offre.faveur}` : "aucune offre reçue");
   dit("et elle se consomme — un oui ne vaut pas pour toute la carrière",
       !!r && r.consommee);
   dit("aucune exception chez le matchmaker", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
+/* ==================================================================== */
+/* LES TROIS RAPPORTS DU 01/09 (Mael, en jouant) : l'age qui fuit, le    */
+/* nom qu'on choisit a table, et le combat qui se cale TOUT DE SUITE.    */
+/* ==================================================================== */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 71 });
+  jouer(P, 150, 71);
+  const r = P.lire(`(function(){
+    /* 1. L'AGE NE FUIT PLUS — « 27.589041095890412 ans » sur une fiche. */
+    const idm=[...MONDE.pros.values()].find(p=>!p.salle&&!p.retraite);
+    idm.age=27.589041095890412;
+    ouvrirFicheMonde(idm.id,"","");
+    const h=$("fiche").innerHTML;
+    const ageSale=/\d+[.,]\d+\s*ans/.test(h);
+    const ageBon=h.indexOf("27 ans")>=0;
+    /* 2. L'ECRAN DE CHOIX MONTRE LA CATEGORIE DE MON HOMME. */
+    completerRelation();
+    const cle=Object.keys(MESGARS).find(k=>MESGARS[k]&&MESGARS[k].org&&!MESGARS[k].amateur);
+    if(!cle)return {pasDeGars:true};
+    const l=MESGARS[cle], org=l.org, e=RELATION[org];
+    l.combatPrevu=null; l.camp=null; l.renego=null; l.vie.dispo=0;
+    delete l.derniereOffre; OFFRES.length=0;
+    e.valeur=88; delete e.demandeLe;
+    ouvrirChoixAdversaire(org,cle);
+    const liste=$("fiche").innerHTML;
+    const roster=((MONDE.rosters[org]||{})[l.division])||[];
+    const advs=roster.map(x=>MONDE.pros.get(x)).filter(x=>x&&x.id!==l.id&&!x.retraite);
+    const listeOk=advs.length>0&&advs.some(a=>liste.indexOf(a.nom)>=0)
+      &&liste.indexOf("demanderAuMatch")>=0;
+    /* 3. LE COMBAT SE CALE A TABLE — c'etait le reproche : "le lendemain
+       il s'est rien passe". */
+    const vise=advs.find(a=>{
+      const dispo=(a.vie&&a.vie.dispo)||0;
+      return t.jour>=dispo&&(l.vie.advPrec!==a.id)&&!a.salle;
+    });
+    if(!vise)return {ageSale,ageBon,listeOk,pasDeCible:true};
+    demanderAuMatch(org,cle,"adversaire",vise.id);
+    const offre=OFFRES.find(o=>o.cle===cle);
+    const ecran=$("fiche").innerHTML;
+    return {ageSale,ageBon,listeOk,
+      offrePosee:!!offre&&offre.adversaire===vise.id,
+      surEcran:ecran.indexOf("L'offre est déjà là")>=0,
+      accepteDepuisLecran:ecran.indexOf("repondreOffre")>=0,
+      faveurConsommee:!MESGARS[cle].faveurMatch};
+  })()`);
+  dit("l'âge ne s'affiche plus avec ses décimales",
+      !!r && !r.ageSale && r.ageBon,
+      "« 27.589041095890412 ans » relevé par Mael sur une fiche de scouting");
+  dit("demander un nom ouvre la catégorie de ton homme chez eux",
+      !!r && r.listeOk);
+  if (r && r.pasDeCible) {
+    dit("le combat se cale à table", false, "aucun adversaire jouable — graine à revoir");
+  } else {
+    dit("et le combat se cale À TABLE : l'offre existe immédiatement",
+        !!r && r.offrePosee,
+        "c'était le reproche : « le lendemain il s'est rien passé »");
+    dit("elle s'affiche dans sa réponse, et on peut répondre sans sortir",
+        !!r && r.surEcran && r.accepteDepuisLecran);
+    dit("une faveur servie sur-le-champ est consommée",
+        !!r && r.faveurConsommee);
+  }
+  dit("aucune exception sur le choix d'adversaire", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 

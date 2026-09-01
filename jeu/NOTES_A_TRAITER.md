@@ -12998,3 +12998,67 @@ exactement ce qui oublie les règles : conditions dans la liste fermée,
 clés uniques, renvois qui aboutissent, AUCUN CHIFFRE à l'écran, effets
 bornés, de vrais mauvais choix, aucune scène écrite deux fois — et LE
 VOLUME, qui est la demande de Mael et qui se mesure.
+
+## CAS 159 — LE NOM SE CHOISIT À TABLE, ET LE COMBAT SE CALE (Mael, 01/09)
+« Il m'a demandé un gars pour un combat ; ça serait bien que quand je
+propose, ça m'ouvre les gars de la catégorie dont il parle et qu'on
+règle ça en direct — car le lendemain il s'est rien passé. »
+LE DÉFAUT : le cas 157 posait une FAVEUR (« il cherchera ce nom ») et
+renvoyait le joueur attendre. Or proposerOffres ne repasse que toutes
+les trente journées, et pouvait viser ailleurs entre-temps. Une demande
+acceptée pouvait donc ne RIEN produire — exactement ce que Mael a vécu.
+CE QUI CHANGE :
+ - « Je veux quelqu'un de précis pour lui » OUVRE LA CATÉGORIE de son
+   homme chez cette organisation : rang, bilan, ce que le scouting en
+   sait (🔍), et ce qui n'est PAS jouable dit AVANT le clic (pas remis,
+   il sort de ce combat-là, duel interne refusé) — pas après ;
+ - un nom accepté fabrique l'offre SUR-LE-CHAMP, par le chemin normal
+   (MMA.offres.fabriquer) : mêmes règles, même bourse, même refus si la
+   carte ne s'y prête pas. Elle s'affiche dans sa réponse, avec Accepter
+   et Refuser — on ne sort même pas de la conversation ;
+ - s'il ne peut pas l'avoir, IL LE DIT À TABLE (« il décroche son
+   téléphone, parle deux minutes, revient ») au lieu de laisser le
+   lendemain vide ;
+ - servie sur-le-champ, la faveur est consommée dans la foulée.
+/!\ UNE ASSERTION DU CAS 157 A ÉTÉ RÉÉCRITE : elle exigeait une faveur
+EN ATTENTE. Les deux issues sont bonnes désormais (offre immédiate OU
+faveur en attente) ; ce qui compte est que la demande ABOUTISSE.
+
+## CAS 160 — L'ÂGE FUYAIT SES DÉCIMALES (Mael, 01/09)
+« 27.589041095890412 ans » sur une fiche de scouting. Les hommes du
+MONDE vieillissent en continu — leur âge est un nombre à virgule — et
+DIX-SEPT endroits l'affichaient tel quel (fiches, retraite, anniversaire,
+espoirs, presse, dîner…). UNE SEULE fonction, `ansDe()`, pas dix-sept
+rustines — et on TRONQUE, on n'arrondit pas : on a vingt-sept ans
+jusqu'à son anniversaire.
+
+## CAS 161 — L'AUDIT MÉTIER DU DÎNER (Mael, 01/09 — et il avait raison)
+« Des phrases incompréhensibles parfois… Comment il peut sortir
+quelqu'un de la carte et en plus il coupait ? … Il me dit j'ai arrêté un
+combat que le gars allait gagner : c'est un matchmaker, pas un arbitre,
+comment il arrête des combats ? »
+DIAGNOSTIC : le contenu du cas 158 avait été relu sur la LANGUE et le
+TON, jamais sur LE MÉTIER. Dix agents écrivent bien le français ; ils ne
+savent pas qui, dans une organisation de MMA, a le droit de faire quoi.
+LA PASSE MANQUANTE, faite : dix agents auditent (un par moment du
+repas), dix contrôlent derrière — avec la liste explicite de ce qu'un
+matchmaker fait (construire les cartes, retirer un homme d'une carte,
+négocier, ne pas renouveler, subir la télé) et de ce qu'il NE FAIT
+JAMAIS : arrêter un combat (l'ARBITRE), rendre une décision (les JUGES),
+peser ou suspendre (la COMMISSION), soigner ou autoriser (le MÉDECIN),
+tenir le coin (le COACH), jeter l'éponge (le COIN).
+RÉSULTAT : 185 corrections — 18 de MÉTIER, 24 de LOGIQUE, 78 de CLARTÉ
+(les « phrases incompréhensibles » de Mael), 58 de LANGUE, 4 chiffres
+affichés qui avaient passé le premier filtre. Exemples : « j'ai arrêté
+un combat » rendu à l'arbitre ; « je ne l'ai pas renouvelé » corrigé (on
+renouvelle un CONTRAT, pas un homme) ; « vous perdrez du classement »
+(ce n'est pas le manager qui est classé, c'est le combattant) ; et la
+phrase de Mael sur le poids, réécrite pour dire ce qui CLOCHE (une
+descente de poids qui part mal) et non ce qui est normal (couper pour
+faire le poids).
+/!\ LA LEÇON, GRAVÉE : DU TEXTE ÉCRIT PAR UNE IA DOIT ÊTRE AUDITÉ SUR LE
+FOND DU MÉTIER, PAS SEULEMENT SUR LA LANGUE. Un texte peut être
+impeccable en français et faux d'un bout à l'autre. Et c'est le JOUEUR
+qui l'a vu le premier — le banc 36 vérifiait la forme (pas de chiffres,
+pas de doublons), il ne pouvait pas voir qu'un matchmaker n'arrête pas
+un combat.
