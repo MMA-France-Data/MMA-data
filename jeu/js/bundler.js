@@ -43,7 +43,9 @@ const RACINES = ["engine.js", "generator.js", "traducteur.js", "mesure.js",
                  // du log a la scene 3D (proto, cas 150).
                  "choregraphie.js",
                  // ce qu'on peut demander au matchmaker (cas 157).
-                 "matchmaker.js"];
+                 "matchmaker.js",
+                 // la soiree avec lui : la mecanique, et son contenu (cas 158).
+                 "diner.js", "diner_scenes.js"];
 
 const ici = __dirname;
 const RE_REQUIRE = /require\(\s*["']\.\/([\w.-]+)["']\s*\)/g;
@@ -138,6 +140,8 @@ ${morceaux.join("\n")}
     soiree:     require("./soiree.js"),
     choregraphie: require("./choregraphie.js"),
     matchmaker: require("./matchmaker.js"),
+    diner:      require("./diner.js"),
+    diner_scenes: require("./diner_scenes.js"),
     require: require
   };
 })(typeof window !== "undefined" ? window : globalThis);

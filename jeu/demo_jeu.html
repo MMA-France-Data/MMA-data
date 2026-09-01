@@ -196,6 +196,40 @@ h2 .plus{color:var(--doux);font-weight:400;text-transform:none;letter-spacing:0;
 .so-fermer{position:fixed;top:10px;right:12px;z-index:2;width:34px;height:34px;
   border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);
   color:#fff;font-size:19px;line-height:1;cursor:pointer}
+/* ==== LE DINER (page annexe, cas 158) — la salle du restaurant : bois
+   sombre, lumiere basse sur la table, le reste dans l'ombre. ==== */
+#diner-page{position:fixed;inset:0;z-index:89;display:none;overflow-y:auto;
+  background:radial-gradient(120% 70% at 50% 0%,#2a2018 0%,#171310 45%,#0a0807 100%)}
+#diner-page.ouvert{display:block}
+.dn-dedans{max-width:480px;margin:0 auto;padding:18px 16px 90px}
+.dn-tete{text-align:center;padding:6px 0 16px;border-bottom:1px solid rgba(200,160,80,.28)}
+.dn-tete .ou{font-size:10.5px;letter-spacing:2.4px;text-transform:uppercase;color:#b08d4e}
+.dn-tete .nom{font-size:21px;font-weight:800;margin-top:3px;color:#f0e6d6}
+.dn-tete .sous{font-size:12.5px;color:#9c8a72;margin-top:2px}
+.dn-service{display:flex;gap:5px;justify-content:center;margin-top:12px}
+.dn-service i{width:16px;height:3px;border-radius:2px;background:rgba(200,160,80,.22)}
+.dn-service i.fait{background:rgba(200,160,80,.85)}
+.dn-service i.la{background:#e8c15a;box-shadow:0 0 8px rgba(232,193,90,.6)}
+.dn-il{margin:22px 0 6px;font-size:17px;line-height:1.6;color:#f2e9db;
+  font-style:italic;text-align:center}
+.dn-didascalie{font-style:normal;color:#b9a68c}
+.dn-choix{margin-top:20px}
+.dn-choix button{display:block;width:100%;text-align:left;margin:9px 0;padding:13px 15px;
+  border-radius:12px;border:1px solid rgba(200,160,80,.3);background:rgba(255,248,235,.045);
+  color:#e9dfd0;font-size:14.5px;line-height:1.45;cursor:pointer;font-family:inherit}
+.dn-choix button:hover{background:rgba(255,248,235,.09);border-color:rgba(200,160,80,.6)}
+.dn-reponse{margin:20px 0;padding:15px 16px;border-radius:12px;
+  background:rgba(255,248,235,.06);border-left:3px solid #b08d4e;
+  font-size:16px;line-height:1.6;color:#f2e9db}
+.dn-suite{display:block;width:100%;margin-top:18px;padding:13px;border-radius:12px;
+  border:1px solid #b08d4e;background:transparent;color:#e8c15a;font-weight:700;
+  font-size:15px;cursor:pointer;font-family:inherit}
+.dn-bilan{margin-top:18px;padding:16px;border-radius:14px;
+  background:rgba(255,248,235,.05);border:1px solid rgba(200,160,80,.35)}
+.dn-bilan h4{margin:0 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b08d4e}
+.dn-confid{margin-top:12px;padding:14px 15px;border-radius:12px;
+  border:1px solid #e8c15a;background:rgba(232,193,90,.09);color:#f4ead9;
+  font-size:15px;line-height:1.55}
 #surcouche iframe{width:100%;height:100%;border:0;display:block}
 #sc-fermer{position:absolute;top:10px;right:12px;z-index:2;width:34px;height:34px;
   border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);
@@ -476,6 +510,9 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
 <!-- LA SOIREE VECUE — la page annexe, remplie par rendreSoireePage(). -->
 <div id="soiree-page"><button class="so-fermer" onclick="fermerSoireePage()">×</button>
   <div class="so-dedans" id="so-dedans"></div></div>
+<!-- LE DINER — page annexe aussi (cas 158), remplie par rendreDinerPage(). -->
+<div id="diner-page"><button class="so-fermer" onclick="fermerDinerPage()">×</button>
+  <div class="dn-dedans" id="dn-dedans"></div></div>
 <div id="toast"></div>
 
 <!-- ===================================================================
@@ -7244,53 +7281,89 @@ const REPLIQUES=[
    r:m=>`« Tout le monde me dit ça. Reviens me le dire avec une ceinture. »`,
    entree:"exigence_argent", cout:0},
 ];
-/* ==== LE DINER AVEC LE MATCHMAKER (conception de Mael, 10/08) ===========
-   "Aller a des diners avec eux et simuler une longue conversation avec
-   chaque reponse un resultat different" — puis, sur la frequence :
-   "peut-etre 1 par an par orga".
-   /!\ CE N'EST PAS UN CINQUIEME BOUTON DE DIALOGUE. C'est une SOIREE :
-   trois temps qui s'enchainent, et ce qu'on dit au premier change ce
-   qu'il propose au dernier. Un diner rate se termine sur une poignee de
-   main polie ; un diner reussi, sur une CONFIDENCE.
-   /!\ ET C'EST SURTOUT LA POUR APPRENDRE (arbitrage). Le jeu ne dit
-   jamais rien a l'avance : on subit les ceintures vacantes, les coupes,
-   les adversaires. Un matchmaker qui parle, c'est la seule fenetre sur
-   ce qui vient. */
-const DINER_TEMPS = [
-  {
-    q: "Il commande. Vous, vous attaquez comment ?",
-    choix: [
-      { lab: "Parler de ses cartes, pas de vos hommes",
-        r: "« Enfin quelqu'un qui s'intéresse au métier. »", d: +3, ton: "pro" },
-      { lab: "Attaquer direct sur vos combattants",
-        r: "« On y vient déjà ? Bon. »", d: -2, ton: "presse" },
-      { lab: "Le laisser parler de lui",
-        r: "Il parle vingt minutes. Il ne s'arrête que parce qu'on apporte les plats.", d: +4, ton: "flatte" },
-    ],
-  },
-  {
-    q: "Il vous demande ce que vous pensez de son organisation.",
-    choix: [
-      { lab: "Être honnête, même sur ce qui ne va pas",
-        r: "« Vous êtes le premier à me le dire en face. »", d: +4, ton: "franc" },
-      { lab: "Dire du bien, comme tout le monde",
-        r: "Il hoche la tête. Il a entendu ça cent fois.", d: +1, ton: "tiede" },
-      { lab: "Se plaindre des bourses",
-        r: "« Tout le monde me dit ça. Et tout le monde signe. »", d: -4, ton: "vexe" },
-    ],
-  },
-  {
-    q: "Le café arrive. C'est le moment.",
-    choix: [
-      { lab: "Ne rien demander", r: "Vous parlez d'autre chose. Il s'en souviendra.", d: +3, ton: "classe" },
-      { lab: "Lui demander ce qui se prépare", r: "Il pose sa tasse.", d: 0, ton: "curieux" },
-      { lab: "Réclamer une date pour un de vos hommes",
-        r: "« On verra ça au bureau. »", d: -1, ton: "demandeur" },
-    ],
-  },
-];
+/* ==== LE DÎNER AVEC LE MATCHMAKER — LA SOIRÉE (cas 158, Mael, 01/09)
+   « Les dîners avec matchmaker, je veux que ce soit une nouvelle fenêtre
+   comme on a fait avec combat et recrutement, et beaucoup plus de
+   dialogues, de réponses, de questions. »
+   /!\ CE QU'IL Y AVAIT : trois questions, neuf réponses, dans le petit
+   panneau. Un couloir. Maintenant : une PAGE ANNEXE plein écran (comme
+   l'écran de combat et la soirée de scouting) et DIX MOMENTS qui
+   s'enchaînent — l'arrivée, ce qu'il veut savoir de vous, ce qu'il pense
+   de vos hommes, le métier, la télé, les concurrentes, ce qui ne se dit
+   pas, l'homme derrière, le café, l'addition.
+   La mécanique vit dans diner.js (banc 36), le contenu dans
+   diner_scenes.js — écrit et relu à part. Ici : l'écran, rien d'autre.
+   /!\ DÉTERMINISTE : la graine de la soirée est (organisation, jour).
+   Deux fois le même dîner le même jour = la même soirée. */
+let DINER=null;
 
-/* Ce qu'il lache — et il ne lache que ce que le monde a VRAIMENT prevu. */
+/* La situation, telle que les conditions des scènes la lisent. */
+function ctxDiner(org){
+  completerRelation();
+  const e=RELATION[org]||{valeur:50};
+  const miens=Object.values(MESGARS).filter(l=>l&&l.org===org&&!l.retraite&&!l.amateur);
+  return {
+    premier:e.dinerLe===undefined,
+    relation:e.valeur,
+    reputation:SALLE.reputation||0,
+    aChampion:miens.some(l=>l.champion),
+    aClasse:miens.some(l=>l.rang!==null&&l.rang!==undefined&&l.rang<=15),
+  };
+}
+
+function ouvrirDiner(org){
+  if(typeof MMA==="undefined"||!MMA.diner||!MMA.diner_scenes)
+    return toast("Le dîner n'est pas disponible dans cette version.");
+  const e=(completerRelation()||{})[org]||{};
+  if(e.dinerLe!==undefined&&t.jour-e.dinerLe<365)
+    return toast(`Vous avez déjà dîné cette année — dans ${365-(t.jour-e.dinerLe)} jours.`);
+  const graine=(String(org).length*7919+t.jour)>>>0;
+  DINER={org,S:MMA.diner.commencer(MMA.diner_scenes.SCENES,ctxDiner(org),graine),
+         reponse:null,solde:false};
+  rendreDinerPage();
+  $("diner-page").classList.add("ouvert");
+}
+function fermerDinerPage(){
+  /* /!\ PARTIR EN COURS DE REPAS, C'EST PARTIR EN COURS DE REPAS : la
+     soirée se solde quand même, avec ce qu'elle vaut à cet instant. Sans
+     ça, on pourrait recommencer un dîner raté jusqu'à ce qu'il soit bon
+     — et le carnet a une règle contre ça (le clic répond toujours, mais
+     il engage). */
+  if(DINER&&!DINER.solde)soldeDuDiner(true);
+  $("diner-page").classList.remove("ouvert");
+  DINER=null; rendre();
+}
+function repondreDinerPage(k){
+  if(!DINER)return;
+  const r=MMA.diner.repondre(DINER.S,k);
+  DINER.reponse=r;
+  rendreDinerPage();
+}
+function suiteDuDiner(){
+  if(!DINER)return;
+  DINER.reponse=null;
+  rendreDinerPage();
+}
+
+function soldeDuDiner(ecourte){
+  const D=DINER; if(!D||D.solde)return;
+  D.solde=true;
+  const org=D.org, cumul=D.S.cumul;
+  completerRelation();
+  try{ MMA.relation.bouger(RELATION,org,"diner"); }catch(e){ console.error("diner/relation :",e); }
+  RELATION[org].valeur=Math.max(0,Math.min(100,RELATION[org].valeur+cumul));
+  RELATION[org].dinerLe=t.jour;
+  const amb=MMA.diner.ambiance(cumul);
+  const mm=MMA.classement.matchmakerDe(org);
+  raconter(t.jour,[`🍽 Dîner avec <b>${mm.nom}</b> (${org}) — ${amb.mot}`
+    +(ecourte?" (tu es parti avant la fin.)":"")],amb.rang==="excellent"||amb.rang==="bon");
+  D.amb=amb;
+  /* Une bonne soirée délie les langues — et il ne dit que ce que le
+     monde a VRAIMENT prévu. */
+  D.confidence=(cumul>=6)?confidenceDe(org):null;
+}
+
+/* Ce qu'il lâche — et il ne lâche que ce que le monde a VRAIMENT prévu. */
 function confidenceDe(org){
   if(!MONDE)return null;
   const divs=Object.keys(MONDE.rosters[org]||{});
@@ -7308,50 +7381,50 @@ function confidenceDe(org){
   return `« Amenez-moi quelqu'un qui finit ses combats. C'est tout ce que je demande. »`;
 }
 
-function ouvrirDiner(org,etape,cumul){
-  const mm=MMA.classement.matchmakerDe(org);
-  etape=etape||0; cumul=cumul===undefined?0:cumul;
-  if(etape>=DINER_TEMPS.length){
-    completerRelation();
-    /* Le diner vaut sa cle d'entente PLUS ce que la soiree a valu. */
-    let mv=null;
-    try{ mv=MMA.relation.bouger(RELATION,org,"diner"); }catch(e){}
-    RELATION[org].valeur=Math.max(0,Math.min(100,RELATION[org].valeur+cumul));
-    RELATION[org].dinerLe=t.jour;
-    const conf=cumul>=6?confidenceDe(org):null;
-    $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${mm.nom}</div>
-      <button class="f-fermer" onclick="ouvrirOrga('${org}')">Retour</button></div>
-      <div class="f-statut">${cumul>=6?"La soirée s'est très bien passée."
-        :cumul>=0?"Soirée correcte. Poignée de main et rendez-vous l'an prochain."
-        :"Il a écourté. Vous avez mal joué."}</div>
-      ${conf?`<div class="f-statut" style="border-color:var(--or);margin-top:8px">
-        🤫 ${conf}</div>`:""}
-      <div class="f-sous" style="margin-top:10px">${MMA.contrats.avisMatchmaker(MONDE,org,null).mot}</div>
-      <button class="cc-voir" style="width:100%;margin-top:12px"
-        onclick="ouvrirOrga('${org}')">Rentrer</button>`;
-    $("voile").classList.add("ouvert");
-    raconter(t.jour,[`🍽 Dîner avec ${mm.nom} (${org}).`],cumul>=6);
-    rendre();
+const DINER_SERVICE={arrivee:"À table",lui_sur_vous:"L'apéritif",
+  vos_hommes:"L'entrée",le_metier:"Le plat",la_tele:"Le plat",
+  concurrence:"Le vin",coulisses:"Entre nous",personnel:"Le fromage",
+  cafe:"Le café",addition:"L'addition"};
+
+function rendreDinerPage(){
+  const D=DINER, z=$("dn-dedans"); if(!D||!z)return;
+  const mm=MMA.classement.matchmakerDe(D.org);
+  const o=MMA.classement.ORGS[D.org]||{};
+  const S=D.S;
+  const tete=(service)=>`<div class="dn-tete">
+      <div class="ou">${service||"Le dîner"}</div>
+      <div class="nom">${mm.nom}</div>
+      <div class="sous">${o.nom||D.org} · ${mm.mot}</div>
+      <div class="dn-service">${MMA.diner.MOMENTS.map((m,i)=>
+        `<i class="${i<S.i-1?"fait":i===S.i-1?"la":""}"></i>`).join("")}</div>
+    </div>`;
+
+  /* 1. IL VIENT DE REPONDRE — on lui laisse la parole avant la suite. */
+  if(D.reponse){
+    z.innerHTML=tete(DINER_SERVICE[(S.encours&&S.encours.moment)||""]||"")
+      +`<div class="dn-reponse">${D.reponse.r}</div>`
+      +`<button class="dn-suite" onclick="suiteDuDiner()">Continuer</button>`;
     return;
   }
-  const T=DINER_TEMPS[etape];
-  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${mm.nom}</div>
-    <div class="f-sous">Dîner · ${etape+1} sur ${DINER_TEMPS.length}</div></div>
-    <div class="f-statut">${T.q}</div>
-    ${T.choix.map((c,k)=>`<button class="cc-voir" style="display:block;width:100%;
-      text-align:left;margin:8px 0" onclick="repondreDiner('${org}',${etape},${k},${cumul})">
-      ${c.lab}</button>`).join("")}`;
-  $("voile").classList.add("ouvert");
-}
-
-function repondreDiner(org,etape,k,cumul){
-  const c=DINER_TEMPS[etape].choix[k];
-  const mm=MMA.classement.matchmakerDe(org);
-  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${mm.nom}</div></div>
-    <div class="f-statut">${c.r}</div>
-    <button class="cc-voir" style="width:100%;margin-top:12px"
-      onclick="ouvrirDiner('${org}',${etape+1},${cumul+c.d})">Continuer</button>`;
-  $("voile").classList.add("ouvert");
+  /* 2. LA SCENE COURANTE. */
+  const sc=MMA.diner.courante(S);
+  if(sc){
+    z.innerHTML=tete(DINER_SERVICE[sc.moment]||"")
+      +`<div class="dn-il">${sc.texte}</div>`
+      +`<div class="dn-choix">${(sc.choix||[]).map((c,k)=>
+        `<button onclick="repondreDinerPage(${k})">${c.lab}</button>`).join("")}</div>`;
+    return;
+  }
+  /* 3. LA FIN DE SOIREE. */
+  if(!D.solde)soldeDuDiner(false);
+  const amb=D.amb||MMA.diner.ambiance(S.cumul);
+  z.innerHTML=tete("La sortie")
+    +`<div class="dn-bilan"><h4>La soirée</h4>
+       <div style="font-size:16px;line-height:1.5;color:#f2e9db">${amb.mot}</div>
+       <div class="f-sous" style="margin-top:8px;color:#9c8a72">
+         ${MMA.contrats.avisMatchmaker(MONDE,D.org,null).mot}</div></div>
+     ${D.confidence?`<div class="dn-confid">🤫 ${D.confidence}</div>`:""}
+     <button class="dn-suite" onclick="fermerDinerPage()">Rentrer</button>`;
 }
 
 function parlerMatchmaker(org,i){

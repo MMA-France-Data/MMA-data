@@ -12964,3 +12964,37 @@ tete -> il accepte -> l'offre suivante vise cet homme -> et le recit le
 dit (« 🤝 L'adversaire que tu reclamais »).
 Banc 27 : huit assertions de plus, dont la seule qui compte vraiment —
 une faveur « haut de carte » sort une offre en main event.
+
+## CAS 158 — LE DÎNER DEVIENT UNE SOIRÉE (Mael, 01/09)
+« Les dîners avec matchmaker, je veux que ce soit une nouvelle fenêtre
+comme on a fait avec combat et recrutement, et beaucoup beaucoup plus de
+dialogue, de réponses, de questions. Prends ton temps. »
+CE QU'IL Y AVAIT : trois questions, neuf réponses, dans le petit
+panneau. Un couloir, et on en voyait le bout au premier dîner.
+CE QU'IL Y A : une PAGE ANNEXE plein écran (la troisième, après l'écran
+de combat et la soirée de scouting) — ambiance de salle de restaurant,
+bois sombre et lumière basse — et DIX MOMENTS qui s'enchaînent :
+l'arrivée · l'apéritif (ce qu'il veut savoir de vous) · l'entrée (ce
+qu'il pense de vos hommes) · le plat (comment on fabrique une carte) ·
+la télé et l'argent · le vin (les concurrentes) · entre nous (ce qui ne
+se dit pas) · le fromage (l'homme derrière le métier) · le café (le
+moment de demander) · l'addition.
+LA MÉCANIQUE (diner.js, banc 36) — quatre règles :
+ 1. AUCUN TIRAGE : la scène de chaque moment est DÉRIVÉE (organisation +
+    jour). Deux fois le même dîner le même jour = la même soirée ;
+ 2. LA SOIRÉE SAIT OÙ ELLE EST : chaque scène porte une condition d'une
+    LISTE FERMÉE (premier dîner ? relation froide ? un champion à la
+    salle ?). Un matchmaker qui parle de votre champion quand vous n'en
+    avez pas, c'est un dialogue mort ;
+ 3. UNE RÉPONSE PEUT OUVRIR UN SUJET (`ouvre`) — c'est ce qui fait une
+    conversation et pas un formulaire. Une fois par soirée ;
+ 4. PARTIR EN COURS DE REPAS SOLDE LA SOIRÉE. Sans ça on relancerait un
+    dîner raté jusqu'à ce qu'il soit bon.
+LE CONTENU (diner_scenes.js) a été écrit par une ESCOUADE DE DIX AGENTS
+en parallèle — un par moment du repas — puis RELU par dix autres
+(français, ton, longueur, doublons, équilibre des effets). Le banc 36 le
+vérifie ensuite COMME UNE DONNÉE, parce qu'un texte écrit par une IA est
+exactement ce qui oublie les règles : conditions dans la liste fermée,
+clés uniques, renvois qui aboutissent, AUCUN CHIFFRE à l'écran, effets
+bornés, de vrais mauvais choix, aucune scène écrite deux fois — et LE
+VOLUME, qui est la demande de Mael et qui se mesure.
