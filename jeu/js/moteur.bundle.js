@@ -11883,24 +11883,38 @@ function nouveaux(etat, deja) {
  * chacune correspond a quelque chose qui s'est REELLEMENT produit dans la
  * partie. `poids` dit ce que la cause ajoute a la chaleur.
  */
+/* /!\ LES POIDS ONT ETE REHAUSSES LE 31/08, SUR MESURE. Dix ans joues,
+   graine 7 : 343 rivalites nees, DIX vivantes — 3 %. La cause etait
+   arithmetique : une defaite valait 30, le seuil de "vivante" est 25, et
+   la chaleur tombait de 0,14 par jour — la rivalite mourait en TRENTE-SIX
+   JOURS, donc toujours avant le combat suivant. Un homme qui t'a battu,
+   on s'en souvient une saison, pas cinq semaines. Les durees de vie
+   visees (chaleur - 25) / refroidissement :
+       defaite ~10 mois · revanche ~1,4 an · ceinture ~1,9 an
+   /!\ DEUX INVARIANTS DU BANC 30 TIENNENT LE CALIBRAGE, et c'est eux qui
+   fixent les chiffres exacts :
+     - LES MOTS SEULS NE FONT PAS UNE RIVALITE : `trash` reste SOUS 25
+       (inchange a 18) — il chauffe, il ne cree pas ;
+     - LA PLUS CHAUDE PASSE DEVANT : trash+defaite (63) doit rester
+       au-dessus de revanche seule (60). D'ou defaite a 45 et non 42.
+   Un chiffre qui atterrit sur un seuil ou sur une egalite est un chiffre
+   a changer — la lecon du banc 30, appliquee une deuxieme fois. */
 const CAUSES = {
-  defaite:   { poids: 30, mot: (n) => `Il l'a battu.` },
-  /* /!\ LA REVANCHE PESE PLUS QUE LA PREMIERE DEFAITE — et le seuil de
-     "vivante" est a 25 : a 25 tout pile, une rivalite rallumee retombait
-     du bon cote par accident (releve au banc 30). Un chiffre qui atterrit
-     exactement sur un seuil est un chiffre a changer. */
-  revanche:  { poids: 35, mot: (n) => `Deux fois. Il l'a battu deux fois.` },
-  ceinture:  { poids: 40, mot: (n) => `Il lui a pris la ceinture.` },
-  vole:      { poids: 20, mot: (n) => `Une décision que personne n'a comprise.` },
+  defaite:   { poids: 45, mot: (n) => `Il l'a battu.` },
+  revanche:  { poids: 60, mot: (n) => `Deux fois. Il l'a battu deux fois.` },
+  ceinture:  { poids: 72, mot: (n) => `Il lui a pris la ceinture.` },
+  vole:      { poids: 32, mot: (n) => `Une décision que personne n'a comprise.` },
   trash:     { poids: 18, mot: (n) => `Ce qui s'est dit avant le combat n'est pas oublié.` },
-  gagne:     { poids: 12, mot: (n) => `Il l'a déjà battu — l'autre veut sa revanche.` },
-  salle:     { poids: 22, mot: (n) => `Il est parti chez eux.` },
+  gagne:     { poids: 20, mot: (n) => `Il l'a déjà battu — l'autre veut sa revanche.` },
+  salle:     { poids: 36, mot: (n) => `Il est parti chez eux.` },
 };
 
-/* La chaleur retombe : sans rien, une rivalite s'eteint en deux ans.
+/* La chaleur retombe : sans rien, une rivalite s'eteint en QUATRE ans
+   (deux, avant le 31/08 — trop vite pour un sport ou deux combats sont
+   espaces de six mois).
    /!\ SANS CETTE LIGNE, TOUT LE MONDE FINIT RIVAL DE TOUT LE MONDE au
    bout de dix ans, et le mot ne veut plus rien dire. */
-const REFROIDIT_PAR_JOUR = 100 / 730;
+const REFROIDIT_PAR_JOUR = 100 / 1460;
 
 const clefRiv = (cleA, idB) => `${cleA}|${idB}`;
 

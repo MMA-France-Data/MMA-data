@@ -12371,24 +12371,38 @@ function nouveaux(etat, deja) {
  * chacune correspond a quelque chose qui s'est REELLEMENT produit dans la
  * partie. `poids` dit ce que la cause ajoute a la chaleur.
  */
+/* /!\ LES POIDS ONT ETE REHAUSSES LE 31/08, SUR MESURE. Dix ans joues,
+   graine 7 : 343 rivalites nees, DIX vivantes — 3 %. La cause etait
+   arithmetique : une defaite valait 30, le seuil de "vivante" est 25, et
+   la chaleur tombait de 0,14 par jour — la rivalite mourait en TRENTE-SIX
+   JOURS, donc toujours avant le combat suivant. Un homme qui t'a battu,
+   on s'en souvient une saison, pas cinq semaines. Les durees de vie
+   visees (chaleur - 25) / refroidissement :
+       defaite ~10 mois · revanche ~1,4 an · ceinture ~1,9 an
+   /!\ DEUX INVARIANTS DU BANC 30 TIENNENT LE CALIBRAGE, et c'est eux qui
+   fixent les chiffres exacts :
+     - LES MOTS SEULS NE FONT PAS UNE RIVALITE : `trash` reste SOUS 25
+       (inchange a 18) — il chauffe, il ne cree pas ;
+     - LA PLUS CHAUDE PASSE DEVANT : trash+defaite (63) doit rester
+       au-dessus de revanche seule (60). D'ou defaite a 45 et non 42.
+   Un chiffre qui atterrit sur un seuil ou sur une egalite est un chiffre
+   a changer — la lecon du banc 30, appliquee une deuxieme fois. */
 const CAUSES = {
-  defaite:   { poids: 30, mot: (n) => `Il l'a battu.` },
-  /* /!\ LA REVANCHE PESE PLUS QUE LA PREMIERE DEFAITE — et le seuil de
-     "vivante" est a 25 : a 25 tout pile, une rivalite rallumee retombait
-     du bon cote par accident (releve au banc 30). Un chiffre qui atterrit
-     exactement sur un seuil est un chiffre a changer. */
-  revanche:  { poids: 35, mot: (n) => `Deux fois. Il l'a battu deux fois.` },
-  ceinture:  { poids: 40, mot: (n) => `Il lui a pris la ceinture.` },
-  vole:      { poids: 20, mot: (n) => `Une décision que personne n'a comprise.` },
+  defaite:   { poids: 45, mot: (n) => `Il l'a battu.` },
+  revanche:  { poids: 60, mot: (n) => `Deux fois. Il l'a battu deux fois.` },
+  ceinture:  { poids: 72, mot: (n) => `Il lui a pris la ceinture.` },
+  vole:      { poids: 32, mot: (n) => `Une décision que personne n'a comprise.` },
   trash:     { poids: 18, mot: (n) => `Ce qui s'est dit avant le combat n'est pas oublié.` },
-  gagne:     { poids: 12, mot: (n) => `Il l'a déjà battu — l'autre veut sa revanche.` },
-  salle:     { poids: 22, mot: (n) => `Il est parti chez eux.` },
+  gagne:     { poids: 20, mot: (n) => `Il l'a déjà battu — l'autre veut sa revanche.` },
+  salle:     { poids: 36, mot: (n) => `Il est parti chez eux.` },
 };
 
-/* La chaleur retombe : sans rien, une rivalite s'eteint en deux ans.
+/* La chaleur retombe : sans rien, une rivalite s'eteint en QUATRE ans
+   (deux, avant le 31/08 — trop vite pour un sport ou deux combats sont
+   espaces de six mois).
    /!\ SANS CETTE LIGNE, TOUT LE MONDE FINIT RIVAL DE TOUT LE MONDE au
    bout de dix ans, et le mot ne veut plus rien dire. */
-const REFROIDIT_PAR_JOUR = 100 / 730;
+const REFROIDIT_PAR_JOUR = 100 / 1460;
 
 const clefRiv = (cleA, idB) => `${cleA}|${idB}`;
 
@@ -14116,6 +14130,42 @@ function verifierContratsEchus(){
    de cette marque). "Le laisser partir" ne l'effacait jamais — l'homme
    parti n'etait plus a toi ET plus au monde : un fantome. La marque
    tombe au depart : le monde le reprend, sa carriere continue sans toi. */
+/* ==== LE RETRAITE FANTOME (mesure du 31/08) ====
+   /!\ TROUVE EN MESURANT, PAS EN LISANT : des que les retraites sont
+   devenues possibles (l'age abaisse a 35), le singe a leve
+   « salle.js : id inconnu -50 » en preparant un combat. Un homme qui
+   raccroche est retire de MONDE.pros — mais son ECHEANCE de combat, son
+   OFFRE en attente, et le combatPrevu de son adversaire de duel interne
+   lui survivaient. Le jeu allait alors chercher un homme qui n'existe
+   plus, et le soir de combat mourait.
+   Le defaut existait DEPUIS TOUJOURS ; il dormait parce que personne ne
+   raccrochait jamais. Meme classe que le cas 131 : une porte rarement
+   ouverte reste une porte. On purge TOUT ce qui pointe vers lui, AVANT
+   de le faire disparaitre. */
+function purgerReferences(cle,id){
+  try{
+    if(typeof t!=="undefined"&&t.echeances)
+      for(let i=t.echeances.length-1;i>=0;i--){
+        const d=t.echeances[i].donnees;
+        if(!d)continue;
+        if(d.cle===cle||d.a===cle||(id!==undefined&&id!==null&&d.b===id))
+          t.echeances.splice(i,1);
+      }
+    if(typeof OFFRES!=="undefined")
+      for(let i=OFFRES.length-1;i>=0;i--)
+        if(OFFRES[i].cle===cle||(id!==undefined&&OFFRES[i].adversaire===id))
+          OFFRES.splice(i,1);
+    for(const [k,x] of Object.entries(MESGARS))
+      if(k!==cle&&x&&x.combatPrevu
+         &&(x.combatPrevu.adversaire===id||x.combatPrevu.cle===cle)){
+        x.combatPrevu=null; x.camp=null;
+        raconter(t.jour,[`◆ Le combat de ${lienGars(k)} tombe à l'eau — son adversaire ne combattra plus.`],false);
+      }
+    if(typeof COMBAT1!=="undefined"&&COMBAT1&&(COMBAT1.a===cle||COMBAT1.b===id))
+      COMBAT1=null;
+  }catch(e){ console.error("purgerReferences :",e); }
+}
+
 function quitterLaSalle(cle,statutTexte){
   const l=MESGARS[cle];
   if(l){
@@ -14124,6 +14174,20 @@ function quitterLaSalle(cle,statutTexte){
     if(l.id!==undefined&&l.id!==null&&MONDE&&MONDE.pros.get(l.id)===l)
       l.salle=false;
   }
+  /* /!\ LE MUR NE DEPEND PLUS DE LA SEULE RETRAITE (mesure du 31/08 :
+     ZERO plaque en dix ans et 500 combats). Deux verrous en serie :
+     accrocherAuMur n'etait appele que par raccrocher(), et raccrocher()
+     exigeait 36 ans — or l'age maximum atteint en dix ans etait 35. Le
+     mur ne pouvait pas se remplir, jamais.
+     Le mur dit CE QUE LA SALLE A PRODUIT : un homme qui part apres une
+     vraie carriere chez toi y a sa place, qu'il parte a l'echeance,
+     debauche ou renvoye. Les seuils de RANGS (endgame.js) filtrent deja
+     — accrocherAuMur rend null pour tous les autres, et c'est le cas
+     normal. */
+  try{
+    const fiP=FICHES[cle];
+    if(l&&!l.amateur&&fiP)accrocherAuMur(cle,l,fiP);
+  }catch(e){ console.error("mur/depart :",e); }
   /* /!\ LE VESTIAIRE SENT LE DEPART (chantier N) : ses paires
      s'effacent — et ceux qui etaient LIES a lui le disent. Si c'etait
      LE CHEF, le vestiaire vacille un mois (les seances rendent moins,
@@ -14137,6 +14201,7 @@ function quitterLaSalle(cle,statutTexte){
       raconter(t.jour,[`✕ Le vestiaire a perdu sa boussole — c'était lui que les autres suivaient. Un mois pour s'en remettre.`],true);
     }
   }catch(e){ console.error("vestiaire/depart :",e); }
+  purgerReferences(cle,l?l.id:undefined);
   delete MESGARS[cle];
   const i=EFFECTIF.findIndex(x=>x.id===cle);
   if(i>=0)EFFECTIF.splice(i,1);
@@ -16423,8 +16488,19 @@ function anniversaires(jour){
       /* Il avait promis un combat d'adieu qui n'est jamais venu : un an
          plus tard, il ne l'attend plus. */
       raccrocher(cle,"decision");
-    } else if(r.age>=36&&!l.amateur&&!l.retraiteRepoussee
-              &&(l.bilan.serie||0)===0&&alea()<0.22){
+    } else if(r.age>=35&&!l.amateur&&!l.retraiteRepoussee
+              &&((l.bilan.serie||0)===0||r.age>=38)&&alea()<0.28){
+      /* /!\ TROIS CHIFFRES REVUS SUR MESURE (31/08). Dix ans joues :
+         AUCUN homme n'a raccroche, et l'age maximum atteint etait 35 —
+         le seuil de 36 n'etait donc jamais franchi, ce qui gelait aussi
+         le mur des legendes (voir quitterLaSalle).
+           36 -> 35 ans : l'age reel ou un combattant commence a y penser ;
+           la serie : un veteran QUI GAGNE ENCORE ne raccrochait JAMAIS
+             (serie===0 exigeait qu'il vienne de perdre) — a 38 ans il y
+             pense meme en gagnant, c'est ce que font les vrais ;
+           0,22 -> 0,28 par anniversaire.
+         /!\ CA RESTE UNE PROPOSITION, JAMAIS UNE IMPOSITION : le popup
+         reste un homme qui annonce, et le joueur peut le retenir. */
       penseARaccrocher(cle);
     }
     /* Le sursis ne vaut qu'un an : a l'anniversaire suivant, il peut y
@@ -16621,6 +16697,7 @@ function raccrocher(cle,cause){
   /* Le fil du carnet : les pros qui raccrochent deviennent des coachs. */
   try{devenirCoach(cle,l,fi);}catch(e){console.error("devenirCoach :",e);}
   const i=EFFECTIF.findIndex(x=>x.id===cle); if(i>=0)EFFECTIF.splice(i,1);
+  purgerReferences(cle,l.id);
   if(MONDE&&MONDE.pros)MONDE.pros.delete(l.id);
   rendre();
 }
@@ -23299,7 +23376,13 @@ function proQuiFrappe(){
     !p.salle&&!p.retraite&&p.org&&!p.champion
     &&((MMA.classement.ORGS[p.org]||{}).portee||40)<=porteeMax
     &&((MMA.classement.ORGS[p.org]||{}).niveau!=="internationale"||preuve)
-    &&p.age>=22&&p.age<=31
+    /* /!\ LA FENETRE D'AGE S'OUVRE JUSQU'A 34 (mesure du 31/08) : a
+       22-31, la salle ne recrutait QUE des jeunes — dix ans plus tard
+       l'homme le plus age avait 35 ans, personne n'atteignait jamais
+       l'age de raccrocher, et le mur des legendes restait vide. Un
+       veteran qui vient chercher un dernier titre chez toi, c'est le
+       reel ET c'est ce qui donne une memoire a la salle. */
+    &&p.age>=22&&p.age<=34
     &&(p.notoriete||0)>=minN&&(p.notoriete||0)<=maxN
     &&(p.bilan.v||0)>=3);
   if(!cands.length)return false;

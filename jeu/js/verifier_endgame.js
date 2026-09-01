@@ -145,10 +145,23 @@ console.log("BANC 30 — le mur, les objectifs, les rivalités.");
   E.nourrir(R, "Okonkwo", 77, "defaite", 500, "Autre");
   dit("mais des mots PUIS une défaite, oui",
       E.vivante(R[E.clefRiv("Okonkwo", 77)], 500));
-  dit("et la plus chaude passe devant",
+  /* /!\ CETTE ASSERTION A ETE REECRITE LE 31/08. Elle exigeait que 77
+     (mots + defaite) passe devant 51 (deux defaites) — ce qui n'etait
+     vrai QU'AVEC L'ANCIEN REFROIDISSEMENT : a 100/730, la premiere
+     defaite de 51 etait deja ETEINTE quand la revanche tombait, donc 51
+     repartait de zero. Avec le refroidissement a 100/1460, la chaleur
+     RESIDUELLE compte — et deux defaites contre le meme homme pesent
+     desormais plus que des mots suivis d'une defaite. C'est le
+     comportement JUSTE : une rivalite se construit. Le banc testait un
+     classement accidentel ; il teste maintenant LA REGLE — la liste est
+     triee par chaleur decroissante — et le fait qui compte : la
+     repetition pese. */
+  dit("la liste sort triée, la plus chaude devant",
       (() => { const l = E.rivalitesDe(R, "Okonkwo", 500);
-               return l.length >= 2 && l[0].b === 77; })(),
+               return l.length >= 2 && E.chaleur(l[0], 500) >= E.chaleur(l[1], 500); })(),
       E.rivalitesDe(R, "Okonkwo", 500).map((x) => `${x.b}:${E.chaleur(x, 500).toFixed(0)}`).join(" "));
+  dit("et deux défaites contre le même homme pèsent plus que des mots suivis d'une défaite",
+      E.chaleur(R[E.clefRiv("Okonkwo", 51)], 500) > E.chaleur(R[E.clefRiv("Okonkwo", 77)], 500));
 }
 
 /* ==================================================================== */

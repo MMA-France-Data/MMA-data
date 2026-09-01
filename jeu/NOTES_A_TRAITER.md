@@ -12869,3 +12869,61 @@ CE QUI RESTE (rien n'est perdu) :
 CE QU'ON NE REFAIT PAS SANS BUDGET MOCAP : la 3D. Le combat se raconte
 par l'ecran 2D, qui dit ce qui se passe VRAIMENT — et c'est ce que le
 jeu a de plus fort.
+
+## CAS 155 — LES TROIS POINTS DE VEILLE, MESURES ET REGLES (Mael, 31/08)
+Mael a choisi le chantier des watchpoints. Ils ne sont plus des
+impressions : ils sont CHIFFRES (js/pilote_endgame.js, nouvel
+instrument hors chaine, comme pilote_eco).
+MESURE AVANT — graine 7, dix ans, 500 combats :
+    MUR 0 plaque · age max 35 ans · rivalites 10 vivantes sur 343 (3 %)
+LES CAUSES, toutes arithmetiques :
+ 1. LE MUR NE POUVAIT PAS SE REMPLIR — DEUX VERROUS EN SERIE :
+    accrocherAuMur n'etait appele QUE par raccrocher(), et raccrocher()
+    exigeait 36 ans alors que l'age maximum atteint en dix ans etait 35.
+    Aucune plaque n'etait possible, jamais. Le mur dit CE QUE LA SALLE A
+    PRODUIT : il s'accroche desormais AUSSI au depart (quitterLaSalle) —
+    echeance, debauchage, renvoi. Les seuils de RANGS filtrent deja, et
+    rendre null reste le cas normal.
+ 2. PERSONNE NE VIEILLISSAIT : proQuiFrappe ne recrutait qu'entre 22 et
+    31 ans. Fenetre ouverte a 34 — un veteran qui vient chercher un
+    dernier titre chez toi, c'est le reel, et c'est ce qui donne une
+    memoire a la salle. Retraite : 36 -> 35 ans, 0,22 -> 0,28 par
+    anniversaire, et la condition serie===0 assouplie (a 38 ans il y
+    pense MEME EN GAGNANT — avant, un veteran qui gagnait encore ne
+    raccrochait jamais). Ca reste une PROPOSITION, jamais une
+    imposition.
+ 3. LES RIVALITES MOURAIENT EN 36 JOURS : defaite 30, seuil vivante 25,
+    refroidissement 0,14/jour. Poids rehausses (defaite 45, revanche 60,
+    ceinture 72, vole 32, salle 36) et refroidissement a 100/1460 (quatre
+    ans au lieu de deux). Durees visees : defaite ~10 mois, revanche
+    ~1,4 an, ceinture ~1,9 an. Les deux invariants du banc 30 FIXENT les
+    chiffres : `trash` reste sous 25 (les mots seuls ne font pas une
+    rivalite) et trash+defaite (63) doit rester au-dessus de revanche
+    seule (60) — d'ou 45 et non 42.
+MESURE APRES — memes graine et duree :
+    MUR 2 plaques · rivalites 52 vivantes sur 317 (16 %) · 536 combats
+/!\ UNE ASSERTION DU BANC 30 A ETE REECRITE, ET C'EST IMPORTANT : « la
+plus chaude passe devant » exigeait que trash+defaite batte deux
+defaites — vrai SEULEMENT avec l'ancien refroidissement, ou la premiere
+defaite etait eteinte quand la revanche tombait. Avec le refroidissement
+lent, la chaleur RESIDUELLE compte et la repetition pese : c'est le
+comportement juste. Le banc testait un classement accidentel ; il teste
+maintenant la regle (la liste est triee) et le fait (deux defaites
+pesent plus). On ne change pas un banc pour le faire passer — on le
+change quand il testait un accident.
+
+## CAS 156 — LE RETRAITE FANTOME (trouve en mesurant, 31/08)
+Des que les retraites sont devenues possibles, le singe a leve
+« salle.js : id inconnu -50 » en preparant un combat. Un homme qui
+raccroche est retire de MONDE.pros — mais lui survivaient : son ECHEANCE
+de combat, son OFFRE en attente, et le combatPrevu de son adversaire de
+duel interne. Le jeu allait chercher un homme qui n'existe plus, et le
+soir de combat mourait.
+LE DEFAUT EXISTAIT DEPUIS TOUJOURS ; il dormait parce que personne ne
+raccrochait jamais — meme classe que le cas 131 (le soir de combat
+ecrase) : une porte rarement ouverte reste une porte. purgerReferences()
+nettoie echeances, offres, combatPrevu des autres et COMBAT1, AVANT la
+disparition — et elle est branchee aux DEUX sorties (raccrocher et
+quitterLaSalle), parce qu'un homme peut partir de deux facons.
+LECON : c'est la MESURE qui a trouve le bug, pas la lecture. Un
+mecanisme qu'on debloque reveille tout ce qui dormait derriere.
