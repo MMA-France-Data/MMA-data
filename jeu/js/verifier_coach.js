@@ -132,6 +132,31 @@ const coach = (o) => Object.assign({
 }
 
 /* ==================================================================== */
+/* 3 bis. LE TÉMOIN D'AMPLITUDE — bloquant                               */
+/* ==================================================================== */
+{
+  /* /!\ LES JUGES DE LA CONCEPTION ONT NOMMÉ CE MANQUE : « aucun témoin
+     avant/après bloquant sur la progression ». Ce chantier touche en même
+     temps le plancher, la dispersion, l'entente, le métier et le
+     multiplicateur de spécialité. Sans une assertion qui fixe l'AMPLITUDE
+     TOTALE, un réglage futur peut la diviser par deux sans que rien ne
+     s'allume. Elle est ici, chiffrée, et elle doit être défendue si on la
+     change. */
+  const rien = C.encadrement(C.couverture([]), "pro", "striking");
+  const top = C.encadrement(C.couverture([coach({ niveau: 95, entente: 95 })]), "pro", "striking");
+  dit("entre aucun staff et le meilleur possible, la séance change vraiment",
+    top / rien >= 2.4 && top / rien <= 3.0,
+    `x${(top / rien).toFixed(2)} (0,55 → ${top.toFixed(2)})`);
+
+  /* /!\ LA RÈGLE POSÉE PAR MAEL : « le coach pèse plus que le matériel ».
+     Le matériel va de 0,80 (1★) à 1,20 (3★), soit x1,50. Elle était
+     FAUSSE partout dans l'ancien code, et elle s'INVERSAIT même sur les
+     séances de cage. */
+  dit("et le coach pèse nettement plus que le matériel",
+    top / rien > 1.5 * 1.4, `coach x${(top / rien).toFixed(2)} · matériel x1,50`);
+}
+
+/* ==================================================================== */
 /* 4. LE MÉTIER ET L'ÂGE PÈSENT — ils étaient cosmétiques                */
 /* ==================================================================== */
 {

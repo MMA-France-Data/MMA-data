@@ -41,12 +41,18 @@
    PAR LE CONTEXTE, calcule par la salle avec salaireCoach(). Sans lui,
    la demande d'augmentation ne sort simplement pas. */
 
-const AXE_EQUIP = { striking: "striking", lutte: "lutte", sol: "lutte",
-                    physique: "physique", mental: null };
-const MOT_AXE = { striking: "la frappe", lutte: "la lutte", sol: "le sol",
-                  physique: "le physique", mental: "le mental" };
+/* /!\ CES DEUX TABLES SONT DERIVEES, PLUS ECRITES (cas 162). Elles
+   etaient deux des SIX copies de la correspondance axe↔famille — et
+   AXE_EQUIP.mental valait null, ce qui faisait du preparateur mental le
+   seul homme du staff a qui une famille entiere de demandes etait
+   FERMEE : il ne pouvait jamais reclamer de materiel, parce qu'il n'avait
+   pas de materiel a reclamer. Il en a un : la salle video. */
+const C = require("./coach.js");
+const AXE_EQUIP = {};
+const MOT_AXE = {};
+for (const a of C.AXES) { AXE_EQUIP[a.cle] = a.equip; MOT_AXE[a.cle] = a.mot; }
 
-const axesDe = (c) => (c.axes && c.axes.length ? c.axes : [c.axe]);
+const axesDe = (c) => C.axesDe(c);
 
 /* ==================================================================== */
 /* FAMILLE 1 — L'ARGENT. Il connait le bareme, c'est tout le probleme.   */
@@ -102,7 +108,9 @@ const FAMILLE_CHARGE = {
     titre: "Il veut un seul groupe",
     dit: () => `Pros, amateurs, le cours du mardi — je cours partout et je `
       + `ne construis rien. Donne-m'en un. Un seul. Et regarde ce qu'il devient.`,
-    probable: (c) => c.groupe === "tous" && (c.semainesTous || 0) >= 6,
+    /* /!\ « tous » N'EST PLUS UN GROUPE DU MODELE : c'etait DEUX cases
+       tenues par le meme homme. On lit ce qu'il tient vraiment. */
+    probable: (c) => C.groupesDe(c).length > 1 && (c.semainesTous || 0) >= 6,
     oui: { effet: "un_groupe",
       dit_coach: "Tu le recentres sur son groupe.",
       cout: "Le reste de la salle perd son encadrement sur cet axe.",

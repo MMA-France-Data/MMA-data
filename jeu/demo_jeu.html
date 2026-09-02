@@ -1154,7 +1154,12 @@ const PALIERS={
 const RIG={prix:12000,nom:"La cage",
   sous:"Sans elle, le travail à la grille ne se fait pas. Elle profite à tout le monde."};
 
-const etoilesTotal=()=>SALLE.equip.striking+SALLE.equip.lutte+SALLE.equip.physique;
+/* /!\ LA SALLE VIDEO COMPTE COMME LE RESTE : elle s'achete, elle
+   s'entretient, et elle se voit a la porte. La laisser hors du total en
+   ferait un materiel gratuit a l'usage — l'inverse de la regle. Les
+   vieilles sauvegardes n'en ont pas : 1 par defaut, jamais undefined. */
+const etoilesTotal=()=>(SALLE.equip.striking||1)+(SALLE.equip.lutte||1)
+  +(SALLE.equip.physique||1)+(SALLE.equip.video||1);
 
 /* Ce que la clientele du quartier accepte de payer a l'annee. */
 const forfaitReco=()=>Math.round(320+SALLE.reputation*8+etoilesTotal()*22+(SALLE.cage?60:0));
@@ -1163,7 +1168,31 @@ const attractivite=()=>{
   /* /!\ LE PLANNING PESE (20/08) : sous 4 seances/semaine pour les
      adherents, ils se lassent — gaver les pros asseche les cotisations. */
   const n=typeof SALLE!=="undefined"&&SALLE.grille?seancesAdherents():99;
-  return base*(n>=4?1:0.72+0.07*n);
+  let a=base*(n>=4?1:0.72+0.07*n);
+  /* /!\ LE STAFF ENTRE ENFIN DANS L'ECONOMIE DE LA SALLE (cas 162).
+     L'ecran Gestion affirmait depuis toujours que la recommandation de
+     tarif tient compte de l'encadrement — c'etait faux : ni forfaitReco
+     ni attractivite ne lisaient le staff. Or les quarante-cinq cotisants
+     sont ceux qui PAIENT les murs, et ils n'avaient AUCUNE raison liee
+     aux coachs de rester ou de partir. On lit donc la couverture des
+     AMATEURS — c'est leur cours a eux, pas celui des pros.
+     ET LE TEMPS DU PATRON A UN PRIX. Depuis que le coaching a un vrai
+     effet, la strategie optimale devenait « je me mets partout moi-meme »
+     (il est le seul coach a 0 €). Un patron qui vit sur le tapis ne tient
+     plus sa salle : au-dela de deux cases, les inscriptions s'en
+     ressentent. C'est ce qui rend le staff necessaire au lieu d'optionnel. */
+  try{
+    const couv=couvertureDuStaff();
+    let som=0,n2=0;
+    for(const ax of MMA.coach.AXES){const k=couv.cases[ax.cle+"|amateur"];
+      if(k){som+=k.niveau;n2++;}}
+    const moy=n2?som/n2:0;
+    a*=0.86+Math.min(1,moy/70)*0.28;                  /* 0,86 → 1,14 */
+    const moi=staffDe().find(c=>c.moi);
+    if(moi){const n3=MMA.coach.cases(moi);
+      if(n3>2)a*=Math.max(0.72,1-(n3-2)*0.055);}
+  }catch(e){ /* avant que le staff existe : on ne penalise rien */ }
+  return a;
 };
 const local=()=>LOCAUX.find(l=>l.id===SALLE.local);
 /* LES MURS, ET RIEN D'AUTRE. */
@@ -4699,6 +4728,7 @@ function vieDuStaff(){
   verifierPromessesStaff();
   poserDemandesStaff();
   interpellations();
+  auBordDuTapis();
   /* /!\ UNE FOIS PAR SEMAINE, PAS PAR JOUR : un objectif qui se franchit
      et se defranchit (un champion perd sa ceinture le mois suivant) ne
      doit pas s'annoncer deux fois. La liste des annonces faites tranche —
@@ -4865,6 +4895,48 @@ function verifierPromessesStaff(){
       raconter(t.jour,[`💬 <b>${c.nom}</b> — « Tu m'avais dit d'attendre. J'ai attendu. »`],true);
     }
   }
+}
+
+/**
+ * CE QU'UN COACH FAIT LES SEMAINES OU IL NE SE PASSE RIEN.
+ * /!\ LA QUESTION QUE PERSONNE N'AVAIT POSEE. Tout ce que le staff
+ * produisait etait DECLENCHE par un evenement : une demande, un titre, un
+ * homme crame. Les quarante autres semaines de l'annee, le bureau etait
+ * muet — et un collegue qu'on ne croise que quand il reclame quelque
+ * chose n'est pas un collegue, c'est un guichet.
+ * Il t'attrape donc au bord du tapis, les paos encore aux mains : deux ou
+ * trois phrases, deux ou trois reponses, et il repart. Non bloquant.
+ *
+ * /!\ ET LA CADENCE EST BORNEE PAR LE CALENDRIER DU JEU. Un coach qui
+ * vient parler methode la veille d'un championnat est un coach qu'on
+ * ferme sans lire. Il se tait la semaine d'un combat, il se tait quand la
+ * salle a deja quelque chose en attente, et il ne revient pas avant trois
+ * semaines. C'est le prix a payer pour qu'on ait envie de l'ecouter.
+ */
+function auBordDuTapis(){
+  if(bloque)return;
+  const st=staffDe().filter(c=>!c.moi);
+  if(!st.length)return;
+  /* Une demande ouverte passe avant : on ne parle pas de la pluie a
+     quelqu'un a qui on doit une reponse. */
+  if(st.some(c=>c.demandeEnCours))return;
+  /* La semaine d'un combat, la salle a autre chose a faire. */
+  for(const k of Object.keys(MESGARS)){
+    const cp=MESGARS[k].combatPrevu;
+    if(cp&&cp.jourCombat-t.jour<=7&&cp.jourCombat>=t.jour)return;
+  }
+  const dispo=st.filter(c=>!c.dernierTapis||t.jour-c.dernierTapis>=21);
+  if(!dispo.length)return;
+  /* Deterministe : c'est le jeton du jour qui designe, pas un tirage —
+     un rendu ne doit jamais faire avancer la graine (lecon d'assurerMoi). */
+  const c=dispo[MMA.coach.jeton("tapis",t.jour)%dispo.length];
+  c.vues=c.vues||{};
+  const sc=MMA.coach_dialogue.scenePour(MMA.coach_scenes.SCENES,"bord_du_tapis",
+    ctxCoach(c),c.vues,t.jour,null,MMA.coach.jeton(c.nom,t.jour));
+  if(!sc)return;
+  c.dernierTapis=t.jour;
+  raconter(t.jour,[`💬 <b>${c.nom}</b> t'attrape après le cours. `
+    +`<span class="lien" onclick="ouvrirBureauCoach('${c.nom.replace(/'/g,"\\'")}','bord_du_tapis')">L'écouter</span>`],false);
 }
 
 /* /!\ LES INTERPELLATIONS (22/08) : le coach vient te voir — et il dit
