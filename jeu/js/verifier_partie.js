@@ -1391,8 +1391,26 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
           au lieu de le faire sur un autre en silence. */
     MESGARS[vise.id].combatPrevu=null;
     const refus=appliquerEffetDialogue(c,"le_mettre_au_coin",vise.id);
+    /* 5. AUCUNE ACCOLADE NULLE PART. On traverse tous les sujets et on
+          verifie que rien de ce qui s'affiche ne porte un marqueur non
+          rempli — c'est la faute qui se voit le plus vite a l'ecran. */
+    let brut=0, vus=0;
+    for(const x of MMA.coach_dialogue.SUJETS){
+      if(BUREAU.E.sujetsFaits.indexOf(x.cle)>=0)continue;
+      sujetBureauCoach(x.cle);
+      if(BUREAU.choixGars){ choisirGarsBureau(vise.id); }
+      let g=0;
+      while(BUREAU.E.encours&&g++<6){
+        const h=$("cp-dedans").innerHTML; vus++;
+        if(h.indexOf("{gars}")>=0||h.indexOf("{autre}")>=0)brut++;
+        repondreBureauCoach(0);
+        const h2=$("cp-dedans").innerHTML; vus++;
+        if(h2.indexOf("{gars}")>=0||h2.indexOf("{autre}")>=0)brut++;
+        suiteBureauCoach();
+      }
+    }
     fermerBureauCoach();
-    return {demandeQui,tousNommes,proDabord,surLaTable,accolade,
+    return {demandeQui,tousNommes,proDabord,surLaTable,accolade,brut,vus,
       sceneDuSujet:!!scene&&scene.sujet==="un_gars",
       applique:eff.ok,bonHomme,pasLautre,
       refusDit:!refus.ok&&(refus.mot||"").indexOf(vise.id)>=0};
@@ -1412,6 +1430,8 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
         "avant : menager_un_gars prenait le premier cuit venu");
     dit("et s'il ne peut pas s'appliquer à lui, il le dit au lieu de viser un autre",
         !!r && r.refusDit);
+    dit("aucun marqueur ne reste à l'écran, sur tous les sujets traversés",
+        !!r && r.brut === 0 && r.vus >= 14, `${r ? r.vus : 0} écrans lus · ${r ? r.brut : "?"} accolade(s)`);
   }
   dit("aucune exception dans le bureau du coach", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));

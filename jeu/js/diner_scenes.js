@@ -938,7 +938,7 @@ const SCENES = {
     },
     {
      "lab": "« Lequel des miens vous ennuie ? »",
-     "r": "Il donne un nom tout de suite. Celui auquel vous pensiez. « Pas parce qu'il est mauvais. Parce qu'il ne prend jamais le risque de perdre. Le public sent ça avant nous, et il se tait. »",
+     "r": "Il désigne tout de suite celui auquel vous pensiez, sans le nommer devant témoin. « Pas parce qu'il est mauvais. Parce qu'il ne prend jamais le risque de perdre. Le public sent ça avant nous, et il se tait. »",
      "d": 4,
      "ton": "curieux"
     },

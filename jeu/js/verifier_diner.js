@@ -160,6 +160,16 @@ const CTX = { premier: true, relation: 50, reputation: 40, aChampion: false, aCl
   dit("on peut vraiment se planter — sinon ce n'est pas un choix",
     mauvais >= 20, `${mauvais} réponses qui coûtent cher`);
 
+  /* /!\ LA MEME REGLE QU'AU BUREAU DU COACH (Mael, 02/09 : « là il donne
+     un nom, moi je veux LE nom ») : ANNONCER UNE INFORMATION QUE LE JEU
+     POSSEDE ET NE PAS LA LIVRER. Le dîner n'a pas de mécanisme de nom —
+     ses répliques ne doivent donc jamais promettre d'en donner un. */
+  const PROMET = /\b(donne|donnes|lâche|lache|cite|sort|livre)\s+(un|le|son)\s+nom\b/i;
+  const enLair = toutes.flatMap((s) => (s.choix || [])
+    .filter((c) => PROMET.test(`${c.lab} ${c.r}`)).map((c) => `${s.cle} : ${c.r.slice(0, 40)}…`));
+  dit("aucune réplique ne promet un nom qu'elle ne dit pas",
+    enLair.length === 0, enLair.slice(0, 2).join(" · ") || "aucune promesse en l'air");
+
   /* Et de la variété : pas trois fois la même réplique. */
   const textes = toutes.map((s) => s.texte.trim().toLowerCase());
   dit("aucune scène n'est écrite deux fois",

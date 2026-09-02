@@ -13343,3 +13343,64 @@ doit avoir sa situation dans ce banc.
 
 Contenu : 241 scenes, 761 repliques.
 CHAINE : 39 bancs, 801 assertions, 0 ECHEC.
+
+## CAS 165 — « IL DONNE UN NOM, MOI JE VEUX LE NOM » (Mael, 02/09)
+
+Deux captures, deux reproches, et le second nomme une classe entiere.
+
+### 1. LA PHRASE QU'ON NE COMPREND PAS
+« Il te prend au mot, immédiatement, et il organise deux ans à voix
+haute. » Mael : « ça veut dire quoi ça, j'ai rien compris. »
+C'est de l'ecriture qui se regarde ecrire : un raccourci d'image que
+l'auteur comprend parce qu'il sait ce qu'il voulait dire. Reecrit en
+clair — « il se met à dire tout haut ce qu'il fera de lui l'an prochain,
+et celui d'après ». Meme passe sur cinq autres : « tu l'as vu tirer »
+(argot de salle), « il repose les épaules » (pas du francais), « il
+déroule » tout seul, « tu viens de lui dire que tu ne le sais pas
+encore » (incomprehensible), et une reponse a voix basse qui annoncait
+un chiffre que le jeu n'a pas et qui ne s'affiche jamais.
+LECON : un banc peut verifier qu'une replique existe, qu'elle a un ton et
+un effet. AUCUN BANC NE PEUT VERIFIER QU'ELLE SE COMPREND. C'est le
+joueur, et lui seul. Le corollaire pratique : quand on ecrit vite et
+beaucoup, on ecrit imagé — et l'image est la premiere chose qui casse.
+
+### 2. LA CLASSE : ANNONCER UNE INFORMATION QUE LE JEU POSSEDE, ET NE PAS
+###    LA LIVRER
+« Il donne un nom auquel tu n'avais pas pensé, et une raison qui tient
+debout. » — et le nom n'apparaissait nulle part.
+C'EST EXACTEMENT LE CAS 159 SOUS UN AUTRE VISAGE : le matchmaker
+demandait un adversaire, on ne pouvait pas repondre, et « le lendemain il
+s'est rien passe ». Meme faute : le jeu PARLE d'une donnee qu'il POSSEDE
+et ne la met pas a l'ecran. C'est la deuxieme fois que Mael la trouve, ce
+qui veut dire qu'elle se reproduit toute seule des qu'on ecrit du texte.
+LA REGLE, ET ELLE VAUT POUR TOUT LE DEPOT :
+    si la chose annoncee existe comme donnee du jeu, ELLE SE DIT.
+    sinon, la phrase ne doit pas promettre de la dire.
+Neuf repliques corrigees au bureau, une au diner. Les huit du bureau
+livrent maintenant un vrai nom ; celles dont l'objet n'existe pas comme
+donnee (un gamin d'avant toi, un signe technique, une duree) ne
+promettent plus.
+
+### LE MARQUEUR `{autre}`
+Un homme de la salle qui n'est PAS celui pose sur la table. DERIVE DE LA
+CLE DE LA SCENE, jamais tire : rouvrir le meme bureau le meme jour
+redonne le meme homme — sinon on rouvrirait jusqu'a tomber sur le nom qui
+arrange (c'est la regle 1 du module, et elle a deja servi trois fois).
+Les noms sont GARDES le temps de l'echange : la reaction doit nommer les
+memes hommes que la question qui vient d'etre posee. Repli honnete quand
+il n'y a personne d'autre a nommer : « quelqu'un du groupe » — mieux
+qu'une accolade a l'ecran.
+
+### LES TROIS CRIBLES AJOUTES
+- BANC 39 : une replique qui dit qu'un nom est donne DOIT porter un
+  marqueur. Crible volontairement etroit (la tournure exacte, pas les
+  tours de phrase) — un crible large aurait ete desactive au premier faux
+  positif.
+- BANC 36 : le meme, au diner. Il n'a pas de mecanisme de nom, donc ses
+  repliques ne doivent jamais promettre d'en donner un. Il en restait une.
+- BANC 27 : on traverse TOUS les sujets du bureau et on lit les seize
+  ecrans — aucune accolade ne doit y rester. C'est la faute qui se voit le
+  plus vite, et aucun banc de module ne peut la voir : les modules ne
+  savent pas qui est dans la salle.
+
+CHAINE : 39 bancs, 806 assertions, 0 ECHEC.

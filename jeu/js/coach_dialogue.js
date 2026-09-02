@@ -289,11 +289,34 @@ function revenable(s, vues, jour) {
  *  s'afficherait tel quel, accolades comprises. */
 const MARQUEUR = /\{gars\}/g;
 
-/** La scène, dite pour cet homme-là. Rend une COPIE : le contenu est une
- *  donnée partagée par tous les coachs, on ne la réécrit jamais en place. */
-function nommer(s, nom) {
-  if (!s || !nom) return s;
-  const r = (x) => String(x).replace(MARQUEUR, nom);
+/* /!\ ET LE SECOND MARQUEUR, QUI VIENT D'UN AUTRE REPROCHE DE MAEL
+   (02/09) : « là il donne un nom, moi je veux LE nom ». Une réplique
+   disait « il donne un nom auquel tu n'avais pas pensé » — et ne le
+   donnait pas. C'est la même faute que le combat qui ne se calait pas
+   (cas 159) : ANNONCER UNE INFORMATION QUE LE JEU POSSÈDE ET NE PAS LA
+   LIVRER. La règle qui en sort, et qui vaut pour tout le dépôt :
+       si la chose annoncée existe comme donnée, elle se dit.
+       sinon, la phrase ne doit pas promettre de la dire.
+   `{autre}` est un homme de la salle qui n'est PAS celui posé sur la
+   table — c'est l'écran qui le tire, une fois, de façon stable. */
+const MARQUEUR_AUTRE = /\{autre\}/g;
+
+/**
+ * La scène, dite pour ces hommes-là. Rend une COPIE : le contenu est une
+ * donnée partagée par tous les coachs, on ne la réécrit jamais en place.
+ * @param {object} s     la scène
+ * @param {object|string} noms  { gars, autre } — une chaîne vaut pour `gars`
+ */
+function nommer(s, noms) {
+  if (!s || !noms) return s;
+  const n = typeof noms === "string" ? { gars: noms } : noms;
+  if (!n.gars && !n.autre) return s;
+  const r = (x) => {
+    let v = String(x);
+    if (n.gars) v = v.replace(MARQUEUR, n.gars);
+    if (n.autre) v = v.replace(MARQUEUR_AUTRE, n.autre);
+    return v;
+  };
   return Object.assign({}, s, {
     texte: r(s.texte),
     choix: (s.choix || []).map((c) => Object.assign({}, c, { lab: r(c.lab), r: r(c.r) })),

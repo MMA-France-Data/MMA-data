@@ -40,7 +40,7 @@ bureau.push(
  texte:"Il pose sa bouteille sur le coin du bureau et s'assoit sans se presser. Personne ne lui a posé cette question depuis longtemps, et ça se voit sur sa figure.",
  choix:[
   {lab:"Attendre qu'il parle",r:"Il met un temps, puis il vide son sac. Le tapis, les horaires, sa femme qui ne le voit plus le soir.",d:3,ton:"calme"},
-  {lab:"Lui dire que tu l'as vu tirer, ces temps-ci",r:"Il hoche la tête lentement. Il n'aime pas être vu, mais il aime encore moins être invisible.",d:2,ton:"franc"},
+  {lab:"Lui dire que tu l'as trouvé fatigué, ces temps-ci",r:"Il hoche la tête lentement. Il n'aime pas être vu, mais il aime encore moins être invisible.",d:2,ton:"franc"},
   {lab:"Lui demander s'il dort",r:"Il rit sans joie et te répond qu'il dort quand la salle dort, donc jamais vraiment.",d:2,ton:"chaud"},
   {lab:"Abréger, tu as du travail",r:"Il se lève avant la fin de ta phrase. La porte se referme un peu trop doucement derrière lui.",d:-4,ton:"sec"}]},
 
@@ -165,7 +165,7 @@ bureau.push(
 {cle:"oie_18",sujet:"ou_il_en_est",si:"ancien",vie:"saison",voix:["taiseux","chaleureux","technicien"],
  texte:"Il est là depuis assez longtemps pour avoir vu partir des hommes qu'il avait formés. Il en parle sans amertume, ce qui est presque pire.",
  choix:[
-  {lab:"Lui demander lequel lui manque le plus",r:"Il donne un nom sans hésiter, et il en parle comme d'un fils.",d:4,ton:"grave"},
+  {lab:"Lui demander lequel lui manque le plus",r:"Il donne sans hésiter le nom d'un gamin d'avant toi, que tu n'as jamais vu, et il en parle comme d'un fils.",d:4,ton:"grave"},
   {lab:"Lui dire que ceux qui restent, c'est grâce à lui",r:"Il balaie ça d'un geste et il le garde quand même.",d:3,ton:"chaud"},
   {lab:"Lui dire que c'est la vie d'une salle",r:"Il te donne raison, poliment, et il change de sujet.",d:-1,ton:"neutre"},
   {lab:"Lui rappeler qu'ils sont partis sous sa responsabilité",r:"Il encaisse le coup en silence. Il ne t'en parlera plus jamais.",d:-6,ton:"dur"}]},
@@ -269,7 +269,7 @@ bureau.push(
 {cle:"cqv_11",sujet:"ce_qu_il_voit",si:"toujours",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
  texte:"Il te sort une liste, dans l'ordre, des hommes du groupe et de ce qui cloche chez chacun. Il n'a rien noté : c'est là depuis des semaines.",
  choix:[
-  {lab:"Tout écouter et lui demander par quoi commencer",r:"Il te donne le premier nom et la raison. C'est le bon, et tu l'aurais mis en dernier.",d:4,ton:"clair"},
+  {lab:"Tout écouter et lui demander par quoi commencer",r:"Il commence par {autre}, et il dit pourquoi. C'est le bon, et tu l'aurais mis en dernier.",d:4,ton:"clair"},
   {lab:"Lui demander de te faire ça tous les mois",r:"Il accepte et il n'en ratera pas un seul. C'est devenu votre rendez-vous.",d:4,ton:"engage"},
   {lab:"L'arrêter au troisième nom",r:"Il s'arrête net et range le reste. Il ne reprendra pas la liste où vous l'avez laissée.",d:-3,ton:"pressé"}]},
 
@@ -291,7 +291,7 @@ bureau.push(
 {cle:"cqv_14",sujet:"ce_qu_il_voit",si:"toujours",vie:"saison",voix:["pedagogue","ambitieux","technicien"],
  texte:"Il te dit qu'il voit ce que la salle produit dans deux ans si rien ne change, et que ce n'est pas beau. Il n'a pas dit ça pour te faire peur, il a compté.",
  choix:[
-  {lab:"Lui demander de te montrer son compte",r:"Il déroule. Ce n'est pas discutable, et c'est très inconfortable.",d:4,ton:"clair"},
+  {lab:"Lui demander de te montrer son compte",r:"Il reprend tout devant toi, saison par saison. Ce n'est pas discutable, et c'est très inconfortable.",d:4,ton:"clair"},
   {lab:"Lui demander ce qu'il ferait à ta place",r:"Il a trois choses. Deux sont applicables lundi, la troisième coûte cher et vaut le coup.",d:4,ton:"calme"},
   {lab:"Lui rappeler que la salle tourne, aujourd'hui",r:"Il te répond que c'est exactement ce qu'on dit deux ans avant de fermer.",d:-3,ton:"tendu"}]},
 
@@ -396,8 +396,8 @@ bureau.push(
 {cle:"ung_08",sujet:"un_gars",si:"toujours",vie:"saison",
  texte:"Tu lui demandes lequel de tes hommes il emmènerait s'il devait n'en garder qu'un. Il rit, puis il voit que tu ne plaisantes pas.",
  choix:[
-  {lab:"Insister pour avoir un nom",r:"Il donne un nom auquel tu n'avais pas pensé, et une raison qui tient debout.",d:3,ton:"franc"},
-  {lab:"Lui laisser le droit de ne pas répondre",r:"Il te remercie de ne pas insister, et il te donne quand même le nom un mois plus tard.",d:4,ton:"respect"},
+  {lab:"Insister pour avoir un nom",r:"Il dit {autre}. Tu ne l'avais pas vu venir, et la raison qu'il donne tient debout.",d:3,ton:"franc"},
+  {lab:"Lui laisser le droit de ne pas répondre",r:"Il te remercie de ne pas insister. Un mois plus tard, il lâche quand même le nom : {autre}.",d:4,ton:"respect"},
   {lab:"Lui reprocher de ne pas oser trancher",r:"Il te répond qu'il tranche tous les jours, et que ce sont des gens, pas des cartes.",d:-4,ton:"sec"}]},
 
 {cle:"ung_09",sujet:"un_gars",si:"gars_jeune",vie:"courante",
@@ -418,7 +418,7 @@ bureau.push(
 {cle:"ung_11",sujet:"un_gars",si:"toujours",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
  texte:"Tu lui parles de {gars}, et il te répond par une question sur toi : est-ce que tu comptes vraiment aller au bout avec lui, ou est-ce qu'il perd son temps.",
  choix:[
-  {lab:"Lui dire que oui, et l'engager avec toi",r:"Il te prend au mot, immédiatement, et il organise deux ans à voix haute.",d:4,ton:"engage"},
+  {lab:"Lui dire que oui, et l'engager avec toi",r:"Il te prend au mot sur-le-champ et se met à dire tout haut ce qu'il fera de lui l'an prochain, et celui d'après.",d:4,ton:"engage"},
   {lab:"Lui répondre honnêtement que tu ne sais pas",r:"Il préfère de loin cette réponse à une promesse en l'air.",d:3,ton:"franc"},
   {lab:"Lui dire que ce n'est pas sa décision",r:"Il te répond que non, mais que c'est sa vie qui passe dedans.",d:-4,ton:"tendu"}]},
 
@@ -651,7 +651,7 @@ bureau.push(
  texte:"Il t'explique qu'il ne travaille jamais deux hommes de la même façon, et que c'est pour ça qu'il ne peut pas en suivre douze correctement.",
  choix:[
   {lab:"Lui alléger la charge en lui reprenant un domaine",r:"Il proteste par principe et il fait la meilleure saison de sa carrière.",d:5,ton:"calme",effet:"lui_lacher_une_case"},
-  {lab:"Lui demander lesquels il suit vraiment",r:"Il donne quatre noms. Les huit autres, il les surveille, ce qui n'est pas la même chose.",d:3,ton:"clair"},
+  {lab:"Lui demander lesquels il suit vraiment",r:"Il en suit vraiment quatre, {autre} en tête. Les autres, il les surveille — ce n'est pas la même chose.",d:3,ton:"clair"},
   {lab:"Lui dire qu'il faudra bien qu'il apprenne à en suivre douze",r:"Il te répond que ça s'appelle un cours collectif, et qu'on ne fait pas de champion avec ça.",d:-4,ton:"tendu"}]},
 
 {cle:"met_03",sujet:"sa_methode",si:"toujours",vie:"courante",
@@ -1063,7 +1063,7 @@ bureau.push(
 {cle:"ras_19",sujet:"le_rassurer",si:"apres_un_depart",vie:"courante",voix:["bourru","taiseux","chaleureux"],
  texte:"Quelqu'un vient de quitter la salle et il en fait une affaire personnelle. Il se demande à voix haute ce qu'il n'a pas su faire.",
  choix:[
-  {lab:"Lui dire les vraies raisons du départ, celles qu'il ignore",r:"Il découvre que ça n'avait rien à voir avec lui. Il repose enfin les épaules.",d:5,ton:"franc"},
+  {lab:"Lui dire les vraies raisons du départ, celles qu'il ignore",r:"Il découvre que ça n'avait rien à voir avec lui. Ses épaules redescendent d'un coup.",d:5,ton:"franc"},
   {lab:"Lui dire que les gens partent, et que ça ne se prend pas comme ça",r:"Il te répond que si, ça se prend comme ça, et que c'est pour ça qu'il fait ce métier.",d:2,ton:"grave"},
   {lab:"Lui demander s'il compte partir aussi",r:"La question sort de nulle part et elle plante une idée qui n'y était pas.",d:-5,ton:"maladroit"}]},
 
@@ -1184,7 +1184,7 @@ bureau.push(
 {cle:"col_15",sujet:"le_collegue",si:"toujours",vie:"courante",voix:["bourru","ambitieux","technicien"],
  texte:"Il te dit tout net que si l'autre reste, lui partira, et qu'il préfère te le dire maintenant plutôt qu'en posant une lettre dans six mois.",
  choix:[
-  {lab:"Lui demander ce qu'il faudrait pour que ça devienne vivable",r:"Il y a trois conditions. Deux sont raisonnables, la troisième est un caprice, et il le sait.",d:3,ton:"calme"},
+  {lab:"Lui demander ce qu'il faudrait pour que ça devienne vivable",r:"Des créneaux séparés, et qu'on tranche quand ils ne sont pas d'accord. La troisième — que l'autre s'excuse — est un caprice, et il le sait.",d:3,ton:"calme"},
   {lab:"Lui dire que tu ne choisis pas sous la menace",r:"Il encaisse et il te respecte pour ça. Rien n'est réglé pour autant.",d:-2,ton:"ferme"},
   {lab:"Lui dire que tu le garderas, lui",r:"Il obtient ce qu'il voulait. Il vient aussi d'apprendre que la menace fonctionne.",d:2,ton:"engage",effet:"arbitrer_pour_lui"},
   {lab:"Lui répondre que la porte est ouverte, alors",r:"Il se lève. Vous savez tous les deux que ça se terminera comme ça.",d:-6,ton:"froid"}]},
@@ -1393,7 +1393,7 @@ bord_du_tapis.push(
 {cle:"bdt_03",si:"toujours",vie:"courante",
  texte:"Il te glisse en passant qu'un de tes hommes est venu avec une blessure qu'il cache, et il repart avant que tu puisses répondre.",
  choix:[
-  {lab:"Le rattraper pour avoir le nom",r:"Il te le donne à voix basse. La blessure est prise avant qu'elle devienne sérieuse.",d:4,ton:"clair"},
+  {lab:"Le rattraper pour avoir le nom",r:"Il lâche « {autre} » à voix basse. La blessure est prise avant qu'elle devienne sérieuse.",d:4,ton:"clair"},
   {lab:"Lui faire confiance et le laisser gérer",r:"Il gère. Le gars est arrêté deux semaines et personne n'a eu à se justifier.",d:3,ton:"calme"},
   {lab:"Attendre qu'il revienne t'en parler",r:"Il ne revient pas. La blessure devient une opération au printemps.",d:-4,ton:"neutre"}]},
 
@@ -1443,7 +1443,7 @@ bord_du_tapis.push(
  texte:"Il t'attrape pour te dire qu'un des gars a besoin d'entendre quelque chose de toi, pas de lui, et que ça ne peut pas attendre lundi.",
  choix:[
   {lab:"Aller lui parler avant de partir ce soir",r:"Tu y vas. Le gamin ne dira rien, et sa semaine change complètement.",d:5,ton:"chaud"},
-  {lab:"Lui demander quoi dire exactement",r:"Il te souffle une phrase. Elle est courte et elle est parfaite.",d:4,ton:"clair"},
+  {lab:"Lui demander quoi dire exactement",r:"Il te souffle quoi dire : que tu l'as vu travailler, et rien de plus. C'est court, et c'est exactement ça.",d:4,ton:"clair"},
   {lab:"Lui dire que c'est son rôle, pas le tien",r:"Il te répond que non, pas cette fois, et il a raison.",d:-4,ton:"sec"}]},
 
 {cle:"bdt_11",si:"toujours",vie:"courante",voix:["pedagogue","ambitieux","technicien"],
@@ -1454,10 +1454,10 @@ bord_du_tapis.push(
   {lab:"Lui dire que tu ne comprends rien à ses dessins",r:"Il referme le carnet. Il ne te le remontrera pas.",d:-4,ton:"sec"}]},
 
 {cle:"bdt_13",si:"a_un_espoir",vie:"courante",
- texte:"Il t'arrête au bord du tapis et te désigne, sans le nommer, un gamin du groupe du soir. Il te dit juste de venir voir la même chose jeudi prochain.",
+ texte:"Il t'arrête au bord du tapis et te désigne, sans le nommer, un des gars du groupe du soir. Il te dit juste de venir voir la même chose jeudi prochain.",
  choix:[
   {lab:"Revenir jeudi, comme demandé",r:"Tu reviens. Tu vois la même chose, en mieux, et tu comprends pourquoi il t'a fait déplacer.",d:5,ton:"clair"},
-  {lab:"Lui demander de te dire tout de suite ce qu'il voit",r:"Il te le dit, et c'est moins convaincant en mots qu'en vrai. Il le sait, d'ailleurs.",d:2,ton:"neutre"},
+  {lab:"Lui demander de te dire tout de suite ce qu'il voit",r:"C'est {autre}, et il t'explique quoi regarder. En mots c'est moins convaincant qu'en vrai, il le sait.",d:2,ton:"neutre"},
   {lab:"Lui dire que tu n'as pas le temps de venir voir des gamins",r:"Il retourne au tapis. Le gamin signera ailleurs dans l'année.",d:-5,ton:"pressé"}]},
 
 {cle:"bdt_12",si:"disperse",vie:"courante",voix:["bourru","ambitieux","technicien"],
@@ -1548,7 +1548,7 @@ debrief.push(
  choix:[
   {lab:"Lui demander de te montrer",r:"Il remonte le fil jusqu'à une séance précise. Il a raison et c'est troublant.",d:5,ton:"clair"},
   {lab:"Lui demander ce qu'il change pour la prochaine préparation",r:"Il change deux choses. Les deux tiendront et les deux se verront.",d:4,ton:"calme"},
-  {lab:"Lui dire que c'est du bavardage",r:"Il ne bavarde jamais. Tu viens de lui dire que tu ne le sais pas encore.",d:-5,ton:"sec"}]},
+  {lab:"Lui dire que c'est du bavardage",r:"Il ne bavarde jamais. Tu viens seulement de lui apprendre que tu ne l'avais pas encore compris.",d:-5,ton:"sec"}]},
 
 {cle:"deb_12",si:"a_un_poulain",vie:"courante",voix:["bourru","ambitieux","technicien"],
  texte:"C'est son poulain qui a combattu et il n'arrive pas à en parler comme d'un dossier. Il commence trois phrases et il n'en finit aucune.",
@@ -1655,7 +1655,7 @@ porte.push(
  texte:"Il pose une lettre sur le bureau et il reste debout. Il n'a pas l'air soulagé du tout, ce qui veut dire que la décision n'est peut-être pas prise.",
  choix:[
   {lab:"Ne pas ouvrir la lettre et lui demander ce qui se passe",r:"Il s'assoit. La lettre reste fermée toute la conversation, et elle repart avec lui.",d:5,ton:"grave"},
-  {lab:"Lui demander ce qu'il faudrait pour qu'il la reprenne",r:"Il donne deux conditions. Elles sont plus faciles à tenir que tu ne le craignais.",d:4,ton:"franc",effet:"le_retenir"},
+  {lab:"Lui demander ce qu'il faudrait pour qu'il la reprenne",r:"Deux choses : qu'on lui dise les choses en face, et qu'on arrête de décider de son travail sans lui. Moins cher que tu ne craignais.",d:4,ton:"franc",effet:"le_retenir"},
   {lab:"Ouvrir la lettre et l'accepter",r:"C'est net et c'est définitif. Il aurait peut-être voulu qu'on lui demande.",d:-2,ton:"ferme",effet:"accepter_son_depart"},
   {lab:"Lui dire que tu ne retiens personne",r:"Il reprend la lettre, la pose sur ton bureau, et sort. Vous en resterez là.",d:-6,ton:"froid"}]},
 
@@ -1704,7 +1704,7 @@ porte.push(
 {cle:"por_08",si:"toujours",vie:"courante",voix:["taiseux","chaleureux","technicien"],
  texte:"Il ne dit rien de tout ça. Il te demande juste, à la fin d'une conversation banale, s'il fait toujours l'affaire ici. Le ton n'est pas banal du tout.",
  choix:[
-  {lab:"T'arrêter et répondre vraiment",r:"Tu réponds, sérieusement, et il repose ses épaules pour la première fois depuis des mois.",d:5,ton:"grave"},
+  {lab:"T'arrêter et répondre vraiment",r:"Tu réponds, sérieusement, et pour la première fois depuis des mois il n'a plus l'air sur le départ.",d:5,ton:"grave"},
   {lab:"Lui demander d'où sort cette question",r:"Elle sort d'une remarque entendue de travers dans un couloir. Ça se répare en cinq minutes.",d:4,ton:"clair"},
   {lab:"Répondre oui, distraitement, en continuant ton travail",r:"Il sort. Tu ne sauras jamais ce que cette question a décidé.",d:-5,ton:"pressé"}]},
 
@@ -1808,7 +1808,7 @@ bureau.push(
  texte:"Tu lui parles de {gars}, qui n'a plus l'âge d'encaisser ce qu'il encaissait. Il te dit qu'il faudra choisir, et bientôt, entre l'utiliser et le garder.",
  choix:[
   {lab:"Choisir de le garder, et le dire clairement",r:"Il te remercie d'avoir tranché. Il détestait porter cette question tout seul.",d:5,ton:"grave",effet:"menager_un_gars"},
-  {lab:"Lui demander combien de combats il lui reste",r:"Il répond un chiffre, à voix basse, et il n'aime pas sa propre réponse.",d:3,ton:"grave"},
+  {lab:"Lui demander combien de combats il lui reste",r:"Il répond à voix basse, en montrant sa main, et il n'aime pas sa propre réponse.",d:3,ton:"grave"},
   {lab:"Lui demander de le préparer pour un dernier gros soir",r:"Il le prépare. Le soir venu, personne dans la salle ne respire normalement.",d:1,ton:"tendu",effet:"le_mettre_au_coin"},
   {lab:"Lui dire qu'on l'use tant qu'il rapporte",r:"Il ne répond pas. Il vient d'apprendre ce que vaut un homme ici, et il en fait partie.",d:-6,ton:"froid"}]},
 

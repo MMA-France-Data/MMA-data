@@ -181,12 +181,44 @@ const tousChoix = toutes.reduce((a, s) => a.concat(s.choix || []), []);
   /* nommer() rend une COPIE : le contenu est partagé par tous les coachs
      de la salle, le réécrire en place le salirait pour tout le monde. */
   const av = dGars.find((s) => /\{gars\}/.test(s.texte));
-  const ap = D.nommer(av, "Karim Belkacem");
+  const ap = D.nommer(av, { gars: "Karim Belkacem", autre: "Elias Rocher" });
   dit("dire une scène pour un homme ne laisse aucune accolade",
     !!ap && !/\{gars\}/.test(ap.texte)
     && ap.choix.every((c) => !/\{gars\}/.test(c.lab) && !/\{gars\}/.test(c.r)));
   dit("et n'abîme pas le contenu partagé — c'est une copie",
     /\{gars\}/.test(av.texte) && ap !== av && ap.choix[0] !== av.choix[0]);
+
+  /* ================================================================== */
+  /* /!\ « LÀ IL DONNE UN NOM, MOI JE VEUX LE NOM » (Mael, 02/09)       */
+  /* ================================================================== */
+  /* Une réplique disait « il donne un nom auquel tu n'avais pas pensé »
+     — et ne le donnait pas. C'est la MÊME faute que le combat qui ne se
+     calait pas (cas 159), et elle a maintenant un nom :
+        ANNONCER UNE INFORMATION QUE LE JEU POSSÈDE, ET NE PAS LA LIVRER.
+     Un nom de combattant, le jeu l'a. Donc : une réplique qui dit qu'un
+     nom est donné DOIT porter un marqueur. Le crible est volontairement
+     étroit — il attrape la tournure exacte, pas les tours de phrase. */
+  const PROMET = /\b(donne|donnes|lâche|lache|cite|sort|dit|livre)\s+(un|le|son)\s+nom\b/i;
+  const promesses = [];
+  for (const s of toutes)
+    for (const c of (s.choix || [])) {
+      const txt = `${c.lab} ${c.r}`;
+      if (PROMET.test(txt) && !/\{gars\}|\{autre\}/.test(txt)) promesses.push(`${s.cle} : ${c.r.slice(0, 46)}…`);
+    }
+  dit("une réplique qui dit qu'un nom est donné le donne vraiment",
+    promesses.length === 0, promesses.slice(0, 3).join(" · ") || "aucune promesse en l'air");
+
+  /* `{autre}` — quelqu'un de la salle qui n'est pas celui sur la table.
+     Contrairement à `{gars}` il vaut partout : l'écran le remplit
+     toujours, y compris par un repli quand il n'y a personne d'autre. */
+  const avecAutre = toutes.filter((s) => /\{autre\}/.test(s.texte)
+    || (s.choix || []).some((c) => /\{autre\}/.test(c.lab) || /\{autre\}/.test(c.r)));
+  dit("et l'autre homme de la salle porte un nom, lui aussi",
+    avecAutre.length >= 5, `${avecAutre.length} répliques nomment quelqu'un d'autre`);
+  const deux = D.nommer(avecAutre[0], { gars: "X", autre: "Elias Rocher" });
+  dit("les deux noms se posent dans la même scène",
+    !!deux && !/\{gars\}|\{autre\}/.test(
+      deux.texte + deux.choix.map((c) => c.lab + c.r).join("")));
 
   /* Les déclencheurs de l'homme choisi sont TOUS faux sans nom : sinon
      une scène écrite pour « son poulain » sortirait pour un inconnu. */

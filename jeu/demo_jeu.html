@@ -7586,9 +7586,36 @@ function choisirGarsBureau(id){
   rendreBureauCoach();
 }
 
-/** Dire un texte pour l'homme du jour — le marqueur du contenu partage. */
-function ditPourLeGars(txt){
-  return BUREAU&&BUREAU.gars?String(txt).replace(/\{gars\}/g,BUREAU.gars.nom):txt;
+/**
+ * LES NOMS QUE CETTE SCENE MET DANS SA BOUCHE.
+ * /!\ « la il donne un nom, moi je veux LE nom » (Mael, 02/09). Une
+ * replique annoncait un nom et ne le donnait pas — la meme faute que le
+ * combat qui ne se calait pas (cas 159) : ANNONCER UNE INFORMATION QUE LE
+ * JEU POSSEDE ET NE PAS LA LIVRER.
+ * `{autre}` est quelqu'un de la salle qui n'est PAS celui pose sur la
+ * table. DERIVE DE LA CLE DE LA SCENE, jamais tire : rouvrir le meme
+ * bureau le meme jour redonne le meme homme — sinon on rouvrirait
+ * jusqu'a tomber sur le nom qui arrange.
+ */
+function nomsDeLaScene(sc){
+  const B=BUREAU, n={};
+  if(B.gars)n.gars=B.gars.nom;
+  const liste=garsDontOnPeutParler().filter(f=>!B.gars||f.id!==B.gars.id);
+  n.autre=liste.length
+    ? liste[MMA.coach.jeton(sc&&sc.cle||"?",t.jour)%liste.length].id
+    /* Repli : une salle sans personne d'autre a nommer. Il vaut mieux une
+       tournure vague qu'une accolade a l'ecran. */
+    :"quelqu'un du groupe";
+  return n;
+}
+
+/** Dire un texte avec les noms de la scene en cours. */
+function ditAvecLesNoms(txt){
+  const n=(BUREAU&&BUREAU.noms)||{};
+  let v=String(txt);
+  if(n.gars)v=v.replace(/\{gars\}/g,n.gars);
+  if(n.autre)v=v.replace(/\{autre\}/g,n.autre);
+  return v;
 }
 
 function repondreBureauCoach(k){
@@ -7609,7 +7636,7 @@ function repondreBureauCoach(k){
     if(!a.ok){ bougerEntenteCoach(c,-3,"une parole en l'air");
       mot=a.mot||"◆ Il a entendu. Rien n'a bougé. C'est pire que rien."; }
   }
-  BUREAU.reponse={r:ditPourLeGars(r.r),mot,suite:r.suite};
+  BUREAU.reponse={r:ditAvecLesNoms(r.r),mot,suite:r.suite};
   couvertureBouge();
   rendreBureauCoach();
 }
@@ -7675,8 +7702,11 @@ function rendreBureauCoach(){
   const sc0=B.E.encours;
   if(sc0){
     /* /!\ NOMMER REND UNE COPIE : le contenu est partage par tous les
-       coachs de la salle, on ne le reecrit jamais en place. */
-    const sc=MMA.coach_dialogue.nommer(sc0,B.gars?B.gars.nom:null);
+       coachs de la salle, on ne le reecrit jamais en place. Les noms sont
+       GARDES : la reaction qui suit doit nommer les memes hommes que la
+       question qui vient d'etre posee. */
+    B.noms=nomsDeLaScene(sc0);
+    const sc=MMA.coach_dialogue.nommer(sc0,B.noms);
     z.innerHTML=tete
       +`<div class="cp-il">${sc.texte}</div>`
       +`<div class="cp-choix">${(sc.choix||[]).map((x,k)=>
