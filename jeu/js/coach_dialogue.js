@@ -139,6 +139,18 @@ const DECLENCHEURS = [
   /* ce que TU lui as dit — la mémoire */
   "je_lui_ai_promis", "je_l_ai_recadre", "je_ne_tiens_jamais_parole",
   "je_lui_ai_toujours_dit_oui",
+  /* ===================================================================
+     L'HOMME POSÉ SUR LA TABLE (Mael, 02/09 : « des trucs où je parle de
+     quelqu'un, on sait pas qui c'est ; j'aimerais pouvoir parler de
+     n'importe quel combattant du groupe pro, au moins le sélectionner »)
+     ===================================================================
+     Ceux-là ne décrivent NI le coach NI la salle : ils décrivent LE
+     COMBATTANT QUE LE JOUEUR VIENT DE CHOISIR. Ils ne valent donc que
+     dans le sujet `un_gars`, et ils sont TOUS FAUX tant qu'aucun nom
+     n'est sur la table — c'est ce qui garantit qu'une scène écrite pour
+     « son poulain » ne sorte jamais au sujet d'un inconnu. */
+  "son_poulain", "pas_son_poulain", "gars_jeune", "gars_vieux",
+  "gars_cuit", "gars_lance", "gars_qui_doute", "gars_blesse",
 ];
 
 /**
@@ -190,6 +202,16 @@ function tient(si, ctx) {
     case "je_l_ai_recadre": return (x.recadrages || 0) > 0;
     case "je_ne_tiens_jamais_parole": return (x.paroleTrahie || 0) >= 2;
     case "je_lui_ai_toujours_dit_oui": return (x.ouiDaffilee || 0) >= 3;
+
+    /* /!\ TOUS EXIGENT `gars` : sans nom sur la table, aucun ne tient. */
+    case "son_poulain": return !!x.gars && !!x.garsPoulain;
+    case "pas_son_poulain": return !!x.gars && !x.garsPoulain;
+    case "gars_jeune": return !!x.gars && (x.garsAge || 99) <= 23;
+    case "gars_vieux": return !!x.gars && (x.garsAge || 0) >= 33;
+    case "gars_cuit": return !!x.gars && !!x.garsCuit;
+    case "gars_lance": return !!x.gars && (x.garsSerie || 0) >= 2;
+    case "gars_qui_doute": return !!x.gars && (x.garsSerie || 0) <= -2;
+    case "gars_blesse": return !!x.gars && !!x.garsBlesse;
 
     /* /!\ UNE CONDITION INCONNUE NE PASSE PAS EN SILENCE. */
     default:
@@ -250,6 +272,32 @@ function revenable(s, vues, jour) {
   const sem = (jour - vu) / 7;
   if (vie === "saison") return sem >= 52;
   return sem >= (s.peremption || PEREMPTION_DEFAUT);
+}
+
+/* ==================================================================== */
+/* LE NOM SUR LA TABLE                                                   */
+/* ==================================================================== */
+/** /!\ LE SUJET « un_gars » DISAIT « tu poses un nom sur la table » ET NE
+ *  DEMANDAIT JAMAIS LEQUEL. Le joueur lisait une conversation sur un
+ *  inconnu — et, bien pire, les effets qui touchent un combattant
+ *  choisissaient l'homme TOUT SEULS (le premier cuit, le premier espoir,
+ *  le premier qui monte). On croyait parler de quelqu'un, le jeu
+ *  appliquait à un autre.
+ *  Le contenu porte donc le marqueur `{gars}` et l'écran fournit le nom.
+ *  RÈGLE, ET LE BANC LA TIENT : le marqueur n'existe QUE dans le sujet
+ *  `un_gars`, le seul où un nom est toujours sur la table. Ailleurs il
+ *  s'afficherait tel quel, accolades comprises. */
+const MARQUEUR = /\{gars\}/g;
+
+/** La scène, dite pour cet homme-là. Rend une COPIE : le contenu est une
+ *  donnée partagée par tous les coachs, on ne la réécrit jamais en place. */
+function nommer(s, nom) {
+  if (!s || !nom) return s;
+  const r = (x) => String(x).replace(MARQUEUR, nom);
+  return Object.assign({}, s, {
+    texte: r(s.texte),
+    choix: (s.choix || []).map((c) => Object.assign({}, c, { lab: r(c.lab), r: r(c.r) })),
+  });
 }
 
 /* ==================================================================== */
@@ -396,6 +444,6 @@ function redite(scenes, ctx, semaines, parSemaine) {
 module.exports = {
   MOMENTS, MOMENTS_JOUEUR, SUJETS, CARACTERES, DECLENCHEURS, EFFETS, VIES,
   PEREMPTION_DEFAUT,
-  caractereDe, motCaractere, tient, revenable,
+  caractereDe, motCaractere, tient, revenable, nommer,
   jouables, scenePour, ouvrir, poser, repondre, ambiance, volume, redite,
 };

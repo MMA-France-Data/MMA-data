@@ -148,6 +148,58 @@ const tousChoix = toutes.reduce((a, s) => a.concat(s.choix || []), []);
   dit("toute scène du bureau porte son sujet", sansSujet.length === 0,
     sansSujet.map((s) => s.cle).slice(0, 4).join(" "));
 
+  /* /!\ ET LE SYMÉTRIQUE, QUI MANQUAIT : un DÉCLENCHEUR que personne ne
+     porte est une branche de `tient()` que rien n'atteint — la même faute
+     que l'effet fantôme, vue de l'autre bout. C'est ce crible qui a
+     rattrapé `a_un_espoir` le jour où une scène a changé de déclencheur. */
+  const declPortes = new Set(toutes.map((s) => s.si));
+  const declMorts = D.DECLENCHEURS.filter((d) => !declPortes.has(d));
+  dit("chaque déclencheur de la liste fermée est porté par au moins une scène",
+    declMorts.length === 0, declMorts.join(",") || `${D.DECLENCHEURS.length} déclencheurs vivants`);
+
+  /* ================================================================== */
+  /* LE NOM SUR LA TABLE (Mael, 02/09)                                  */
+  /* ================================================================== */
+  /* Le marqueur `{gars}` n'a de sens que là où un nom est TOUJOURS
+     fourni : le sujet `un_gars`. Ailleurs il s'afficherait tel quel,
+     accolades comprises — c'est la faute la plus visible qui soit. */
+  const marqueurAilleurs = toutes.filter((s) => s.sujet !== "un_gars"
+    && (/\{gars\}/.test(s.texte)
+        || (s.choix || []).some((c) => /\{gars\}/.test(c.lab) || /\{gars\}/.test(c.r))));
+  dit("le nom d'un combattant ne s'écrit que là où il y en a un",
+    marqueurAilleurs.length === 0, marqueurAilleurs.map((s) => s.cle).slice(0, 4).join(" "));
+
+  /* Et il faut qu'il se voie : un sujet qui demande de choisir un homme
+     et n'en dit jamais le nom, c'est la moitié du travail. */
+  const dGars = toutes.filter((s) => s.sujet === "un_gars");
+  const nommees = dGars.filter((s) => /\{gars\}/.test(s.texte)
+    || (s.choix || []).some((c) => /\{gars\}/.test(c.lab) || /\{gars\}/.test(c.r)));
+  dit("le combattant choisi est nommé dans la plupart de ces scènes",
+    nommees.length >= dGars.length * 0.6,
+    `${nommees.length} scènes sur ${dGars.length} disent son nom`);
+
+  /* nommer() rend une COPIE : le contenu est partagé par tous les coachs
+     de la salle, le réécrire en place le salirait pour tout le monde. */
+  const av = dGars.find((s) => /\{gars\}/.test(s.texte));
+  const ap = D.nommer(av, "Karim Belkacem");
+  dit("dire une scène pour un homme ne laisse aucune accolade",
+    !!ap && !/\{gars\}/.test(ap.texte)
+    && ap.choix.every((c) => !/\{gars\}/.test(c.lab) && !/\{gars\}/.test(c.r)));
+  dit("et n'abîme pas le contenu partagé — c'est une copie",
+    /\{gars\}/.test(av.texte) && ap !== av && ap.choix[0] !== av.choix[0]);
+
+  /* Les déclencheurs de l'homme choisi sont TOUS faux sans nom : sinon
+     une scène écrite pour « son poulain » sortirait pour un inconnu. */
+  const DU_GARS = ["son_poulain", "pas_son_poulain", "gars_jeune", "gars_vieux",
+                   "gars_cuit", "gars_lance", "gars_qui_doute", "gars_blesse"];
+  dit("aucune scène de l'homme choisi ne sort tant qu'aucun nom n'est posé",
+    DU_GARS.every((d) => D.tient(d, { entente: 55 }) === false));
+  dit("et elles sortent dès qu'il y en a un",
+    D.tient("son_poulain", { gars: "x", garsPoulain: true })
+    && D.tient("pas_son_poulain", { gars: "x" })
+    && D.tient("gars_cuit", { gars: "x", garsCuit: true })
+    && !D.tient("son_poulain", { gars: "x" }));
+
   /* Et chaque effet déclaré doit être SERVI par au moins une réplique :
      un effet que personne ne porte est du code que rien n'atteint. */
   const servis = new Set(tousChoix.map((c) => c.effet).filter(Boolean));

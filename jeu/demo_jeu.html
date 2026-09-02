@@ -7482,6 +7482,49 @@ function ctxCoach(c){
   };
 }
 
+/* ==================================================================== */
+/* L'HOMME POSE SUR LA TABLE (Mael, 02/09)                              */
+/* ==================================================================== */
+/* /!\ « des trucs dans les coachs ou je parle de quelqu'un, on sait pas
+   qui c'est ». Il avait raison, et c'etait pire que ce qu'il voyait : le
+   sujet « lui parler d'un de tes hommes » ne demandait JAMAIS lequel, et
+   les quatre effets qui touchent un combattant choisissaient l'homme
+   TOUT SEULS — le premier cuit, le premier espoir, le premier qui monte.
+   On croyait parler de quelqu'un, le jeu appliquait a un autre. */
+
+/** Ceux dont on peut parler : tous ceux qu'on a sous contrat, les pros
+ *  d'abord. Un retraite n'est plus un sujet de conversation. */
+function garsDontOnPeutParler(){
+  return EFFECTIF.filter(f=>MESGARS[f.id]&&!MESGARS[f.id].retraite)
+    .sort((a,b)=>((a.gr==="pro"?0:a.gr==="amateur"?1:2)-(b.gr==="pro"?0:b.gr==="amateur"?1:2))
+      ||((FICHES[b.id]||{}).age||0)-((FICHES[a.id]||{}).age||0));
+}
+
+/**
+ * Ce que le coach sait de CET homme-la. /!\ CHAQUE CHAMP EST UN
+ * DECLENCHEUR de la liste fermee de coach_dialogue.js, et tous sont faux
+ * tant qu'aucun nom n'est pose : c'est ce qui empeche une scene ecrite
+ * pour son poulain de sortir au sujet d'un inconnu.
+ */
+function ctxDuGars(c,id){
+  const f=EFFECTIF.find(x=>x.id===id), l=MESGARS[id], fi=FICHES[id]||{};
+  if(!f||!l)return {gars:null};
+  /* La serie SIGNEE : `bilan.serie` ne compte que les victoires et
+     retombe a zero sur une defaite — elle ne sait pas dire « il ne gagne
+     plus ». Les trois derniers resultats, eux, le savent. */
+  const der=(l.vie&&l.vie.derniers)||[];
+  let ko=0; for(let i=der.length-1;i>=0&&der[i]==="D";i--)ko++;
+  const serie=(l.bilan&&l.bilan.serie)||0;
+  return {
+    gars:id,
+    garsPoulain:c.poulain===id,
+    garsAge:fi.age||FICHES[id]&&FICHES[id].age||0,
+    garsCuit:f.fraicheur!==undefined&&f.fraicheur<40&&!l.menage,
+    garsSerie:serie>0?serie:-ko,
+    garsBlesse:!!l.blessure,
+  };
+}
+
 /** Ouvrir le bureau. `moment` absent = TU vas le voir (les sujets). */
 function ouvrirBureauCoach(nom,moment){
   const c=typeof nom==="object"?nom:coachParNom(nom);
@@ -7513,12 +7556,39 @@ function fermerBureauCoach(){
   rendre();
 }
 
-/** Le joueur ouvre un sujet. */
+/** Le joueur ouvre un sujet. /!\ « un_gars » DEMANDE D'ABORD QUI : sans
+ *  nom, la scene parlerait d'un inconnu et l'effet toucherait au hasard. */
 function sujetBureauCoach(cle){
   if(!BUREAU)return;
   BUREAU.reponse=null;
+  if(cle==="un_gars"&&!BUREAU.gars){
+    if(!garsDontOnPeutParler().length)
+      return toast("Tu n'as personne sous contrat dont lui parler.");
+    BUREAU.choixGars=true; rendreBureauCoach(); return;
+  }
   MMA.coach_dialogue.poser(BUREAU.E,"bureau",cle);
   rendreBureauCoach();
+}
+
+/** Le nom est pose. La situation de cet homme entre dans celle que le
+ *  coach lit — donc les scenes qui lui sont propres deviennent jouables. */
+function choisirGarsBureau(id){
+  if(!BUREAU)return;
+  const f=EFFECTIF.find(x=>x.id===id); if(!f)return;
+  /* /!\ DEUX NOMS, ET C'EST VOULU. Dans la bouche du coach c'est le nom
+     COURT — on ne dit pas le nom complet et le surnom d'un homme qu'on
+     voit tous les jours. Le bandeau, lui, porte le nom entier, parce
+     qu'il repond a « de qui parle-t-on », pas a « comment on l'appelle ». */
+  BUREAU.gars={id,nom:id,complet:(FICHES[id]||{}).nom||id};
+  Object.assign(BUREAU.E.ctx,ctxDuGars(BUREAU.c,id));
+  BUREAU.choixGars=false;
+  MMA.coach_dialogue.poser(BUREAU.E,"bureau","un_gars");
+  rendreBureauCoach();
+}
+
+/** Dire un texte pour l'homme du jour — le marqueur du contenu partage. */
+function ditPourLeGars(txt){
+  return BUREAU&&BUREAU.gars?String(txt).replace(/\{gars\}/g,BUREAU.gars.nom):txt;
 }
 
 function repondreBureauCoach(k){
@@ -7532,13 +7602,22 @@ function repondreBureauCoach(k){
      pas — et un « oui » qui ne fait rien est pire qu'un non. */
   let mot=null;
   if(r.effet){
-    const a=appliquerEffetDialogue(c,r.effet);
+    /* /!\ LA CIBLE : l'effet porte sur l'homme QUE LE JOUEUR A NOMME,
+       jamais sur celui que le jeu aurait choisi a sa place. */
+    const a=appliquerEffetDialogue(c,r.effet,BUREAU.gars?BUREAU.gars.id:null);
     mot=a.mot||null;
     if(!a.ok){ bougerEntenteCoach(c,-3,"une parole en l'air");
       mot=a.mot||"◆ Il a entendu. Rien n'a bougé. C'est pire que rien."; }
   }
-  BUREAU.reponse={r:r.r,mot,suite:r.suite};
+  BUREAU.reponse={r:ditPourLeGars(r.r),mot,suite:r.suite};
   couvertureBouge();
+  rendreBureauCoach();
+}
+
+/** Reposer le nom : on referme la liste sans rien avoir dit. */
+function annulerChoixGars(){
+  if(!BUREAU)return;
+  BUREAU.choixGars=false;
   rendreBureauCoach();
 }
 
@@ -7560,8 +7639,29 @@ function rendreBureauCoach(){
         :B.moment==="bord_du_tapis"?"Au bord du tapis":"Le bureau"}</div>
       <div class="nom">${c.nom}</div>
       <div class="sous">${MMA.coach.libDe(MMA.coach.axePrincipal(c))} · ${ditGroupes(c)} · ${carr.mot}</div>
+      ${B.gars?`<div class="sous" style="color:#e8c07a">Sur la table : ${B.gars.complet}</div>`:""}
     </div>`;
 
+  /* 0. QUI ? /!\ ON NE PARLE PAS D'UN INCONNU. Cet ecran est toute la
+        difference entre « un de tes hommes » et un homme. */
+  if(B.choixGars){
+    z.innerHTML=tete
+      +`<div class="cp-il">Tu poses un nom sur la table. Lequel ?</div>`
+      +`<div class="cp-choix cp-sujets">${garsDontOnPeutParler().map(f=>{
+          const l=MESGARS[f.id]||{}, fi=FICHES[f.id]||{};
+          const b=l.bilan||{v:0,d:0};
+          const etat=l.blessure?"à l'arrêt"
+            :(f.fraicheur!==undefined&&f.fraicheur<40&&!l.menage)?"au bout du rouleau"
+            :(b.serie||0)>=2?"sur une série"
+            :l.menage?"au repos":"";
+          const soi=BUREAU.c.poulain===f.id?" · le sien":"";
+          return `<button onclick="choisirGarsBureau('${f.id}')">
+            <b>${fi.nom||f.id}</b><br><span style="font-size:12.5px;color:#8b9aab">${
+            f.gr==="pro"?"pro":f.gr==="amateur"?"amateur":"loisir"} · ${ansDe(fi.age)} ans · ${
+            b.v}-${b.d}${etat?" · "+etat:""}${soi}</span></button>`;}).join("")}</div>`
+      +`<button class="cp-suite" onclick="annulerChoixGars()">Finalement, non</button>`;
+    return;
+  }
   /* 1. IL VIENT DE REPONDRE. */
   if(B.reponse){
     z.innerHTML=tete
@@ -7572,8 +7672,11 @@ function rendreBureauCoach(){
     return;
   }
   /* 2. UNE SCENE EST OUVERTE. */
-  const sc=B.E.encours;
-  if(sc){
+  const sc0=B.E.encours;
+  if(sc0){
+    /* /!\ NOMMER REND UNE COPIE : le contenu est partage par tous les
+       coachs de la salle, on ne le reecrit jamais en place. */
+    const sc=MMA.coach_dialogue.nommer(sc0,B.gars?B.gars.nom:null);
     z.innerHTML=tete
       +`<div class="cp-il">${sc.texte}</div>`
       +`<div class="cp-choix">${(sc.choix||[]).map((x,k)=>
@@ -7603,7 +7706,7 @@ function rendreBureauCoach(){
  * applique aux demandes du staff, et le banc 39 le rejoue sur cette
  * table : une cle qui tombe dans le vide fait ECHOUER le banc.
  */
-function appliquerEffetDialogue(c,effet){
+function appliquerEffetDialogue(c,effet,cible){
   switch(effet){
     case "promettre_argent":{
       if(c.promesse)return {ok:false,mot:"◆ Tu lui as déjà promis quelque chose. Il attend toujours."};
@@ -7636,9 +7739,14 @@ function appliquerEffetDialogue(c,effet){
       return {ok:true,mot:`◆ Il prend ${MMA.coach.libDe(a).toLowerCase()} chez ${g==="pro"?"les pros":"les amateurs"} — en plus du reste.`};
     }
     case "lui_confier_un_gars":{
+      /* /!\ LA CIBLE D'ABORD. Sans nom pose (au bord du tapis, au
+         debrief), on retombe sur celui qu'il a en tete — mais des que le
+         joueur a designe quelqu'un, c'est CELUI-LA et pas un autre. */
       const x=ctxCoach(c);
-      const qui=x.espoir||x.poulain;
+      const qui=cible||x.espoir||x.poulain;
       if(!qui)return {ok:false,mot:"◆ Il n'a personne en tête aujourd'hui."};
+      if(!MESGARS[qui]||MESGARS[qui].retraite)
+        return {ok:false,mot:"◆ Cet homme-là n'est plus à la salle."};
       if(staffDe().some(a=>a!==c&&a.poulain===qui))
         return {ok:false,mot:"◆ Quelqu'un d'autre l'a déjà sous son aile. Il ne va pas le disputer."};
       if(c.poulain===qui)return {ok:false,mot:"◆ Il l'a déjà."};
@@ -7647,12 +7755,19 @@ function appliquerEffetDialogue(c,effet){
     }
     case "lui_rendre_un_gars":{
       if(!c.poulain)return {ok:false,mot:"◆ Il n'a personne sous son aile."};
+      if(cible&&c.poulain!==cible)
+        return {ok:false,mot:`◆ ${lienGars(cible)} n'est pas le sien. Il ne peut pas rendre ce qu'il n'a pas.`};
       const q=c.poulain; c.poulain=null;
       return {ok:true,mot:`◆ ${lienGars(q)} retourne dans le groupe.`};
     }
     case "le_mettre_au_coin":{
-      const qui=Object.keys(MESGARS).find(k=>MESGARS[k].combatPrevu
-        &&MESGARS[k].combatPrevu.jourCombat-t.jour<=28);
+      const monte=(k)=>MESGARS[k]&&MESGARS[k].combatPrevu
+        &&MESGARS[k].combatPrevu.jourCombat-t.jour<=28;
+      const qui=cible&&monte(cible)?cible
+        :cible?null
+        :Object.keys(MESGARS).find(monte);
+      if(cible&&!qui)
+        return {ok:false,mot:`◆ ${lienGars(cible)} ne monte pas dans les semaines qui viennent. Il n'y a pas de coin à tenir.`};
       if(!qui)return {ok:false,mot:"◆ Personne ne monte dans les semaines qui viennent."};
       if(c.coinDe===qui)return {ok:false,mot:"◆ Il y est déjà."};
       const cout=Math.round((c.salaire||40)*1.5);
@@ -7662,10 +7777,12 @@ function appliquerEffetDialogue(c,effet){
     }
     case "menager_un_gars":{
       const x=ctxCoach(c);
-      if(!x.crame)return {ok:false,mot:"◆ Personne n'est à bout, en ce moment."};
-      const l=MESGARS[x.crame]; if(!l)return {ok:false};
+      const qui=cible||x.crame;
+      if(!qui)return {ok:false,mot:"◆ Personne n'est à bout, en ce moment."};
+      const l=MESGARS[qui]; if(!l||l.retraite)return {ok:false,mot:"◆ Cet homme-là n'est plus à la salle."};
+      if(l.menage)return {ok:false,mot:`◆ ${lienGars(qui)} lève déjà le pied. Il le voit, et il le dit.`};
       l.menage=true;
-      return {ok:true,mot:`◆ ${lienGars(x.crame)} lève le pied — il récupère au lieu de forcer.`};
+      return {ok:true,mot:`◆ ${lienGars(qui)} lève le pied — il récupère au lieu de forcer.`};
     }
     case "arbitrer_pour_lui":{
       c.arbitrages=(c.arbitrages||0)+1;

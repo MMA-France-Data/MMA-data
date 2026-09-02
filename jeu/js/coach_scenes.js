@@ -344,53 +344,53 @@ bureau.push(
 /* ==================================================================== */
 bureau.push(
 {cle:"ung_01",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Tu poses un nom sur la table. Il ne répond pas tout de suite : il cherche à savoir pourquoi c'est celui-là que tu sors aujourd'hui.",
+ texte:"Tu poses le nom de {gars} sur la table. Il ne répond pas tout de suite : il cherche à savoir pourquoi c'est celui-là que tu sors aujourd'hui.",
  choix:[
   {lab:"Lui dire franchement ce qui t'inquiète",r:"Il pose sa version à côté de la tienne. Les deux se recoupent sur un point que tu n'avais pas vu.",d:3,ton:"franc"},
   {lab:"Lui demander sa version avant de donner la tienne",r:"Il parle librement, sans savoir ce que tu penses. C'est comme ça qu'on obtient un vrai avis.",d:4,ton:"malin"},
-  {lab:"Lui demander s'il le garderait, à ta place",r:"Il prend la question au sérieux et met un long moment avant de répondre non.",d:3,ton:"grave"},
+  {lab:"Lui demander s'il garderait {gars}, à ta place",r:"Il prend la question au sérieux et met un long moment avant de répondre non.",d:3,ton:"grave"},
   {lab:"Lui demander de le sanctionner sans discuter",r:"Il exécute. Il ne comprend pas, il n'a pas demandé à comprendre, et ça se sent tout le mois.",d:-4,ton:"sec"}]},
 
-{cle:"ung_02",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Le nom que tu sors, c'est celui de son poulain. Il se redresse d'un coup, prêt à défendre, avant même de savoir ce que tu vas dire.",
+{cle:"ung_02",sujet:"un_gars",si:"son_poulain",vie:"courante",
+ texte:"Le nom que tu sors, c'est {gars} — le sien. Il se redresse d'un coup, prêt à défendre, avant même de savoir ce que tu vas dire.",
  choix:[
   {lab:"Le rassurer tout de suite : ce sont de bonnes nouvelles",r:"Il se rassoit et se met à parler du gamin pendant vingt minutes, sans respirer.",d:4,ton:"chaud"},
-  {lab:"Lui dire que tu envisages de le confier à quelqu'un d'autre",r:"Il encaisse debout. Il ne discute pas, ce qui est la pire réaction possible.",d:-5,ton:"grave",effet:"lui_rendre_un_gars"},
+  {lab:"Lui dire que tu envisages de confier {gars} à quelqu'un d'autre",r:"Il encaisse debout. Il ne discute pas, ce qui est la pire réaction possible.",d:-5,ton:"grave",effet:"lui_rendre_un_gars"},
   {lab:"Lui demander s'il est trop attaché",r:"Il te répond que oui, évidemment, et que c'est le seul moyen de faire ce métier correctement.",d:2,ton:"franc"}]},
 
 {cle:"ung_03",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Tu lui parles d'un combattant qui s'entraîne bien mais qui n'arrive à rien en cage. Il te dit que c'est le cas le plus difficile qu'il connaisse.",
+ texte:"Tu lui parles de {gars}, qui s'entraîne bien mais qui n'arrive à rien en cage. Il te dit que c'est le cas le plus difficile qu'il connaisse.",
  choix:[
   {lab:"Lui demander de le préparer autrement, à sa main libre",r:"Il change tout : le rythme, les partenaires, l'heure des séances. Le suivant se passe mieux.",d:4,ton:"clair",effet:"lui_confier_un_gars"},
   {lab:"Lui proposer de le sortir de la compétition un moment",r:"Il trouve ça courageux. Le gars revient six mois plus tard, entier.",d:3,ton:"calme",effet:"menager_un_gars"},
   {lab:"Lui demander de le pousser plus fort",r:"Il pousse. Le gamin casse, et pas seulement au niveau du corps.",d:-4,ton:"dur"}]},
 
 {cle:"ung_04",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Tu lui parles d'un homme qui a demandé à changer de coach. Il ne le savait pas, et tu le vois le comprendre en direct.",
+ texte:"Tu lui apprends que {gars} a demandé à changer de coach. Il ne le savait pas, et tu le vois le comprendre en direct.",
  choix:[
   {lab:"Lui demander ce qu'il en pense avant de décider",r:"Il te répond honnêtement, y compris sur ce qui est sa faute à lui. C'est rare et ça vaut cher.",d:4,ton:"franc"},
-  {lab:"Lui dire que tu refuses et que le gars reste avec lui",r:"Il apprécie le soutien et il te dit quand même que ce n'est peut-être pas le bon choix.",d:3,ton:"loyal"},
+  {lab:"Lui dire que tu refuses et que {gars} reste avec lui",r:"Il apprécie le soutien et il te dit quand même que ce n'est peut-être pas le bon choix.",d:3,ton:"loyal"},
   {lab:"Lui annoncer que c'est déjà acté",r:"Il ne dit rien pendant un temps très long, puis il demande si c'est tout.",d:-5,ton:"froid",effet:"lui_rendre_un_gars"}]},
 
 {cle:"ung_05",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Tu lui parles d'un jeune qui progresse trop vite et qui commence à se croire arrivé. Il te dit qu'il attendait que quelqu'un d'autre le voie.",
+ texte:"Tu lui parles de {gars}, qui progresse trop vite et qui commence à se croire arrivé. Il te dit qu'il attendait que quelqu'un d'autre le voie.",
  choix:[
   {lab:"Lui demander de le remettre à sa place, en séance",r:"Il lui organise une soirée très longue et très humiliante. Le gamin revient le lendemain.",d:4,ton:"ferme"},
   {lab:"Lui demander de lui donner un rôle auprès des débutants",r:"Le gamin découvre en une semaine tout ce qu'il ne sait pas expliquer. Ça le calme mieux qu'une correction.",d:5,ton:"malin"},
   {lab:"Lui dire de le laisser se cogner tout seul",r:"Il laisse. Le gamin se cogne, et il emporte deux autres avec lui.",d:-3,ton:"neutre"}]},
 
 {cle:"ung_06",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Tu lui parles d'un vétéran du groupe qui prend de la place, donne des consignes à sa place, et à qui personne n'ose rien dire.",
+ texte:"Tu lui parles de {gars}, qui prend de la place, donne des consignes à sa place, et à qui personne n'ose rien dire.",
  choix:[
   {lab:"Lui demander de le recadrer, avec ton appui public",r:"Il le recadre en sachant que tu es derrière. Le vestiaire comprend la hiérarchie en une séance.",d:4,ton:"ferme"},
   {lab:"Lui suggérer d'en faire un relais officiel",r:"Le vétéran devient utile au lieu d'être encombrant. C'est la solution la moins coûteuse.",d:5,ton:"malin"},
   {lab:"Lui demander de laisser courir, il partira bien",r:"Il laisse courir. Le vétéran reste deux ans de plus et prend encore plus de place.",d:-3,ton:"mou"}]},
 
 {cle:"ung_07",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Tu lui parles d'un homme qui a raté sa pesée. Il n'a rien dit pendant la semaine, et maintenant il a besoin de savoir ce que tu vas décider.",
+ texte:"Tu lui parles de la pesée ratée de {gars}. Il n'a rien dit pendant la semaine, et maintenant il a besoin de savoir ce que tu vas décider.",
  choix:[
   {lab:"Lui demander comment on évite que ça recommence",r:"Il a déjà la réponse : la balance dans le couloir, tous les mardis, devant lui.",d:4,ton:"clair"},
-  {lab:"Le mettre au coin du prochain combat pour reprendre la main",r:"Il accepte la charge et il la prend au sérieux jusqu'au bout de la nuit.",d:3,ton:"engage",effet:"le_mettre_au_coin"},
+  {lab:"Le mettre dans le coin de {gars} pour reprendre la main",r:"Il accepte la charge et il la prend au sérieux jusqu'au bout de la nuit.",d:3,ton:"engage",effet:"le_mettre_au_coin"},
   {lab:"Lui reprocher de ne pas l'avoir vu venir",r:"Il te répond que si, il l'avait vu, et qu'il te l'avait dit. Il a raison, en plus.",d:-5,ton:"dur"}]},
 
 {cle:"ung_08",sujet:"un_gars",si:"toujours",vie:"saison",
@@ -400,15 +400,15 @@ bureau.push(
   {lab:"Lui laisser le droit de ne pas répondre",r:"Il te remercie de ne pas insister, et il te donne quand même le nom un mois plus tard.",d:4,ton:"respect"},
   {lab:"Lui reprocher de ne pas oser trancher",r:"Il te répond qu'il tranche tous les jours, et que ce sont des gens, pas des cartes.",d:-4,ton:"sec"}]},
 
-{cle:"ung_09",sujet:"un_gars",si:"a_un_espoir",vie:"courante",
- texte:"Le gamin qu'il suit commence à intéresser du monde à l'extérieur. Il te le dit lui-même, alors qu'il aurait pu se taire.",
+{cle:"ung_09",sujet:"un_gars",si:"gars_jeune",vie:"courante",
+ texte:"Il t'apprend que {gars} commence à intéresser du monde à l'extérieur. Il te le dit lui-même, alors qu'il aurait pu se taire.",
  choix:[
   {lab:"Le remercier de te l'avoir dit",r:"Il hausse les épaules, mais il est content que tu l'aies relevé.",d:4,ton:"chaud"},
-  {lab:"Lui demander de garder le gamin au chaud",r:"Il s'en occupe, et il fait ça bien : le gamin ne saura même pas qu'on l'a courtisé.",d:3,ton:"malin"},
+  {lab:"Lui demander de garder {gars} au chaud",r:"Il s'en occupe, et il fait ça bien : le gamin ne saura même pas qu'on l'a courtisé.",d:3,ton:"malin"},
   {lab:"Lui demander pourquoi il ne t'a pas prévenu plus tôt",r:"Il te répond qu'il vient de l'apprendre. C'était vrai, et tu l'apprends trop tard.",d:-4,ton:"soupcon"}]},
 
-{cle:"ung_10",sujet:"un_gars",si:"apres_defaite",vie:"courante",
- texte:"Tu lui parles de celui qui vient de perdre. Il a passé la nuit à y penser et il a déjà décidé ce qu'il fallait changer.",
+{cle:"ung_10",sujet:"un_gars",si:"gars_qui_doute",vie:"courante",
+ texte:"Tu lui parles de {gars}, qui n'y arrive plus. Il a passé la nuit à y penser et il a déjà décidé ce qu'il fallait changer.",
  choix:[
   {lab:"Lui laisser la main complète sur la suite",r:"Il repart avec un poids et un plan. Les deux lui vont bien.",d:4,ton:"engage",effet:"lui_confier_un_gars"},
   {lab:"Lui demander de ne rien changer pendant un mois",r:"Il trouve ça dur à tenir et il reconnaît, plus tard, que c'était la bonne décision.",d:2,ton:"calme"},
@@ -416,57 +416,57 @@ bureau.push(
   {lab:"Lui dire que le gars n'était pas prêt, et que c'est son travail",r:"Il ne bronche pas. Il vient d'apprendre ce que tu feras la prochaine fois que ça arrivera.",d:-6,ton:"dur"}]},
 
 {cle:"ung_11",sujet:"un_gars",si:"toujours",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
- texte:"Tu lui parles d'un combattant, et il te répond par une question sur toi : est-ce que tu comptes vraiment aller au bout avec ce gars, ou est-ce qu'il perd son temps.",
+ texte:"Tu lui parles de {gars}, et il te répond par une question sur toi : est-ce que tu comptes vraiment aller au bout avec lui, ou est-ce qu'il perd son temps.",
  choix:[
   {lab:"Lui dire que oui, et l'engager avec toi",r:"Il te prend au mot, immédiatement, et il organise deux ans à voix haute.",d:4,ton:"engage"},
   {lab:"Lui répondre honnêtement que tu ne sais pas",r:"Il préfère de loin cette réponse à une promesse en l'air.",d:3,ton:"franc"},
   {lab:"Lui dire que ce n'est pas sa décision",r:"Il te répond que non, mais que c'est sa vie qui passe dedans.",d:-4,ton:"tendu"}]},
 
 {cle:"ung_12",sujet:"un_gars",si:"toujours",vie:"courante",voix:["taiseux","chaleureux","technicien"],
- texte:"Tu poses le nom, et au lieu de parler du combattant, il te décrit une séance : ce que le gars fait quand il croit que personne ne regarde.",
+ texte:"Tu poses le nom, et au lieu de parler du combattant, il te décrit une séance : ce que {gars} fait quand il croit que personne ne regarde.",
  choix:[
   {lab:"Le laisser raconter jusqu'au bout",r:"Ce détail-là vaut tous les bilans. Tu changes d'avis sur le gars en cinq minutes.",d:4,ton:"clair"},
   {lab:"Lui demander ce que ça veut dire, concrètement",r:"Il traduit : ce gars-là ne trichera jamais, mais il ne demandera jamais d'aide non plus.",d:4,ton:"calme"},
   {lab:"Lui demander de venir à l'essentiel",r:"Il abrège. Tu as gagné trois minutes et perdu ce qui comptait.",d:-3,ton:"pressé"}]},
 
 {cle:"ung_13",sujet:"un_gars",si:"toujours",vie:"courante",voix:["bourru","taiseux","chaleureux"],
- texte:"Tu lui parles d'un gars qu'il n'aime pas. Il le dit tout de suite, pour que tu saches d'où il parle avant de l'écouter.",
+ texte:"Tu poses le nom de {gars}, et il t'annonce d'emblée qu'il ne l'aime pas, pour que tu saches d'où il parle avant de l'écouter.",
  choix:[
   {lab:"Le remercier d'avoir prévenu, puis écouter quand même",r:"Il fait l'effort d'être juste, et il y arrive presque. Ça se respecte.",d:4,ton:"franc"},
   {lab:"Lui demander pourquoi il ne l'aime pas",r:"La raison est ancienne et personnelle. Elle explique bien plus que ce seul dossier.",d:3,ton:"grave"},
-  {lab:"Lui retirer le gars pour éviter les problèmes",r:"Il approuve, soulagé, et il perd un peu de lui-même dans l'affaire.",d:0,ton:"neutre",effet:"lui_rendre_un_gars"},
+  {lab:"Lui retirer {gars} pour éviter les problèmes",r:"Il approuve, soulagé, et il perd un peu de lui-même dans l'affaire.",d:0,ton:"neutre",effet:"lui_rendre_un_gars"},
   {lab:"Lui dire de faire son travail sans état d'âme",r:"Il le fait. Le gars le sent, et il s'en va au printemps.",d:-4,ton:"froid"}]},
 
 {cle:"ung_14",sujet:"un_gars",si:"toujours",vie:"saison",voix:["pedagogue","ambitieux","technicien"],
- texte:"Il te dit qu'il faudrait décider maintenant si ce combattant est un projet ou un employé, parce qu'on ne travaille pas pareil, et qu'à force de ne pas choisir on obtient les défauts des deux.",
+ texte:"Il te dit qu'il faudrait décider maintenant si {gars} est un projet ou un employé, parce qu'on ne travaille pas pareil, et qu'à force de ne pas choisir on obtient les défauts des deux.",
  choix:[
   {lab:"Trancher : c'est un projet, et vous y mettez les moyens",r:"Il repart avec de quoi remplir deux ans. Il en avait besoin plus qu'il ne le disait.",d:4,ton:"clair",effet:"lui_confier_un_gars"},
   {lab:"Trancher : c'est un employé, et on est honnête là-dessus",r:"Il n'aime pas la réponse, mais il apprécie énormément que tu l'aies donnée.",d:2,ton:"franc"},
   {lab:"Lui dire que vous verrez plus tard",r:"Il te répond que plus tard, c'est la façon polie de dire que la réponse est non.",d:-4,ton:"tendu"}]},
 
 {cle:"ung_15",sujet:"un_gars",si:"toujours",vie:"courante",voix:["bourru","ambitieux","technicien"],
- texte:"Tu lui parles d'un homme dont le combat approche, et il te dit d'entrée qu'il veut être dans le coin ce soir-là, pas dans les gradins.",
+ texte:"Tu lui parles de {gars}, dont le combat approche, et il te dit d'entrée qu'il veut être dans le coin ce soir-là, pas dans les gradins.",
  choix:[
   {lab:"Le mettre au coin, et le lui dire tout de suite",r:"Il ne le montre pas, mais il travaillera deux fois plus cette semaine.",d:4,ton:"engage",effet:"le_mettre_au_coin"},
   {lab:"Lui demander pourquoi il y tient",r:"Il t'explique. Ce n'est pas de la vanité, c'est qu'il connaît le gars mieux que personne.",d:3,ton:"calme"},
   {lab:"Lui dire que le coin, c'est pour l'autre coach",r:"Il l'accepte sans discuter et il regarde le combat depuis les gradins, mains dans les poches.",d:-3,ton:"sec"}]},
 
 {cle:"ung_16",sujet:"un_gars",si:"toujours",vie:"courante",voix:["pedagogue","taiseux","chaleureux"],
- texte:"Tu lui parles d'un gars qui a des soucis à l'extérieur de la salle et qui ne veut pas en parler. Il te dit qu'il est déjà au courant, et qu'il ne t'a rien dit exprès.",
+ texte:"Tu lui parles des soucis que {gars} traîne en dehors de la salle et dont il ne veut pas parler. Il te dit qu'il est déjà au courant, et qu'il ne t'a rien dit exprès.",
  choix:[
   {lab:"Lui dire qu'il a bien fait",r:"Il souffle. Il ne savait pas comment tu prendrais ça, et il s'y préparait depuis une semaine.",d:5,ton:"chaud"},
   {lab:"Lui demander seulement s'il faut alléger le gars",r:"Il dit oui. C'est fait le jour même, et personne d'autre n'a besoin de savoir pourquoi.",d:4,ton:"calme",effet:"menager_un_gars"},
   {lab:"Lui reprocher de t'avoir caché quelque chose",r:"Il te répond que ce n'était pas à lui de te le dire. Vous avez tous les deux raison, et ça ne se règle pas.",d:-4,ton:"tendu"}]},
 
 {cle:"ung_17",sujet:"un_gars",si:"competition",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
- texte:"Il te dit qu'un de tes hommes est prêt pour un cran au-dessus, et qu'attendre encore serait la seule vraie erreur possible.",
+ texte:"Il te dit que {gars} est prêt pour un cran au-dessus, et qu'attendre encore serait la seule vraie erreur possible.",
  choix:[
   {lab:"Lui faire confiance et viser plus haut",r:"Il repart en marchant vite. Il n'avait pas eu ça depuis longtemps.",d:4,ton:"engage"},
   {lab:"Lui demander ce qui se passe si vous vous trompez",r:"Il a la réponse : on perd un combat, pas un homme. Et c'est juste.",d:3,ton:"clair"},
   {lab:"Lui dire d'attendre encore deux victoires",r:"Il obéit. La fenêtre se referme, et vous ne le saurez que l'an prochain.",d:-3,ton:"prudent"}]},
 
-{cle:"ung_18",sujet:"un_gars",si:"a_un_poulain",vie:"saison",voix:["taiseux","chaleureux","technicien"],
- texte:"Il te parle du gars qu'il a sous son aile comme d'une dette : il dit qu'il lui doit d'aller au bout, parce qu'il lui a promis quelque chose au début.",
+{cle:"ung_18",sujet:"un_gars",si:"son_poulain",vie:"saison",voix:["taiseux","chaleureux","technicien"],
+ texte:"Il te parle de {gars} comme d'une dette : il dit qu'il lui doit d'aller au bout, parce qu'il lui a promis quelque chose au début.",
  choix:[
   {lab:"Lui demander ce qu'il lui a promis",r:"Il te le dit, et c'est une promesse que la salle peut tenir. Vous la tenez.",d:5,ton:"grave"},
   {lab:"Lui dire que la salle est derrière lui",r:"Il te croit, et il te le rappellera le jour où il faudra payer.",d:3,ton:"chaud"},
@@ -480,7 +480,7 @@ bureau.push(
   {lab:"Enchaîner sur la suite de la saison",r:"Il te suit sur la suite. Ce moment-là ne reviendra pas.",d:-4,ton:"pressé"}]},
 
 {cle:"ung_20",sujet:"un_gars",si:"je_lui_ai_promis",vie:"courante",voix:["pedagogue","ambitieux","technicien"],
- texte:"Il te parle d'un combattant, puis il glisse, l'air de rien, que tu lui avais dit quelque chose il y a un moment et qu'il attend toujours.",
+ texte:"Il te parle de {gars}, puis il glisse, l'air de rien, que tu lui avais dit quelque chose il y a un moment et qu'il attend toujours.",
  choix:[
   {lab:"Reconnaître que tu n'as pas tenu, et donner une date",r:"Il note la date. Cette fois, il ne la redemandera pas : il la vérifiera.",d:3,ton:"franc"},
   {lab:"Tenir la promesse maintenant : son salaire monte aujourd'hui",r:"Il ne s'y attendait plus. C'est le genre de chose qu'un homme raconte encore dix ans après.",d:5,ton:"engage",effet:"monter_au_bareme"},
@@ -1453,6 +1453,13 @@ bord_du_tapis.push(
   {lab:"Lui proposer d'en reparler avec un café",r:"Il accepte et il arrive au café avec trois pages de plus.",d:3,ton:"chaud"},
   {lab:"Lui dire que tu ne comprends rien à ses dessins",r:"Il referme le carnet. Il ne te le remontrera pas.",d:-4,ton:"sec"}]},
 
+{cle:"bdt_13",si:"a_un_espoir",vie:"courante",
+ texte:"Il t'arrête au bord du tapis et te désigne, sans le nommer, un gamin du groupe du soir. Il te dit juste de venir voir la même chose jeudi prochain.",
+ choix:[
+  {lab:"Revenir jeudi, comme demandé",r:"Tu reviens. Tu vois la même chose, en mieux, et tu comprends pourquoi il t'a fait déplacer.",d:5,ton:"clair"},
+  {lab:"Lui demander de te dire tout de suite ce qu'il voit",r:"Il te le dit, et c'est moins convaincant en mots qu'en vrai. Il le sait, d'ailleurs.",d:2,ton:"neutre"},
+  {lab:"Lui dire que tu n'as pas le temps de venir voir des gamins",r:"Il retourne au tapis. Le gamin signera ailleurs dans l'année.",d:-5,ton:"pressé"}]},
+
 {cle:"bdt_12",si:"disperse",vie:"courante",voix:["bourru","ambitieux","technicien"],
  texte:"Il court d'un tapis à l'autre et te croise entre deux. Il te dit qu'il n'a pas trois minutes à toi, et c'est exactement le problème.",
  choix:[
@@ -1733,3 +1740,97 @@ porte.push(
 /* ==================================================================== */
 const SCENES = { bureau, bord_du_tapis, debrief, accrochage, porte };
 module.exports = { SCENES };
+
+/* ==================================================================== */
+/* SUJET 3 (suite) — CE QUE LE NOM SUR LA TABLE CHANGE                  */
+/* /!\ Ces scènes-là ne sortent QUE si le combattant choisi correspond.  */
+/*     C'est la moitié qui manquait : avant, on parlait d'un inconnu.   */
+/* ==================================================================== */
+bureau.push(
+{cle:"ung_21",sujet:"un_gars",si:"pas_son_poulain",vie:"courante",
+ texte:"Tu poses le nom de {gars} et il te fait remarquer, sans reproche, qu'il ne s'occupe pas de lui et qu'il te répondra donc de loin.",
+ choix:[
+  {lab:"Lui demander ce qu'il en voit quand même, de loin",r:"De loin, il voit deux choses que celui qui le suit de près ne voit plus. Elles sont justes.",d:4,ton:"clair"},
+  {lab:"Lui confier {gars} pour de bon",r:"Il prend, à condition de faire à sa manière. C'est la seule condition qu'il pose.",d:4,ton:"engage",effet:"lui_confier_un_gars"},
+  {lab:"Lui demander d'en parler avec celui qui le suit",r:"Ils en parlent le soir même. Ce qui en sort est meilleur que ce que l'un ou l'autre aurait dit.",d:3,ton:"calme"},
+  {lab:"Lui reprocher de ne pas s'intéresser à tout le groupe",r:"Il te répond qu'il s'intéresse à ceux qu'on lui donne, et qu'on ne lui a pas donné celui-là.",d:-4,ton:"sec"}]},
+
+{cle:"ung_22",sujet:"un_gars",si:"pas_son_poulain",vie:"courante",voix:["bourru","ambitieux","technicien"],
+ texte:"Il t'écoute parler de {gars} et il finit par lâcher qu'il le prendrait volontiers, mais qu'il ne demandera pas, parce que ça ne se fait pas entre coachs.",
+ choix:[
+  {lab:"Le lui donner, puisqu'il le veut",r:"Il n'a rien demandé et il a tout obtenu. Il travaillera comme un homme qui doit quelque chose.",d:5,ton:"franc",effet:"lui_confier_un_gars"},
+  {lab:"Lui demander ce qu'il ferait de lui",r:"Il déroule un an de travail en cinq minutes. Il y pense depuis bien plus longtemps que ce matin.",d:4,ton:"clair"},
+  {lab:"Lui dire que chacun garde ses hommes",r:"Il approuve, parce que c'est la règle qu'il vient d'énoncer lui-même. Ça lui coûte quand même.",d:-3,ton:"ferme"}]},
+
+{cle:"ung_23",sujet:"un_gars",si:"gars_cuit",vie:"courante",
+ texte:"Tu prononces le nom de {gars} et il te coupe : il te dit que cet homme-là est vide, qu'il donne le change à l'entraînement, et que ça se paiera en cage.",
+ choix:[
+  {lab:"Le faire lever le pied tout de suite",r:"Il allège la semaine sans en faire une affaire. Personne d'autre ne le remarque.",d:5,ton:"calme",effet:"menager_un_gars"},
+  {lab:"Lui demander depuis quand il le voit",r:"Depuis six semaines. Il te l'avait signalé une fois, en passant, et tu n'avais pas relevé.",d:3,ton:"grave"},
+  {lab:"Lui demander de tenir jusqu'au combat",r:"Il tient. Il te regarde d'une drôle de façon quand le combat se passe comme il l'avait dit.",d:-4,ton:"dur"}]},
+
+{cle:"ung_24",sujet:"un_gars",si:"gars_cuit",vie:"courante",voix:["pedagogue","taiseux","chaleureux"],
+ texte:"Il te parle de {gars} en baissant la voix, comme s'il craignait qu'on entende : ce n'est pas le corps qui a lâché, c'est le reste, et ça ne se voit sur aucun test.",
+ choix:[
+  {lab:"Lui demander de rester près de lui, sans rien changer d'autre",r:"Il le fait, discrètement, pendant des semaines. C'est ce qui remet l'homme debout.",d:5,ton:"chaud",effet:"menager_un_gars"},
+  {lab:"Lui demander ce qui l'a mis dans cet état",r:"Il sait. Ce n'est pas la salle, et ça explique tout ce que tu prenais pour de la paresse.",d:4,ton:"grave"},
+  {lab:"Lui dire que ça ne se mesure pas, donc que ça n'existe pas",r:"Il ne répond pas. Il ne te parlera plus jamais de ce qui ne se mesure pas.",d:-5,ton:"froid"}]},
+
+{cle:"ung_25",sujet:"un_gars",si:"gars_blesse",vie:"courante",
+ texte:"Tu lui parles de {gars}, à l'arrêt. Il te dit que le plus dur commence maintenant, et que ce n'est pas le genou le problème.",
+ choix:[
+  {lab:"Lui demander de garder l'homme dans le groupe pendant l'arrêt",r:"Il lui invente un rôle dès le lendemain. L'homme vient tous les jours et il ne coule pas.",d:5,ton:"chaud"},
+  {lab:"Lui demander combien de temps, honnêtement",r:"Il donne une durée plus longue que celle du médecin, et il aura raison.",d:3,ton:"clair"},
+  {lab:"Lui dire de se concentrer sur ceux qui s'entraînent",r:"Il obéit. L'homme blessé ne remet plus les pieds à la salle et ne revient jamais.",d:-5,ton:"froid"}]},
+
+{cle:"ung_26",sujet:"un_gars",si:"gars_blesse",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
+ texte:"Il te dit que la blessure de {gars} n'est pas un accident : il l'a vue venir dans la façon dont l'homme se protégeait depuis un mois, et il n'a pas su l'arrêter.",
+ choix:[
+  {lab:"Lui dire que ce n'est pas à lui de tout arrêter tout seul",r:"Il encaisse mal le compliment et il en a besoin. Il travaillera mieux la semaine d'après.",d:4,ton:"franc"},
+  {lab:"Lui demander comment on repère ça plus tôt",r:"Il décrit trois signes. Ils entrent dans la routine de la salle et ils resserviront.",d:5,ton:"clair"},
+  {lab:"Lui dire qu'effectivement, il aurait dû l'arrêter",r:"Il ne se défend pas. Il se le disait déjà, et tu viens de le graver.",d:-6,ton:"dur"}]},
+
+{cle:"ung_27",sujet:"un_gars",si:"gars_lance",vie:"courante",
+ texte:"Tu poses le nom de {gars}, qui enchaîne. Il te dit que c'est exactement le moment où on fait les erreurs les plus chères, parce que tout marche.",
+ choix:[
+  {lab:"Lui demander ce qu'il ne faut surtout pas faire maintenant",r:"Il en cite deux. Vous les évitez toutes les deux, et la série continue.",d:5,ton:"clair"},
+  {lab:"Le mettre dans le coin pour le prochain",r:"Il prend la place et il la mérite. Il connaît l'homme mieux que personne en ce moment.",d:4,ton:"engage",effet:"le_mettre_au_coin"},
+  {lab:"Lui dire de ne rien casser tant que ça gagne",r:"Il te répond que c'est comme ça qu'on se réveille deux ans plus tard avec un homme qui plafonne.",d:-3,ton:"tendu"}]},
+
+{cle:"ung_28",sujet:"un_gars",si:"gars_lance",vie:"courante",voix:["taiseux","chaleureux","technicien"],
+ texte:"Il te parle de {gars} sans une once d'enthousiasme, alors que tout le monde n'a que ce nom à la bouche. Il t'explique qu'il regarde la façon, pas le résultat.",
+ choix:[
+  {lab:"Lui demander ce que la façon lui dit",r:"Elle lui dit qu'un défaut se creuse pendant que les victoires le cachent. Il a un dessin pour ça.",d:5,ton:"clair"},
+  {lab:"Lui demander de corriger, quitte à casser la série",r:"Il corrige. La série s'arrête, et l'homme est meilleur six mois plus tard.",d:4,ton:"ferme"},
+  {lab:"Lui dire de profiter comme tout le monde",r:"Il sourit poliment. C'est la deuxième fois que tu le vois faire semblant.",d:-3,ton:"leger"}]},
+
+{cle:"ung_29",sujet:"un_gars",si:"gars_vieux",vie:"courante",
+ texte:"Tu lui parles de {gars}, qui n'a plus l'âge d'encaisser ce qu'il encaissait. Il te dit qu'il faudra choisir, et bientôt, entre l'utiliser et le garder.",
+ choix:[
+  {lab:"Choisir de le garder, et le dire clairement",r:"Il te remercie d'avoir tranché. Il détestait porter cette question tout seul.",d:5,ton:"grave",effet:"menager_un_gars"},
+  {lab:"Lui demander combien de combats il lui reste",r:"Il répond un chiffre, à voix basse, et il n'aime pas sa propre réponse.",d:3,ton:"grave"},
+  {lab:"Lui demander de le préparer pour un dernier gros soir",r:"Il le prépare. Le soir venu, personne dans la salle ne respire normalement.",d:1,ton:"tendu",effet:"le_mettre_au_coin"},
+  {lab:"Lui dire qu'on l'use tant qu'il rapporte",r:"Il ne répond pas. Il vient d'apprendre ce que vaut un homme ici, et il en fait partie.",d:-6,ton:"froid"}]},
+
+{cle:"ung_30",sujet:"un_gars",si:"gars_vieux",vie:"saison",voix:["bourru","taiseux","chaleureux"],
+ texte:"Il te dit que {gars} lui a demandé, à lui et pas à toi, ce qu'il devrait faire de la fin de sa carrière. Il vient te le dire parce qu'il n'a pas voulu répondre seul.",
+ choix:[
+  {lab:"Lui dire de répondre honnêtement, et que la salle suivra",r:"Il répond honnêtement. La conversation qui suit décidera des trois années de cet homme.",d:5,ton:"grave"},
+  {lab:"Aller en parler tous les trois",r:"Vous en parlez. C'est inconfortable et personne ne regrette de l'avoir fait.",d:5,ton:"franc"},
+  {lab:"Lui demander de renvoyer le gars vers toi",r:"Il le renvoie. Le gars ne vient pas : ce n'est pas à toi qu'il voulait le demander.",d:-3,ton:"ferme"}]},
+
+{cle:"ung_31",sujet:"un_gars",si:"gars_jeune",vie:"courante",voix:["pedagogue","ambitieux","technicien"],
+ texte:"Il te dit que {gars} apprend plus vite que ce que la salle sait lui donner, et qu'il faudra bientôt l'envoyer se frotter ailleurs ou le regarder s'ennuyer.",
+ choix:[
+  {lab:"Lui demander d'organiser ça avec les salles qu'il connaît",r:"Il passe trois coups de téléphone. Le gamin part deux semaines et revient méconnaissable.",d:5,ton:"clair"},
+  {lab:"Le lui confier pour de bon, et le laisser décider",r:"Il prend, et il fait exactement ce qu'il avait annoncé, au calendrier près.",d:4,ton:"engage",effet:"lui_confier_un_gars"},
+  {lab:"Lui dire qu'on ne prête pas ses gamins aux voisins",r:"Il te répond que le gamin partira quand même, mais sans billet de retour.",d:-4,ton:"sec"}]},
+
+{cle:"ung_32",sujet:"un_gars",si:"son_poulain",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
+ texte:"Tu lui parles de {gars} et il te demande, très directement, si tu es en train de lui reprocher quelque chose ou de lui demander quelque chose.",
+ choix:[
+  {lab:"Lui dire que c'est une demande, et laquelle",r:"La demande est claire et il l'exécute sans discuter. La franchise a fait gagner une heure.",d:4,ton:"clair"},
+  {lab:"Lui dire que c'est un reproche, et lequel",r:"Il conteste un point sur trois, ce qui est honnête. Les deux autres sont corrigés dans la semaine.",d:2,ton:"ferme"},
+  {lab:"Lui rendre {gars} et confier le gamin à un autre",r:"Il rend le dossier sans un mot. Ce silence-là coûtera plus cher que la décision.",d:-5,ton:"froid",effet:"lui_rendre_un_gars"},
+  {lab:"Lui dire que ce n'est ni l'un ni l'autre",r:"Alors il ne comprend pas pourquoi il est assis là, et il n'a pas tort.",d:-3,ton:"flou"}]}
+);

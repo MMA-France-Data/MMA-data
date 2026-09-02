@@ -315,6 +315,16 @@ const coach = (o) => Object.assign({
     { dernier: "victoire" }, { dernier: "defaite" }, { dernier: "titre" },
     { departRecent: true }, { promesseEnCours: true }, { recadrages: 2 },
     { paroleTrahie: 3 }, { ouiDaffilee: 4 },
+    /* /!\ L'HOMME POSE SUR LA TABLE (02/09). Cette liste est MANUSCRITE —
+       exactement le defaut que le cas 162 a paye cher : « un banc dont la
+       couverture est ecrite a la main mesure ce qu'on a pense a mesurer ».
+       Elle a crie toute seule le jour ou huit declencheurs sont arrives :
+       c'est la seule raison pour laquelle on la garde. Tout declencheur
+       ajoute a coach_dialogue.js DOIT avoir sa situation ici. */
+    { gars: "X" }, { gars: "X", garsPoulain: true },
+    { gars: "X", garsAge: 20 }, { gars: "X", garsAge: 35 },
+    { gars: "X", garsCuit: true }, { gars: "X", garsBlesse: true },
+    { gars: "X", garsSerie: 3 }, { gars: "X", garsSerie: -2 },
   ];
   const jamais = D.DECLENCHEURS.filter((k) => !situations.some((x) => D.tient(k, x)));
   dit("aucun déclencheur n'est impossible à satisfaire", jamais.length === 0,

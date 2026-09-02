@@ -1344,6 +1344,79 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* LE NOM SUR LA TABLE (Mael, 02/09 : « des trucs dans les coachs ou je   */
+/* parle de quelqu'un, on sait pas qui c'est ; j'aimerais pouvoir parler  */
+/* de n'importe quel combattant du groupe pro, au moins selectionner »)   */
+/* ==================================================================== */
+/* /!\ CE BLOC MESURE LA MOITIE QU'AUCUN BANC DE MODULE NE PEUT VOIR :
+   coach_dialogue.js et coach_scenes.js sont purs, ils ne savent pas qui
+   est dans la salle. Le defaut vivait DANS L'ECRAN — le sujet ne
+   demandait jamais lequel, et les quatre effets qui touchent un homme le
+   choisissaient eux-memes. Un banc de module l'aurait rate a vie. */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 33 });
+  jouer(P, 120, 33);
+  const r = P.lire(`(function(){
+    const c=staffDe().find(x=>!x.moi);
+    if(!c)return {pasDeCoach:true};
+    ouvrirBureauCoach(c);
+    /* 1. OUVRIR LE SUJET DEMANDE D'ABORD QUI. */
+    sujetBureauCoach("un_gars");
+    const demandeQui=!!BUREAU.choixGars;
+    const liste=$("cp-dedans").innerHTML;
+    const choisissables=garsDontOnPeutParler();
+    if(!choisissables.length)return {demandeQui,personne:true};
+    /* Tous ceux qu'on a sous contrat sont proposes, les pros d'abord. */
+    const tousNommes=choisissables.every(f=>liste.indexOf((FICHES[f.id]||{}).nom)>=0);
+    const proDabord=choisissables[0].gr==="pro"||!choisissables.some(f=>f.gr==="pro");
+    /* 2. ON EN CHOISIT UN, ET C'EST SON NOM QUI S'AFFICHE. */
+    const vise=choisissables[choisissables.length-1];
+    const nom=(FICHES[vise.id]||{}).nom;
+    choisirGarsBureau(vise.id);
+    const ecran=$("cp-dedans").innerHTML;
+    const surLaTable=ecran.indexOf(nom)>=0;
+    const accolade=ecran.indexOf("{gars}")>=0;
+    const scene=BUREAU.E.encours;
+    /* 3. L'EFFET TOUCHE CET HOMME-LA. On le prouve sur menager_un_gars :
+          on fabrique un AUTRE homme a bout, celui que l'ancien code
+          aurait pris tout seul, et on verifie qu'il n'est PAS touche. */
+    const autre=EFFECTIF.find(f=>f.id!==vise.id&&MESGARS[f.id]&&!MESGARS[f.id].retraite);
+    if(autre){ autre.fraicheur=10; delete MESGARS[autre.id].menage; }
+    delete MESGARS[vise.id].menage;
+    const eff=appliquerEffetDialogue(c,"menager_un_gars",vise.id);
+    const bonHomme=!!MESGARS[vise.id].menage;
+    const pasLautre=!autre||!MESGARS[autre.id].menage;
+    /* 4. ET UN EFFET QUI NE PEUT PAS S'APPLIQUER A CET HOMME LE DIT,
+          au lieu de le faire sur un autre en silence. */
+    MESGARS[vise.id].combatPrevu=null;
+    const refus=appliquerEffetDialogue(c,"le_mettre_au_coin",vise.id);
+    fermerBureauCoach();
+    return {demandeQui,tousNommes,proDabord,surLaTable,accolade,
+      sceneDuSujet:!!scene&&scene.sujet==="un_gars",
+      applique:eff.ok,bonHomme,pasLautre,
+      refusDit:!refus.ok&&(refus.mot||"").indexOf(vise.id)>=0};
+  })()`);
+  if (r && (r.pasDeCoach || r.personne)) {
+    dit("on peut parler d'un homme précis à son coach", false,
+        r.pasDeCoach ? "aucun coach dans la partie" : "personne sous contrat — graine à revoir");
+  } else {
+    dit("« lui parler d'un de tes hommes » demande d'abord LEQUEL",
+        !!r && r.demandeQui, "avant : la scène parlait d'un inconnu");
+    dit("tout l'effectif sous contrat est proposé, les pros d'abord",
+        !!r && r.tousNommes && r.proDabord);
+    dit("et c'est SON nom qui s'affiche dans la scène",
+        !!r && r.surLaTable && !r.accolade && r.sceneDuSujet);
+    dit("l'effet touche l'homme nommé, et pas celui que le jeu aurait choisi",
+        !!r && r.applique && r.bonHomme && r.pasLautre,
+        "avant : menager_un_gars prenait le premier cuit venu");
+    dit("et s'il ne peut pas s'appliquer à lui, il le dit au lieu de viser un autre",
+        !!r && r.refusDit);
+  }
+  dit("aucune exception dans le bureau du coach", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);

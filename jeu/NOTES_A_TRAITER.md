@@ -13271,3 +13271,75 @@ pas « pay ». Huit libelles ecrits avec « sa paie » promettaient donc une
 augmentation sans l'annoncer. Ecrire « son salaire ».
 
 CHAINE : 39 bancs, 788 assertions, 0 ECHEC.
+
+## CAS 164 — ON PARLAIT DE QUELQU'UN SANS SAVOIR QUI (Mael, 02/09)
+
+Mael, en jouant : « il y a des trucs dans les coachs où je parle de
+quelqu'un, on sait pas qui c'est ; j'aimerais pouvoir parler de n'importe
+quel combattant du groupe pro, au moins le sélectionner. »
+
+### IL AVAIT VU LA MOITIE DU DEFAUT. L'AUTRE ETAIT PIRE.
+Le sujet « lui parler d'un de tes hommes » s'ouvrait sur « Tu poses un nom
+sur la table » ET NE DEMANDAIT JAMAIS LEQUEL. Ca, il l'a vu. Ce qu'on ne
+voit pas depuis l'ecran : LES QUATRE EFFETS QUI TOUCHENT UN COMBATTANT
+CHOISISSAIENT L'HOMME EUX-MEMES.
+    lui_confier_un_gars → le premier espoir de la salle
+    menager_un_gars     → le premier homme a bout
+    le_mettre_au_coin   → le premier qui monte dans le mois
+    lui_rendre_un_gars  → son poulain, quel qu'il soit
+On croyait parler de quelqu'un, LE JEU APPLIQUAIT A UN AUTRE — et jamais
+un message ne le disait. C'est la classe de defaut la plus chere du
+carnet dans sa version la plus discrete : ca marche, ca repond, et ca ne
+fait pas ce qu'on croit.
+
+### POURQUOI AUCUN BANC DE MODULE NE POUVAIT LE VOIR
+coach_dialogue.js et coach_scenes.js sont PURS : ils ne savent pas qui est
+dans la salle. Le defaut vivait entierement DANS L'ECRAN, entre le
+contenu et l'effectif. Un banc de module l'aurait rate a vie — c'est le
+banc 27 (le singe, qui charge le jeu et JOUE) qui le tient maintenant, et
+sa preuve est faite a l'envers : on fabrique un AUTRE homme a bout, celui
+que l'ancien code aurait pris tout seul, et on verifie qu'il n'est PAS
+touche. Une assertion qui verifierait seulement que « quelqu'un » est
+menage aurait passe sur le code d'avant.
+
+### CE QUI EXISTE MAINTENANT
+- UN ECRAN DE CHOIX. Ouvrir le sujet demande d'abord qui : tout l'effectif
+  sous contrat, les pros d'abord, avec ce qu'il faut pour choisir — age,
+  bilan, et l'etat qui compte (a l'arret, au bout du rouleau, sur une
+  serie, au repos, « le sien »).
+- HUIT DECLENCHEURS DE PLUS, et ils ne decrivent NI le coach NI la salle :
+  son_poulain, pas_son_poulain, gars_jeune, gars_vieux, gars_cuit,
+  gars_lance, gars_qui_doute, gars_blesse. TOUS EXIGENT UN NOM POSE — sans
+  quoi une scene ecrite pour son poulain sortirait au sujet d'un inconnu.
+- LA SERIE SIGNEE. `bilan.serie` ne compte que les victoires et retombe a
+  zero sur une defaite : elle ne sait pas dire « il ne gagne plus ». On la
+  lit avec `vie.derniers` pour obtenir un entier signe. AUCUNE DONNEE
+  NOUVELLE — la regle du carnet tient : pas deux exemplaires de la meme
+  chose.
+- LE MARQUEUR `{gars}`. Le contenu porte le nom en creux, l'ecran le
+  remplit. `nommer()` rend une COPIE : le contenu est partage par tous les
+  coachs de la salle, le reecrire en place le salirait pour tout le monde.
+  REGLE TENUE PAR LE BANC : le marqueur n'existe QUE dans le sujet
+  `un_gars`, le seul ou un nom est toujours pose. Ailleurs il s'afficherait
+  accolades comprises.
+- DEUX NOMS, ET C'EST VOULU. Dans la bouche du coach, le nom COURT — on ne
+  dit pas le nom complet et le surnom d'un homme qu'on voit tous les jours.
+  Sur le bandeau, le nom entier : il repond a « de qui parle-t-on », pas a
+  « comment on l'appelle ».
+- DOUZE SCENES DE PLUS, qui ne sortent que pour l'homme qui correspond, et
+  une treizieme au bord du tapis pour reprendre `a_un_espoir`.
+
+### LE CRIBLE QUI MANQUAIT, ET CELUI QUI A CRIE TOUT SEUL
+Le banc 39 verifiait que chaque EFFET est porte par une replique. Il ne
+verifiait pas le symetrique : QU'AUCUN DECLENCHEUR NE SOIT ORPHELIN. Un
+declencheur que rien ne porte est une branche de `tient()` que rien
+n'atteint — la meme faute vue de l'autre bout. Ajoute : c'est lui qui a
+rattrape `a_un_espoir` le jour ou une scene a change de declencheur.
+Et le banc 38 a crie tout seul : sa liste de situations est MANUSCRITE —
+le defaut meme que le cas 162 avait paye — mais elle a refuse les huit
+nouveaux declencheurs a la seconde ou ils sont arrives. C'est la seule
+raison pour laquelle on la garde : toute cle ajoutee a la liste fermee
+doit avoir sa situation dans ce banc.
+
+Contenu : 241 scenes, 761 repliques.
+CHAINE : 39 bancs, 801 assertions, 0 ECHEC.
