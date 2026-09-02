@@ -231,7 +231,15 @@ const EFFETS = [
 /** unique : une fois dans sa carrière · saison : pas avant un an ·
  *  courante : pas avant `peremption` semaines (défaut 26). */
 const VIES = ["unique", "saison", "courante"];
-const PEREMPTION_DEFAUT = 26;
+/* /!\ MESURÉ, PAS CHOISI. Un semestre paraissait raisonnable — c'est le
+   chiffre qu'on écrit sans réfléchir. Mais neuf sujets et deux passages
+   au bureau par semaine, ça ne fait qu'une visite par sujet toutes les
+   quatre ou cinq semaines : un semestre ne représente que six ouvertures.
+   Le banc 39 l'a chiffré sur une première saison de jeu réel — quinze
+   redites à vingt-six semaines, aucune à quarante-cinq. La péremption
+   ne se compte donc pas en calendrier, elle se compte EN NOMBRE DE FOIS
+   OÙ LE JOUEUR OUVRE CETTE PORTE-LÀ. */
+const PEREMPTION_DEFAUT = 45;
 
 /** Depuis combien de semaines cette scène a-t-elle été vue ? */
 function revenable(s, vues, jour) {

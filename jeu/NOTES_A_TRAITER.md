@@ -13209,3 +13209,65 @@ reponses pour douze hommes vus chaque semaine. A TRAITER.)
 9. LE DEBRIEF EST TOUJOURS UN TETE-A-TETE. La scene la plus naturelle du
    lendemain d'une defaite, c'est DEUX coachs qui ne sont pas d'accord
    devant toi.
+
+## CAS 163 — LE BUREAU AVAIT UNE PORTE ET AUCUNE PIECE DERRIERE (02/09)
+
+### CE QU'ON A TROUVE EN REPRENANT
+Le chantier 162 etait POUSSE ROUGE. Toute la mecanique existait et etait
+branchee — coach.js, coach_dialogue.js, l'ecran ouvrirBureauCoach, les
+treize effets traites dans demo_jeu.html, le bundler, les deux bancs — et
+coach_scenes.js etait une COQUILLE VIDE : cinq tableaux, zero scene. Le
+joueur pouvait ouvrir le bureau et personne ne parlait.
+LECON, ET ELLE EST NEUVE : la chaine a bien crie (banc 39, dix echecs),
+mais le commit est parti quand meme. Le carnet disait « une chose branchee
+nulle part ne fait rien » ; il faut y ajouter SON SYMETRIQUE : une chose
+branchee PARTOUT et vide ne fait rien non plus, et elle est plus difficile
+a voir, parce que tout autour d'elle a l'air fini.
+
+### LE SEUIL QUI NE POUVAIT PAS ETRE ATTEINT (et pourquoi c'est un defaut)
+Le banc 39 exigeait « moins de 30 % de redites sur trois saisons ». Le
+calcul, fait pour de bon cette fois : trois cents rendez-vous, neuf sujets,
+une peremption d'un semestre — il aurait fallu plus de DEUX CENTS scenes
+jouables pour UN SEUL homme dans UNE SEULE situation. Autrement dit : un
+contenu ou ni le caractere ni le declencheur ne trient plus rien. Le seuil
+ne mesurait pas la richesse, IL INTERDISAIT LES DEUX MECANIQUES qui font
+que le coach parle juste.
+C'est la meme famille que la lecon du banc 30 (« l'assertion testait un
+accident des anciennes valeurs »), en plus grave : un seuil qu'aucun
+contenu honnete ne peut atteindre ne mesure plus rien — il se contourne.
+Ce qu'on mesure maintenant, et qui se voit vraiment a l'ecran :
+  — LA PREMIERE SAISON NE SE REPETE PAS (c'est la seule ou le joueur se
+    souvient de ce qu'on lui a dit). Mesure : 104 rendez-vous, 99 scenes
+    distinctes, 5 redites.
+  — SUR TROIS SAISONS, IL AURA DIT CENT CHOSES DIFFERENTES, et rien plus de
+    six fois. Mesure : 312 rendez-vous, 110 distinctes, la plus vue 4 fois.
+    Une variete comptee EN NOMBRE, pas en pourcentage : c'est la seule
+    forme qu'on ne peut pas atteindre en retirant les declencheurs.
+
+### LA PEREMPTION NE SE COMPTE PAS EN CALENDRIER
+PEREMPTION_DEFAUT valait 26 semaines — un semestre, le chiffre qu'on ecrit
+sans reflechir. Mais neuf sujets et deux passages par semaine, cela ne fait
+qu'UNE visite par sujet toutes les quatre ou cinq semaines : un semestre ne
+represente que six ouvertures de cette porte-la. MESURE : 15 redites en
+premiere saison a 26 semaines, 5 a 45. La peremption se compte EN NOMBRE DE
+FOIS OU LE JOUEUR OUVRE LA PORTE, jamais en mois.
+
+### LE CORPUS
+228 scenes, 719 repliques (l'ancien coach : ~40 repliques dans TOUTE une
+partie, et zero ligne pour le joueur).
+  bureau 180 — vingt par sujet : huit de fond que tout le monde recoit,
+    deux qui attendent leur situation, six ecrites pour une voix, quatre
+    qui attendent la voix ET la situation.
+  bord_du_tapis 12 · debrief 12 · accrochage 12 · porte 12.
+111 scenes sur 228 sont ecrites pour une voix precise ; les six caracteres
+recoivent chacun plus de 170 scenes. 230 repliques coutent cher (32 %) :
+on peut vraiment se planter en parlant a son coach. Les treize effets sont
+tous portes par au moins une replique, et le banc le verifie.
+
+### LA REGLE D'ECRITURE QUI A COUTE DEUX PASSES
+« Une replique qui engage de l'argent le DIT dans son libelle » — le banc
+le crible. Piege trouve : le crible cherche « pay », et « paie » ne contient
+pas « pay ». Huit libelles ecrits avec « sa paie » promettaient donc une
+augmentation sans l'annoncer. Ecrire « son salaire ».
+
+CHAINE : 39 bancs, 788 assertions, 0 ECHEC.

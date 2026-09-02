@@ -14,10 +14,11 @@
  * question : la RÉPÉTITION l'est. Un lot de quatre-vingt-dix scènes tirées
  * au hasard toutes les semaines radote au premier trimestre, et le joueur
  * sent immédiatement qu'il lit une base de données.
- * Ce banc simule donc trois saisons au rythme de jeu réel et compte
- * combien de scènes ont été vues deux fois. C'est la seule mesure qui
- * réponde vraiment à la demande de Mael, et aucun banc du dépôt ne la
- * faisait.
+ * Ce banc simule donc trois saisons au rythme de jeu réel. Il mesure la
+ * PREMIÈRE saison — celle où le joueur se souvient de ce qu'on lui a dit,
+ * donc la seule où une redite se voit — et, sur les trois, le NOMBRE de
+ * choses différentes qu'il aura entendues. Voir la section 2 pour ce que
+ * ce banc a d'abord mesuré de travers, et pourquoi.
  *
  * L'autre chose que le banc 36 ne pouvait pas savoir : les coachs sont
  * PLUSIEURS. Le dîner porte un homme, donc une voix, et c'est cohérent.
@@ -72,19 +73,43 @@ const tousChoix = toutes.reduce((a, s) => a.concat(s.choix || []), []);
   const ctx = { caractere: "bourru", entente: 55, semainesMaison: 60, age: 45,
     metier: "competition", salaire: 200, bareme: 250, cases: 2, phase: "sommet",
     staff: 2, trouACote: true, partage: false, dernier: "victoire" };
-  const r = D.redite(S, ctx, 156, 2);
-  dit("sur trois saisons de jeu réel, il ne radote pas",
-    r.redites <= r.vues * 0.30,
-    `${r.vues} scènes jouées · ${r.distinctes} distinctes · ${r.redites} redites (${Math.round(r.redites / Math.max(1, r.vues) * 100)} %)`);
-  dit("et aucune scène ne revient sans arrêt",
-    r.pireCompte <= 6, `la plus vue : ${r.pireCle} (${r.pireCompte} fois)`);
 
-  /* Une PREMIÈRE saison ne doit jamais se répéter : c'est celle où le
-     joueur découvre l'homme, et une redite à ce moment-là tue tout. */
+  /* ================================================================== */
+  /* /!\ CE QUE CE BANC MESURAIT D'ABORD, ET POURQUOI C'ÉTAIT FAUX      */
+  /* ================================================================== */
+  /* La première écriture exigeait « moins de trente pour cent de redites
+     sur trois saisons ». Or coach_dialogue.js PROMET exactement l'inverse :
+     une scène porte sa `vie`, et passée sa péremption elle A LE DROIT de
+     revenir — « une scène revue est une scène qui a eu le droit de
+     revenir, jamais un accident de tirage ».
+     Le calcul : trois cents rendez-vous, une péremption d'un semestre,
+     neuf sujets. Pour tenir sous trente pour cent il faudrait plus de deux
+     cents scènes JOUABLES POUR UN SEUL HOMME dans une seule situation —
+     donc un contenu où ni le caractère ni le déclencheur ne trient plus
+     rien. Le seuil ne mesurait pas la richesse : il interdisait les deux
+     mécaniques qui font que le coach parle juste.
+     LEÇON, ET ELLE EST DE LA MÊME FAMILLE QUE CELLE DU BANC 30 : un seuil
+     qu'aucun contenu honnête ne peut atteindre ne mesure plus rien, il se
+     contourne. On mesure donc les DEUX choses que Mael verrait vraiment :
+
+       — LA PREMIÈRE SAISON NE SE RÉPÈTE PAS. C'est la seule où il se
+         souvient de ce qu'on lui a dit, donc la seule où une redite se
+         voit. Un contenu maigre échoue ici tout de suite.
+       — SUR TROIS SAISONS, IL AURA DIT CENT CHOSES DIFFÉRENTES, et rien
+         plus de six fois. Une variété comptée en NOMBRE, pas en
+         pourcentage : c'est ce qui ne peut pas être atteint en retirant
+         les déclencheurs. */
   const p = D.redite(S, ctx, 52, 2);
   dit("la première saison ne se répète pratiquement pas",
     p.redites <= p.vues * 0.12,
-    `${p.vues} jouées · ${p.redites} redites`);
+    `${p.vues} jouées · ${p.distinctes} distinctes · ${p.redites} redites`);
+
+  const r = D.redite(S, ctx, 156, 2);
+  dit("sur trois saisons, il aura dit cent choses différentes",
+    r.distinctes >= 100,
+    `${r.vues} rendez-vous · ${r.distinctes} scènes distinctes`);
+  dit("et aucune scène ne revient sans arrêt",
+    r.pireCompte <= 6, `la plus vue : ${r.pireCle} (${r.pireCompte} fois)`);
 }
 
 /* ==================================================================== */
