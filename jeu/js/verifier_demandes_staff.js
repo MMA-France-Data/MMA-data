@@ -177,14 +177,39 @@ console.log("BANC 29 — le staff demande, et ton oui coûte vraiment.");
       refus.refusees.includes("un_seul_groupe") && !refus.enCours,
       refus.refusees.join(","));
 
-  /* La parole donnee a une date, et le jour venu elle se paie. */
-  const parole = P.lire(`(function(){
+  /* La parole donnee a une date, et le jour venu elle se paie — DANS LES
+     DEUX SENS. /!\ CE BANC NE TESTAIT QUE LA BRANCHE NON-TENUE, et c'est
+     exactement pour ca que le defaut avait survecu : rien au monde
+     n'ecrivait promesse.tenue = true, la branche « parole tenue » etait
+     du code mort, et « Plus tard » etait donc mecaniquement TOUJOURS une
+     trahison. On teste desormais les deux, avec deux situations propres. */
+  const trahie = P.lire(`(function(){
     const c=staffDe().find(x=>!x.moi);
-    c.entente=60; c.promesse={quoi:"augmentation",n:8,echeance:t.jour-1,tenue:false};
+    c.entente=60; c.salaire=5;                      /* tres loin du barème */
+    c.promesse={quoi:"augmentation",n:8,echeance:t.jour-1,tenue:false};
     verifierPromessesStaff();
-    return {entente:c.entente, promesse:c.promesse};})()`);
-  dit("une promesse non tenue se paie à l'échéance",
-      parole.entente < 60 && parole.promesse === null, `entente 60 -> ${parole.entente}`);
+    return {entente:c.entente, promesse:c.promesse, trahies:c.paroleTrahie};})()`);
+  dit("une promesse NON tenue se paie à l'échéance",
+      trahie.entente < 60 && trahie.promesse === null && trahie.trahies === 1,
+      `entente 60 -> ${trahie.entente}`);
+
+  const tenue = P.lire(`(function(){
+    const c=staffDe().find(x=>!x.moi);
+    c.entente=60; c.salaire=MMA.coach.salaire(c.niveau,c.metier==="competition");
+    c.promesse={quoi:"augmentation",n:8,echeance:t.jour-1,tenue:false};
+    verifierPromessesStaff();
+    return {entente:c.entente, promesse:c.promesse, tenues:c.paroleTenue};})()`);
+  dit("et une promesse TENUE rapporte — la branche qui était du code mort",
+      tenue.entente > 60 && tenue.promesse === null && tenue.tenues === 1,
+      `entente 60 -> ${tenue.entente}`);
+
+  /* /!\ ET LE COEUR DU DEFAUT, EN UNE ASSERTION : faire ce qu'on a promis
+     doit valoir MIEUX que refuser tout de suite. Sinon « Plus tard » est
+     un piege, et c'etait le cas — il coutait 1 a 4 points de plus qu'un
+     « non » sur les quatre demandes qui le proposent. */
+  dit("tenir sa parole vaut mieux que refuser d'emblée",
+      (tenue.entente - 60) > D.DEMANDES_STAFF.augmentation.non.entente,
+      `parole tenue ${(tenue.entente-60).toFixed(1)} · refus ${D.DEMANDES_STAFF.augmentation.non.entente}`);
 
   /* ET CA SE VOIT A L'ACCUEIL : sinon personne ne saura jamais qu'il a
      demande quelque chose (le defaut "ça devrait pop en gros"). */

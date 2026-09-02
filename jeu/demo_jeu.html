@@ -196,6 +196,32 @@ h2 .plus{color:var(--doux);font-weight:400;text-transform:none;letter-spacing:0;
 .so-fermer{position:fixed;top:10px;right:12px;z-index:2;width:34px;height:34px;
   border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);
   color:#fff;font-size:19px;line-height:1;cursor:pointer}
+/* ==== LE BUREAU DU COACH (page annexe, cas 162) — le bureau d'une salle
+   de sport : neon froid, murs clairs, l'odeur du tapis derriere la porte.
+   Volontairement l'inverse du diner (bois sombre, lumiere basse) : on ne
+   parle pas a son coach comme on dine avec un matchmaker. ==== */
+#coach-page{position:fixed;inset:0;z-index:89;display:none;overflow-y:auto;
+  background:linear-gradient(175deg,#1b2026 0%,#141920 55%,#0d1014 100%)}
+#coach-page.ouvert{display:block}
+.cp-dedans{max-width:480px;margin:0 auto;padding:18px 16px 90px}
+.cp-tete{text-align:center;padding:6px 0 14px;border-bottom:1px solid rgba(150,180,210,.22)}
+.cp-tete .ou{font-size:10.5px;letter-spacing:2.4px;text-transform:uppercase;color:#7e9ab5}
+.cp-tete .nom{font-size:21px;font-weight:800;margin-top:3px;color:#e8eef5}
+.cp-tete .sous{font-size:12.5px;color:#8b9aab;margin-top:2px}
+.cp-il{margin:20px 0 6px;font-size:16.5px;line-height:1.6;color:#eef3f8;text-align:left}
+.cp-choix button{display:block;width:100%;margin-top:9px;padding:12px 14px;
+  border-radius:11px;border:1px solid rgba(150,180,210,.3);background:rgba(255,255,255,.035);
+  color:#e8eef5;font:inherit;font-size:14.5px;text-align:left;line-height:1.45;cursor:pointer}
+.cp-choix button:hover{border-color:#8fb4d8;background:rgba(143,180,216,.09)}
+.cp-reponse{margin:20px 0 8px;font-size:16px;line-height:1.6;color:#dfe8f1;
+  padding:14px;border-left:3px solid #6f93b8;background:rgba(255,255,255,.03);border-radius:0 10px 10px 0}
+.cp-suite{display:block;width:100%;margin-top:16px;padding:13px;border-radius:11px;
+  border:1px solid #6f93b8;background:rgba(111,147,184,.14);color:#cfe0f0;
+  font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.cp-sujets{margin-top:6px}
+.cp-fin{margin-top:18px;padding:14px;border-radius:11px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(150,180,210,.22);color:#cfe0f0;font-size:15px;line-height:1.5}
+.cp-effet{margin-top:10px;font-size:13px;color:#9fd3a8}
 /* ==== LE DINER (page annexe, cas 158) — la salle du restaurant : bois
    sombre, lumiere basse sur la table, le reste dans l'ombre. ==== */
 #diner-page{position:fixed;inset:0;z-index:89;display:none;overflow-y:auto;
@@ -513,6 +539,9 @@ h3{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--doux
 <!-- LE DINER — page annexe aussi (cas 158), remplie par rendreDinerPage(). -->
 <div id="diner-page"><button class="so-fermer" onclick="fermerDinerPage()">×</button>
   <div class="dn-dedans" id="dn-dedans"></div></div>
+<!-- LE BUREAU DU COACH — page annexe (cas 162), remplie par rendreBureauCoach(). -->
+<div id="coach-page"><button class="so-fermer" onclick="fermerBureauCoach()">×</button>
+  <div class="cp-dedans" id="cp-dedans"></div></div>
 <div id="toast"></div>
 
 <!-- ===================================================================
@@ -672,6 +701,21 @@ const TRAVAIL={
        ground:["ground_striking","passing"],
        striking:["footwork","spinning"]},
   physique:{physical:["cardio","recovery","body_conditioning","balance_base"]},
+  /* /!\ LA FAMILLE QUI MANQUAIT, ET QUI RENDAIT UN AXE ENTIER MORT.
+     « Preparation mentale » etait l'un des cinq axes de coach — donc un
+     cinquieme du marche, avec huit CV ecrits pour lui — et AUCUNE famille
+     de seance ne lui correspondait : un psychologue du sport paye
+     999 e/semaine rendait exactement ce que rend un formateur striking
+     paye 47 e. Pire : dire oui a son poulain infligeait -18 % A VIE au
+     combattant, parce que la famille cherchee n'existait pas.
+     Les deux cles touchees sont celles que le moteur LIT VRAIMENT :
+     fight_iq (douze lectures dans engine.js — la lucidite qui fait
+     renoncer a une lutte qui ne passe pas) et discipline (le filtre
+     d'ecoute des cris du coin, et la reussite de la coupe de poids).
+     On ne touche PAS a aggression : le temperament ne se coache pas a la
+     hausse, et une salle qui fabriquerait des hommes de plus en plus
+     agressifs serait un defaut, pas une fonctionnalite. */
+  mental:{mental:["fight_iq","discipline"]},
 };
 
 /** Le travail d'une seance, verse sur les stats du domaine.
@@ -853,8 +897,8 @@ const texte=s=>s.replace(/\{J5\}/g,()=>{const e=t.echeances.find(x=>x.donnees&&x
     return e?`<b>${e.jour-t.jour} j</b>`:"—";})
   .replace(/\{(\w+[\wé]*)\}/g,(_,id)=>FICHES[id]?lien(id):id);
 
-const COULEURS={jjb:"var(--vert)",striking:"var(--or)",mma:"var(--accent)",physique:"var(--violet)"};
-const AXE_LIB={jjb:"sol",striking:"striking",mma:"MMA",physique:"physique"};
+const COULEURS={jjb:"var(--vert)",striking:"var(--or)",mma:"var(--accent)",physique:"var(--violet)",mental:"var(--bleu,#7aa7d8)"};
+const AXE_LIB={jjb:"sol",striking:"striking",mma:"MMA",physique:"physique",mental:"mental"};
 /* /!\ LE PROGRAMME DES PROS ETAIT TROUE (Mael, 10/08 : "mes pros
    progressent bien moins vite que mes amateurs"). MESURE DANS LA GRILLE :
    les pros n'apparaissaient que dans TROIS creneaux de la semaine (prepa
@@ -906,7 +950,8 @@ const GRILLE={
     ["Soir","MMA — grille & clinch","mma",["amateur","pro"]]],
  5:[["Matin","Open mat","jjb",["amateur","loisir","pro"]],
     ["Midi","Prépa physique","physique",["amateur","loisir","pro"]]],
- 6:[],
+ 6:[["Matin","Vidéo — lecture de l'adversaire","mental",["pro"]],
+    ["Midi","Gestion du combat","mental",["amateur","pro"]]],
 };
 
 const t=new Temps();
@@ -996,7 +1041,7 @@ const LOCAUX=[
    qu'une salle puisse etre bien equipee en frappe et miserable au sol. Le
    materiel achete monte UN domaine, jamais les places. */
 const SALLE={forfait:600,reputation:12,coachAm:38,local:"assoc",
-             equip:{striking:2,lutte:1,physique:2}, cage:false};
+             equip:{striking:2,lutte:1,physique:2,video:1}, cage:false};
 /* /!\ LA PARTIE NEUVE COMMENCE EN BAS DE L'ECHELLE (Mael, 10/08) :
    le garage, tout a 1 etoile, une reputation de quartier, et un forfait
    assez bas pour que l'attractivite depasse 0,95 — sinon une salle VIDE
@@ -1004,7 +1049,7 @@ const SALLE={forfait:600,reputation:12,coachAm:38,local:"assoc",
 function reglerSalleDepart(m){
   if(m!=="neuf")return;
   Object.assign(SALLE,{local:"garage",reputation:5,forfait:390,
-    equip:{striking:1,lutte:1,physique:1},cage:false});
+    equip:{striking:1,lutte:1,physique:1,video:1},cage:false});
   argent=5500;
 }
 reglerSalleDepart(MODE);
@@ -1097,6 +1142,13 @@ const PALIERS={
   physique:[{prix:900,nom:"Remettre un coin physique",sous:"Des barres, des poids dépareillés. Le minimum digne."},
     {prix:3800,nom:"Coin force",            sous:"Barre, rack, poids. Le physique cesse d'être un vœu."},
     {prix:6100,nom:"Cardio et récupération",sous:"Assault bike, sauna, kinésithérapie."}],
+  /* /!\ LE MATERIEL DU COACH MENTAL. Il n'en avait aucun : AXE_EQUIP.mental
+     valait null, donc il etait le seul du staff a qui une famille entiere de
+     demandes etait fermee. Une salle video, c'est ce qu'un preparateur
+     mental reclame en vrai — et c'est ce qui rend sa seance utile. */
+  video:[{prix:700,nom:"Un écran et un projecteur",sous:"On peut enfin revoir un combat ensemble."},
+    {prix:2100,nom:"Salle vidéo",           sous:"Un vrai coin pour découper l'adversaire, image par image."},
+    {prix:4800,nom:"Analyse et suivi",      sous:"Caméras au tapis, montage, un dossier par homme."}],
 };
 /* La cage est a part : c'est le RIG, elle sert aux trois domaines. */
 const RIG={prix:12000,nom:"La cage",
@@ -1145,31 +1197,57 @@ const analyses=new Set(["Renaud"]);   /* Renaud deja analyse (staff l'a fait pou
    0,90 pour le coach contre 0,40 pour les etoiles, soit un rapport de 2,25.
    Du bon materiel ne remplace pas quelqu'un qui sait corriger un geste ;
    mais s'entrainer au sol sans tatamis coute vraiment quelque chose. */
-function facteursSeance(fam,titre,groupe){
-  /* /!\ LE NIVEAU DEPEND DU GROUPE ET DE LA FAMILLE (Mael, 10/08 :
-     "amateur = coach comme pro, c'est un truc chelou"). Il avait raison :
-     SALLE.coachAm encadrait les amateurs du mardi soir ET un pro qui
-     prepare un titre, avec le meme chiffre. Desormais on demande au
-     staff qui couvre CE groupe pour CETTE famille — et un coach hors de
-     sa specialite ne vaut que 55 % de lui-meme. */
+/* /!\ LA COUVERTURE SE CALCULE UNE FOIS PAR JOUR, PAS PAR SEANCE. Elle
+   est pure et deterministe : neuf seances dans la journee la
+   recalculeraient neuf fois a l'identique. Le cache tombe des que le
+   staff bouge (embauche, renvoi, case deplacee) — poserCouverture(). */
+let _couv=null, _couvJour=null, _couvN=null;
+function couvertureDuStaff(){
   migrerStaff();
-  const c=niveauStaff(groupe||"amateur",fam);
-  let fCoach=0.55+Math.max(0,Math.min(100,c))/100*0.90;     /* 0,55 → 1,45 */
-  /* /!\ LE ROLE DU STAFF COMPTE (Mael, 10/08 : "code les boutons comme
-     parler au coach"). Da Costa est un ancien jiu-jitsuka, Meyer un
-     ancien kickboxeur : leur specialite majore LEUR famille et coute
-     ailleurs. Le bouton "Changer son rôle" deplace cette specialite —
-     c'est une vraie decision de gestion, pas un libelle. */
-  const spe=SALLE.roleStaff||{"Da Costa":"jjb","Meyer":"striking"};
-  const dessus=Object.values(spe).filter(x=>x===fam).length;
-  fCoach*=1+dessus*0.12-(dessus?0:0.05);
+  const st=staffDe();
+  /* La signature du staff : si elle bouge, le cache est perime. */
+  const sig=st.map(c=>`${c.nom}|${c.niveau}|${(c.axes||[c.axe]).join(",")}|${(c.groupes||[c.groupe]).join(",")}|${c.entente}|${c.metier}|${c.age}`).join(";");
+  if(_couv&&_couvJour===t.jour&&_couvN===sig)return _couv;
+  _couv=MMA.coach.couverture(st); _couvJour=t.jour; _couvN=sig;
+  return _couv;
+}
+function couvertureBouge(){ _couv=null; }
 
-  /* Quelle etoile compte pour cette seance ? */
-  let et;
-  if(fam==="striking")      et=SALLE.equip.striking;
-  else if(fam==="jjb")      et=SALLE.equip.lutte;
-  else if(fam==="physique") et=SALLE.equip.physique;
-  else                      et=(SALLE.equip.striking+SALLE.equip.lutte)/2;  /* mma */
+function facteursSeance(fam,titre,groupe){
+  /* /!\ CE QUI EST MORT ICI, ET POURQUOI (audit du 02/09).
+     Il y avait DEUX sources de la specialite d'un coach, et la plus
+     lourde ne regardait meme pas le staff :
+         const spe=SALLE.roleStaff||{"Da Costa":"jjb","Meyer":"striking"};
+         fCoach*=1+dessus*0.12-(dessus?0:0.05);
+     Une table indexee par NOM PROPRE, cablee en dur, qu'aucun coach
+     recrute au marche n'atteignait jamais (embaucherCoach ne l'ecrit
+     pas, et son seul ecrivain — le bouton « Changer son rôle » — ne
+     s'ouvre que sur les deux coachs herites de FICHES). Sur une partie
+     neuve le litteral s'appliquait donc a TOUTES les seances, a vie :
+     +12 % sur le striking et le sol, -5 % sur la lutte et le physique,
+     quel que soit le staff employe. Un coach de lutte a 95 paye
+     1 500 e/semaine restait penalise ; on pouvait remercier Da Costa, le
+     bonus sol restait. Et la specialite etait comptee DEUX FOIS, puisque
+     niveauStaff appliquait deja son x0,55 hors specialite.
+     DESORMAIS : une seule loi, dans coach.js, lue ici. La specialite ne
+     se compte qu'une fois, et elle se compte sur l'HOMME. */
+  const fCoach=MMA.coach.encadrement(couvertureDuStaff(),
+    groupe==="pro"?"pro":"amateur", fam);
+
+  /* Quelle etoile compte pour cette seance ? /!\ LA TABLE VIT DANS
+     coach.js : c'etait la sixieme copie de la correspondance
+     axe/famille/materiel, et la seule qui traitait "mental" comme du
+     striking. */
+  const cleAxe=MMA.coach.axeDeFam(fam);
+  const dom=cleAxe?MMA.coach.equipDe(cleAxe):null;
+  /* /!\ LA LUTTE (famille "mma") TRAVAILLE AVEC LES TAPIS ET LES SACS :
+     elle prend la moyenne des deux, comme avant. Le reste lit son
+     domaine. Une vieille sauvegarde n'a pas d'etoile video : 1 par
+     defaut, jamais undefined (sinon fEquip devenait NaN et la seance
+     entiere ne rendait rien, en silence). */
+  const et=(fam==="mma")
+    ?((SALLE.equip.striking||1)+(SALLE.equip.lutte||1))/2
+    :(SALLE.equip[dom]||1);
 
   let fEquip=0.80+(et-1)/2*0.40;                            /* 1★ 0,80 → 3★ 1,20 */
   /* La cage sert au travail de grille et de clinch — et a rien d'autre. */
@@ -1831,12 +1909,30 @@ function donneesEcran(r){
        moteur qui a juge, l'ecran ne rejuge rien (regle 7). */
     cartes:r.cartes||[],
     sec_round:MMA.engine.DUREE_ROUND,
-    /* /!\ UN SECOND DANS LE COIN, C'EST UNE VOIX DE PLUS. Le coach a qui
-       on a dit oui (demande "Il veut être dans le coin") gagne un cri par
-       round — un effet REEL, mesurable, sans toucher au moteur : le budget
-       de cris est une donnee de l'ecran depuis le chantier G. */
-    crisMax:MMA.cris.MAX_CRIS_PAR_ROUND
-      +(staffDe().some(c=>c.coinDe===r.a)?1:0),
+    /* /!\ CE QUE LE COIN VAUT VRAIMENT (cas 162). Avant, le staff etait lu
+       UNE seule fois dans toute la cage, et EN BOOLEEN : ni le niveau, ni
+       l'axe, ni l'entente du coach n'existaient pendant le combat. Un
+       preparateur d'elite a mille euros la semaine et un educateur du
+       mardi donnaient exactement le meme cri de plus.
+       DESORMAIS le coin lit l'HOMME :
+         · sa presence vaut toujours une voix ;
+         · un tres bon coach en vaut deux — il voit ce que les autres ne
+           voient pas, et il le dit au bon moment ;
+         · le coach MENTAL est celui du coin par excellence : « gestion du
+           combat, lecture », c'est ecrit dans sa definition, et c'etait
+           l'axe qui n'etait lu par AUCUNE ligne du jeu.
+       On ne touche pas au moteur : le budget de cris est une donnee de
+       l'ecran depuis le chantier G. */
+    crisMax:MMA.cris.MAX_CRIS_PAR_ROUND+(function(){
+      const co=staffDe().find(c=>c.coinDe===r.a);
+      if(!co)return 0;
+      const axes=MMA.coach.axesDe(co);
+      const oeil=(co.niveau||0)*(0.75+0.25*(MMA.coach.fEntente(co)));
+      let n=1;
+      if(oeil>=70)n++;
+      if(axes.indexOf("mental")>=0)n++;
+      return Math.min(3,n);
+    })(),
   };
 }
 /* Resume de frappes sur la carte de resultat : le combat est termine, donc
@@ -2233,7 +2329,21 @@ function pesee(id,adv,jour){
     else if(MMA.fiches.FICHES&&MMA.fiches.FICHES[id])f=MMA.fiches.fighter(id);
   }catch(e){ f=null; }
   const disc=f?f.mental.discipline:70, card=f?f.physical.cardio:70;
-  const rigueur=(disc*0.65+card*0.35)/100;
+  /* /!\ LE CANAL « poids » (cas 162). Une coupe se tient a deux : le
+     combattant, et quelqu'un qui compte avec lui. Le coach mental — celui
+     dont la definition dit « gestion du combat, lecture » et qui n'etait
+     lu par AUCUNE ligne du jeu — encadre son groupe ici aussi. L'effet
+     est volontairement modeste : il aide a tenir, il ne fait pas maigrir
+     a la place de l'homme. */
+  let encadre=0;
+  try{
+    if(MESGARS[id]){
+      const grp=(EFFECTIF.find(x=>x.id===id)||{}).gr==="pro"?"pro":"amateur";
+      const k=couvertureDuStaff().cases["mental|"+grp];
+      encadre=k?k.niveau:0;
+    }
+  }catch(e){ encadre=0; }
+  const rigueur=Math.min(1,(disc*0.65+card*0.35)/100+encadre/100*0.12);
   const im=imageDe(id);
   /* /!\ PROBABILITE ET AMPLITUDE SONT DEUX CHOSES SEPAREES. Premiere
      version : un seul tirage multiplie par la rigueur — ca ne changeait que
@@ -2359,6 +2469,12 @@ function remonterDansLeMonde(r){
      l'affichage de la croix de fermeture. L'ecran restait verrouille. */
   const cle=r.a;
   r.remonte=true;
+  /* /!\ LE COIN SE LIBERE ICI (audit du 02/09). c.coinDe n'etait efface
+     nulle part : paye une fois, acquis a vie — ce combattant gardait une
+     voix de plus dans son coin a CHAQUE combat suivant, gratuitement, et
+     la fiche du coach annoncait « il sera dans le coin de X » pour
+     toujours. Le coin se paie pour UN soir : ce soir est passe. */
+  for(const co of staffDe())if(co.coinDe===cle){co.coinDe=null;co.coinPour=null;}
 
   const nul=(r.vainqueur===null), gagne=(r.vainqueur==="A");
   /* /!\ L'OFFRE EST SUR LE COMBAT (10/08) : combatPrevu est deja libere
@@ -2463,11 +2579,24 @@ function remonterDansLeMonde(r){
       if(gagne&&SALLE.victoires===10&&!SALLE.presseDix){
         SALLE.presseDix=true;ecrireArticle("portraitSalle",null,{jalon:"dixVictoires"});}
       if(o&&o.titre&&gagne)an.faits.push(`la ceinture de ${l.nom}`);
-      /* La victoire d'un eleve rejaillit sur ses coachs (22/08). */
-      if(gagne)for(const c of staffDe()){
-        if(c.moi)continue;
-        if(c.groupe==="tous"||c.groupe==="pro")
-          bougerEntenteCoach(c,o&&o.titre?12:5,o&&o.titre?`la ceinture de ${l.nom}`:`la victoire de ${l.nom}`);
+      /* La victoire d'un eleve rejaillit sur ses coachs (22/08).
+         /!\ ELLE NE REJAILLIT PLUS SUR TOUT LE MONDE (audit du 02/09).
+         Avant : +5 a CHAQUE coach du groupe pro, a chaque victoire — soit
+         quatre fois l'erosion hebdomadaire maximale, distribuee a des
+         hommes qui n'avaient pas touche le combattant. L'entente saturait
+         a 100 en une saison et plus rien ne pouvait la faire redescendre.
+         Desormais : celui qui l'a PREPARE (son poulain) et celui qui
+         etait DANS LE COIN touchent ; les autres regardent. Un titre
+         rejaillit un peu sur la maison, et c'est tout. */
+      if(gagne){
+        const quoi=o&&o.titre?`la ceinture de ${l.nom}`:`la victoire de ${l.nom}`;
+        for(const c of staffDe()){
+          if(c.moi)continue;
+          const sien=c.poulain===cle||c.coinDe===cle;
+          if(sien)bougerEntenteCoach(c,o&&o.titre?10:5,quoi);
+          else if(o&&o.titre&&MMA.coach.groupesDe(c).indexOf("pro")>=0)
+            bougerEntenteCoach(c,3,`la ceinture, à la maison`);
+        }
       }
     }
     /* /!\ LA CEINTURE SE TRANSMET (Mael, 21/08 : "j'ai battu le champion
@@ -2872,15 +3001,35 @@ function motResultat(v){return v===null?"Match nul":(v==="A"?"Victoire":"Défait
    crame (<40) presque rien, et le corps casse. */
 const fraicheurDe=(f)=>{if(f.fraicheur===undefined)f.fraicheur=100;return f.fraicheur;};
 const motFraicheur=(v)=>v>=70?"frais":v>=40?"entamé":"cramé";
-const FATIGUE_FAM={mma:10,striking:8,jjb:7,physique:6};
+/* /!\ LA SEANCE MENTALE NE COUTE PRESQUE RIEN AU CORPS : on regarde
+   de la video, on parle, on repete a vide. C'est justement ce qui en
+   fait un vrai choix de grille — elle ne prend pas de fraicheur, elle
+   prend du CRENEAU. */
+const FATIGUE_FAM={mma:10,striking:8,jjb:7,physique:6,mental:2};
 
 function jouerJournee(jour,echeances){
   const seances=grilleDe()[jour%7]||[];
-  /* La nuit rend — selon l'age. */
-  for(const f of EFFECTIF){
-    const age=f.age||(MESGARS[f.id]&&MESGARS[f.id].age)||26;
-    const rec=age<=27?13:age<=33?12:age<=37?10:8;
-    f.fraicheur=Math.min(100,fraicheurDe(f)+rec);
+  /* La nuit rend — selon l'age, ET selon qui s'occupe des corps.
+     /!\ LE CANAL « corps » (cas 162). Un coach n'avait AUCUN effet sur
+     autre chose que le gain brut d'une seance : ni blessure, ni
+     fraicheur, ni plafond. Or la fraicheur est le levier le plus lourd du
+     jeu — entame elle divise le gain par 1,7, cramee par 8,3 — et un
+     preparateur physique qui ne change pas la recuperation de ses hommes
+     n'est pas un preparateur physique. Ici il la change : entre personne
+     et un tres bon, la nuit rend de 15 % en moins a 25 % en plus. */
+  {
+    const couv=couvertureDuStaff();
+    const recDe={};
+    for(const g of MMA.coach.GROUPES){
+      const k=couv.cases["physique|"+g];
+      const n=k?k.niveau:0;
+      recDe[g]=0.85+Math.max(0,Math.min(100,n))/100*0.40;
+    }
+    for(const f of EFFECTIF){
+      const age=f.age||(MESGARS[f.id]&&MESGARS[f.id].age)||26;
+      const rec=age<=27?13:age<=33?12:age<=37?10:8;
+      f.fraicheur=Math.min(100,fraicheurDe(f)+rec*(recDe[f.gr==="pro"?"pro":"amateur"]||1));
+    }
   }
   const cr={jour,seances:[],evenements:[],lignes:[]};
   for(const e of echeances){
@@ -3166,10 +3315,17 @@ function jouerJournee(jour,echeances){
          pas. C'est ce qui fait du oui une DECISION et pas un cadeau.
          Le gain suit le niveau du coach : un formateur moyen ne fabrique
          pas un champion parce qu'on lui a dit oui. */
+      /* /!\ ET C'EST ICI QUE LA COPIE MANUSCRITE COUTAIT LE PLUS CHER
+         (audit du 02/09) : la table ecrite a la main ne contenait PAS
+         « mental ». Pour un coach mental, famM valait donc undefined,
+         la comparaison echouait toujours, et son poulain prenait le
+         malus de 0,82 dans TOUTES les seances, A VIE — pendant que
+         l'ecran lui annoncait « il progressera plus vite ». Dire oui a
+         cette demande-la ABIMAIT le combattant. La table vit dans
+         coach.js, et elle a cinq entrees. */
       const mtr=staffDe().find(x=>x.poulain===f.id);
       if(mtr){
-        const axeM=MMA.demandes_staff.axesDe(mtr)[0];
-        const famM={striking:"striking",lutte:"mma",sol:"jjb",physique:"physique"}[axeM];
+        const famM=MMA.coach.famDe(MMA.coach.axePrincipal(mtr));
         g*=(famM===fam?1+Math.max(0,Math.min(100,mtr.niveau||40))/100*0.55:0.82);
       }
       /* /!\ LA FRAICHEUR PESE SUR CE QUI RENTRE (20/08) : entame, la
@@ -3408,9 +3564,12 @@ function rendreSalle(){
            coach competent rend beaucoup moins — le moteur le calculait
            deja, l'ecran le dit. */
         const grpS=groupes.includes("pro")&&groupes.length===1?"pro":"amateur";
-        const axeS=({jjb:"sol",striking:"striking",mma:"lutte",physique:"physique"})[fam];
-        const encadre=staffDe().some(c=>{const ax=(c.axes&&c.axes.length?c.axes:[c.axe]);
-          return ax.includes(axeS)&&(c.groupe==="tous"||c.groupe===grpS);});
+        /* /!\ SIXIEME ET DERNIERE COPIE DE LA TABLE (audit du 02/09).
+           Elle lit maintenant l'ETAT REEL de la case : « personne pour
+           encadrer » ne veut plus dire « aucun nom dessus » mais
+           « personne qui vaille quelque chose dessus ». */
+        const kS=couvertureDuStaff().cases[MMA.coach.axeDeFam(fam)+"|"+grpS];
+        const encadre=!!kS&&kS.etat!=="trou"&&kS.etat!=="maigre";
         return `<div class="creneau" style="cursor:pointer" onclick="ouvrirCreneau(${t.jour%7},'${h}')"><div class="h">${h}</div><div>
           <div class="t"><span class="pastille" style="background:${COULEURS[fam]}"></span>${titre}</div>
           <div class="qui">${qui}${encadre?"":` · <span style="color:var(--cuir)">personne pour encadrer</span>`}</div></div></div>`;}).join("")
@@ -4265,15 +4424,26 @@ function soignerBlessures(){
    les competiteurs, et ce ne sont pas les memes hommes.
    DESORMAIS : des COACHS NOMMES, chacun avec sa specialite, son niveau,
    son salaire, et LE GROUPE qu'il encadre. */
-const AXES_COACH = [
-  ["striking", "Frappe",    "boxe, kickboxing, distance"],
-  ["lutte",    "Lutte",     "amenées au sol, cage, corps à corps"],
-  ["sol",      "Sol",       "JJB, contrôle, soumissions"],
-  ["physique", "Physique",  "cardio, force, récupération"],
-  ["mental",   "Préparation mentale", "gestion du combat, lecture"],
-];
+/* /!\ CES DEUX TABLES SONT DERIVEES, PLUS ECRITES. Elles etaient la
+   premiere des SIX copies de la correspondance axe↔famille reperees par
+   l'audit — et la seule qui declarait un axe « mental » qu'aucune des
+   cinq autres ne savait servir. La source est coach.js. */
+const AXES_COACH = MMA.coach.AXES.map(a => [a.cle, a.lib, a.quoi]);
+/* /!\ « tous » N'EST PLUS UN GROUPE. Ce n'en etait pas un : c'etait DEUX
+   cases tenues par le meme homme, et les confondre est ce qui rendait la
+   grille insecable (Mael, 16/08 : « quand je mets un coach groupe pro ou
+   amateur ca le met aussi dans l'autre groupe, je peux pas separer ») et
+   le cout de la dispersion invisible. Il reste affichable — c'est l'etat
+   d'un homme qui tient les deux — mais le modele ne le connait plus. */
 const GROUPES_COACH = [["amateur", "les amateurs"], ["pro", "le groupe pro"],
                        ["tous", "toute la salle"]];
+/* Comment on DIT ce qu'un homme encadre, a partir de ses vrais groupes. */
+function ditGroupes(c){
+  const g = MMA.coach.groupesDe(c);
+  return g.length >= 2 ? "toute la salle"
+    : g.length === 1 ? (g[0] === "pro" ? "le groupe pro" : "les amateurs")
+    : "personne";
+}
 
 /* Le staff de la salle. Chaque coach : nom, axe, niveau, salaire, groupe. */
 function staffDe(){ return (SALLE.staff = SALLE.staff || []); }
@@ -4284,29 +4454,13 @@ function staffDe(){ return (SALLE.staff = SALLE.staff || []); }
    une intuition — puis on decouvre ce qu'il vaut EN LE VOYANT TRAVAILLER.
    `vu` compte les semaines passees avec lui ; l'estimation se resserre
    autour du vrai niveau a mesure qu'on le connait. */
-function avisCoach(c){
-  const vu=c.vu||0;
-  if(vu<4)  return {mot:"tu ne le connais pas encore", sur:0};
-  if(vu<12) return {mot:estimation(c,22), sur:1};
-  if(vu<30) return {mot:estimation(c,12), sur:2};
-  if(vu<60) return {mot:estimation(c,6),  sur:3};
-  return {mot:estimation(c,0), sur:4};
-}
-/* Une fourchette large devient une phrase precise. Aucun chiffre ne sort. */
-function estimation(c,flou){
-  /* Le brouillard est DETERMINISTE : deux lectures le meme jour donnent
-     la meme phrase — sinon l'estimation sauterait a chaque affichage. */
-  let h=0; const src=c.nom+"|"+(c.vu||0);
-  for(let i=0;i<src.length;i++)h=(h*31+src.charCodeAt(i))>>>0;
-  const biais=flou?((h%(flou*2+1))-flou):0;
-  const n=Math.max(10,Math.min(99,c.niveau+biais));
-  return n>=85?"c'est un très grand technicien"
-       :n>=72?"il sait vraiment ce qu'il fait"
-       :n>=58?"il est solide"
-       :n>=44?"il fait le travail, sans plus"
-       :n>=30?"il a des lacunes"
-       :"il n'est pas au niveau";
-}
+function avisCoach(c){ return MMA.coach.avis(c); }
+/* Une fourchette large devient une phrase precise. Aucun chiffre ne sort.
+   /!\ LE BROUILLARD EST DETERMINISTE et vit desormais dans coach.js :
+   deux lectures le meme jour donnent la meme phrase, sinon l'estimation
+   sauterait a chaque affichage — et le joueur pourrait rouvrir l'ecran
+   jusqu'a tomber sur la phrase qui l'arrange. */
+function estimation(c,flou){ return MMA.coach.estimation(c,flou); }
 /* Chaque semaine passee avec lui, on le connait un peu mieux. */
 /* /!\ LA FIN DE CARRIERE D'UN COACH (Mael, 10/08 : "une retraite prevue
    aux alentours de 55 a 60 ans, et si possible qu'eux aussi puissent
@@ -4342,47 +4496,35 @@ function observerStaff(){
   for(const c of staffDe()){
     c.vu=(c.vu||0)+1;
     /* /!\ ILS VIEILLISSENT AUSSI (Mael) : une semaine de plus, et un an
-       tous les 52. La retraite se joue entre 55 et 62 ans. */
+       tous les 52. La retraite se joue entre 55 et 64 ans. */
     c.semaines=(c.semaines||0)+1;
     if(c.semaines%52===0)c.age=(c.age||35)+1;
-    /* /!\ UN COACH PROGRESSE AUSSI (question de Mael, 10/08 : "est-ce que
-       les coachs progressent ? normalement oui"). Il apprend en
-       travaillant — lentement, et d'autant moins qu'il est deja bon (on
-       ne progresse plus beaucoup a 85). Un homme sur trop de fronts
-       n'apprend rien : il court partout.
-       Environ +2 par an pour un debutant, +0,4 pour un tres bon. */
-    const axes=(c.axes&&c.axes.length)?c.axes:[c.axe];
-    const disperse=(c.groupe==="tous"?1:0)+(axes.length-1);
-    /* Sans potentiel connu (ancien coach migre) : on lui en donne un,
-       derive de son nom, pour qu'il ne soit pas fige a vie. */
+    /* /!\ LE FILET N'EST PLUS UN FABRICANT (audit du 02/09). Cette
+       re-derivation existait pour les coachs MIGRES d'une vieille
+       sauvegarde — mais comme embaucherCoach JETAIT potentiel, vitesse et
+       age a la signature, elle s'appliquait a TOUT LE MONDE. Consequences
+       mesurees : tout coach recrute avait exactement 42 ou 30 ans (donc
+       la retraite « prevue entre 55 et 60 ans » demandee par Mael etait
+       inatteignable : il fallait treize ans de jeu pour l'atteindre), son
+       plafond etait une fonction pure de son NOM (deux homonymes du
+       marche avaient le meme, et « le meilleur pari du jeu » n'existait
+       pas), et la vitesse tiree sur un entier SIGNE pouvait etre
+       NEGATIVE : dix coachs sur trente-deux REGRESSAIENT a vie.
+       L'embauche recopie desormais l'homme tel quel ; ceci ne sert plus
+       qu'aux vieilles parties, et la vitesse est bornee. */
     if(c.potentiel===undefined){
-      let h=0; for(let i=0;i<c.nom.length;i++)h=(h*31+c.nom.charCodeAt(i))>>>0;
-      c.potentiel=Math.min(96,Math.max(c.niveau+2,28+(h%68)));
-      c.vitesse=Math.round((0.45+((h>>7)%125)/100)*100)/100;
+      const h=MMA.coach.jeton(c.nom,"migre");
+      c.potentiel=Math.min(96,Math.max((c.niveau||40)+2,28+(h%68)));
+      c.vitesse=Math.round((0.45+((h>>>7)%125)/100)*100)/100;
       c.age=c.age||(c.metier==="competition"?42:30);
     }
     /* /!\ IL PROGRESSE VERS SON POTENTIEL, A SA VITESSE — et la marge
        compte double quand il en est loin. Deux coachs a 35 avec des
-       potentiels de 45 et 85 ne vivront pas la meme carriere. */
-    /* /!\ RALENTI (Mael, 10/08 : "c'est enorme la, il doit atteindre son
-       potentiel en au moins 7 ans — c'est long a devenir sa meilleure
-       version, et tu peux encore progresser apres 10 ans en realite").
-       DEUX CHOSES CORRIGEES :
-         1. LE RYTHME : divise par trois. Un coach met desormais 8 a 12
-            ans a s'approcher de son potentiel, pas 4.
-         2. LA COURBE NE S'ECRASE PLUS : la marge etait au carre de fait
-            (elle divisait par 96 puis multipliait), donc les derniers
-            points ne venaient JAMAIS et l'homme stagnait a 8 points de
-            son plafond. On garde une progression lente mais reelle
-            jusqu'au bout — on peut encore progresser apres dix ans. */
-    const ecart=Math.max(0,c.potentiel-c.niveau);
-    const marge=Math.min(1,0.22+ecart/40);      // jamais nul tant qu'il reste de la marge
-    /* /!\ ET ON N'APPREND PLUS TRES VIEUX, mais plus tard qu'avant :
-       plein regime jusqu'a 48, ca ralentit ensuite, plus rien a 62. */
-    const age=c.age||35;
-    const facteurAge=age<=48?1:age>=62?0:(62-age)/14;
-    c.niveau=Math.min(c.potentiel,
-      Math.round((c.niveau+0.055*marge*c.vitesse*facteurAge*(1-disperse*0.25))*100)/100);
+       potentiels de 45 et 85 ne vivront pas la meme carriere. La loi vit
+       dans coach.js : elle y ajoute ce que le vieux calcul ignorait —
+       QU'ON N'APPREND PAS EN COURANT PARTOUT. Un homme etale sur six
+       cases n'apprend plus rien, et c'est juste. */
+    c.niveau=MMA.coach.pas(c);
   }
 }
 
@@ -4469,38 +4611,90 @@ const bougerEntenteCoach=(c,d,motif)=>{
   if(motif)(c.griefs=c.griefs||[]).unshift({jour:t.jour,motif,d});
   if(c.griefs&&c.griefs.length>6)c.griefs.pop();
 };
-const motEntenteCoach=(v)=>v>=80?"Il est de la maison — il resterait même à moitié prix."
-  :v>=60?"Il est bien ici. Ça se sent aux séances."
-  :v>=40?"Il fait le travail. Sans plus."
-  :v>=25?"Il traîne les pieds. Quelque chose le ronge."
-  :"Il regarde ailleurs. Ce n'est plus qu'une question de temps.";
+const motEntenteCoach=(v)=>MMA.coach.motEntente(v);
 
-/* La vie hebdomadaire du staff : l'entente bouge par les faits, et les
-   coachs INTERPELLENT quand ils ont quelque chose de reel a dire. */
+/* /!\ LES FAITS QUI FONT SON SOCLE. L'entente n'est pas une jauge : c'est
+   un RESIDU. Ce que la salle lui fait, chiffre, et rendu au module. */
+function faitsCoach(c){
+  return { bareme: MMA.coach.salaire(c.niveau, c.metier==="competition"),
+           titres: c.primesTitre||0,
+           paroleTenue: c.paroleTenue||0, paroleTrahie: c.paroleTrahie||0,
+           collegueRemercie: c.collegueRemercie||0 };
+}
+
+/* La vie hebdomadaire du staff : l'entente GLISSE vers ce que les faits
+   justifient, et les coachs INTERPELLENT quand ils ont quelque chose de
+   reel a dire. */
 function vieDuStaff(){
   const st=staffDe();
-  for(const c of st){
+  /* /!\ ON PARCOURT UNE COPIE. L'ancienne boucle faisait
+   `for(const c of st)` puis `st.splice(...)` DEDANS : supprimer un coach
+   en pleine iteration decale le tableau, et LE COACH SUIVANT SAUTAIT SA
+   SEMAINE — pas de vieillissement, pas de demande, pas d'interpellation,
+   silencieusement, la semaine ou un collegue demissionne. */
+  const partis=[];
+  for(const c of st.slice()){
     if(c.moi)continue;
     ententeCoach(c);
-    /* L'anciennete construit, doucement. */
     c.semainesMaison=(c.semainesMaison||0)+1;
-    if(c.semainesMaison%8===0&&c.entente<75)bougerEntenteCoach(c,1);
-    /* Le salaire sous-bareme : il connait le marche. */
-    const juste=salaireCoach(c.niveau,c.metier==="competition");
-    if(c.salaire<juste*0.6)bougerEntenteCoach(c,-0.6,"payé sous le marché");
-    /* Etale sur tous les groupes trop longtemps. */
-    if(c.groupe==="tous"){c.semainesTous=(c.semainesTous||0)+1;
-      if(c.semainesTous>8)bougerEntenteCoach(c,-0.3,"étalé sur toute la salle");}
+    /* Combien de semaines il tient plus d'un groupe : demandes_staff le lit. */
+    if(MMA.coach.groupesDe(c).length>1)c.semainesTous=(c.semainesTous||0)+1;
     else c.semainesTous=0;
+
+    /* /!\ LE SOCLE, ET LA FIN DU CLIQUET (audit du 02/09). Avant :
+       l'anciennete donnait +1 toutes les huit semaines, le cafe +3 par
+       semaine GRATUITEMENT, et la victoire d'un eleve +5 a TOUS les
+       coachs d'un coup — contre -0,9 d'erosion au pire. Le systeme
+       entier etait donc annule par un clic hebdomadaire, et l'entente ne
+       faisait que monter. Desormais elle GLISSE vers la valeur que sa
+       situation reelle justifie : un cafe rapproche du socle, il ne le
+       depasse jamais durablement. Le salaire, la charge, les annees, la
+       parole donnee — tout est dedans, et rien d'autre. */
+    const cible=MMA.coach.socle(c,faitsCoach(c));
+    const avant=c.entente;
+    c.entente=MMA.coach.glisse(c.entente,cible);
+    /* On ne trace un grief que quand la derive a une CAUSE lisible : un
+       homme doit pouvoir dire pourquoi il est fache. */
+    if(c.entente<avant-0.25){
+      const j=MMA.coach.salaire(c.niveau,c.metier==="competition");
+      const motif=(c.salaire||0)<j*0.8?"payé sous le marché"
+        :MMA.coach.cases(c)>=3?"étalé sur trop de fronts"
+        :MMA.coach.cases(c)===0?"payé à ne rien encadrer":null;
+      if(motif&&!(c.griefs||[]).some(g=>g.motif===motif&&t.jour-g.jour<120))
+        (c.griefs=c.griefs||[]).unshift({jour:t.jour,motif,d:-1});
+      if(c.griefs&&c.griefs.length>6)c.griefs.pop();
+    }
+
+    /* /!\ UN REFUS EXPIRE. c.refusees n'etait JAMAIS purge : dix « non »
+       et le coach ne demandait plus jamais rien de la partie, dans toutes
+       les sauvegardes suivantes. Un homme qui ne reclame plus n'est pas
+       un homme content, c'est un homme mort. Six mois, et il redemande. */
+    if(c.refusJour){
+      for(const k of Object.keys(c.refusJour))
+        if(t.jour-c.refusJour[k]>182){
+          delete c.refusJour[k];
+          c.refusees=(c.refusees||[]).filter(x=>x!==k);
+        }
+    }
+
     /* Tres basse trop longtemps : il pose sa demission, avec ses raisons. */
     if(c.entente<20){c.semainesFroid=(c.semainesFroid||0)+1;
-      if(c.semainesFroid>=8){
-        const pourquoi=(c.griefs||[]).slice(0,2).map(g=>g.motif).join(", ")||"l'usure";
-        raconter(t.jour,[`🚪 <b>${c.nom} pose sa démission</b> — ${pourquoi}. Il finit la semaine et rend les clés.`],true);
-        st.splice(st.indexOf(c),1);
-        continue;
-      }
+      if(c.semainesFroid>=8)partis.push(c);
     } else c.semainesFroid=0;
+  }
+  /* Les departs se jouent APRES la boucle — voir plus haut. */
+  for(const c of partis){
+    const k=st.indexOf(c); if(k<0)continue;
+    const pourquoi=(c.griefs||[]).slice(0,2).map(g=>g.motif).join(", ")||"l'usure";
+    /* /!\ UNE DEMISSION SE PARLE. Elle tenait en une ligne de journal,
+       quand un combattant qui raccroche a droit a trois reponses. Le
+       moment « la porte » existe pour ca. */
+    raconter(t.jour,[`🚪 <b>${c.nom} veut te voir</b> — ${pourquoi}. `
+      +`<span class="lien" onclick="ouvrirBureauCoach('${c.nom.replace(/'/g,"\\'")}','porte')">Le recevoir</span>`],true);
+    c.surLaPorte=t.jour;
+    st.splice(k,1);
+    for(const a of st)if(!a.moi)a.collegueRemercie=(a.collegueRemercie||0)+1;
+    couvertureBouge();
   }
   verifierPromessesStaff();
   poserDemandesStaff();
@@ -4528,8 +4722,12 @@ function contexteCoach(c){
   const aLui=EFFECTIF.filter(f=>grp==="tous"||f.gr===grp
     ||(grp==="pro"&&f.gr==="pro"));
   /* Le crame de SON groupe : celui que la fraicheur condamne. */
+  /* /!\ LE GARDE QUI MANQUAIT : un homme DEJA menage n'a plus a etre
+     signale. Sans lui, la demande sortait sur quelqu'un qui leve deja le
+     pied, l'effet rendait ok:false, et dire oui coutait -4 au joueur au
+     lieu de lui rapporter +7. On ne fait pas payer la bonne reponse. */
   const crame=aLui.find(f=>f.fraicheur!==undefined&&f.fraicheur<38
-    &&MESGARS[f.id]&&!MESGARS[f.id].retraite);
+    &&MESGARS[f.id]&&!MESGARS[f.id].retraite&&!MESGARS[f.id].menage);
   /* Son poulain possible : un jeune a fort potentiel de son groupe —
      /!\ SON ESTIMATION, bruitee par SON niveau, comme l'interpellation
      "genie" du cas 117. Un coach moyen se trompe de gars, et c'est juste. */
@@ -4542,9 +4740,12 @@ function contexteCoach(c){
     if(estime>=80){poulain=f.id;break;}
   }
   /* Un de ses pros monte bientot dans la cage. */
+  /* /!\ ET CELUI-CI : il ne redemande pas le coin d'un homme dont il a
+     DEJA le coin. « au_coin » se payait une fois de plus a chaque fois. */
   let combattant=null;
   for(const f of aLui){const l=MESGARS[f.id];
-    if(l&&l.combatPrevu&&l.combatPrevu.jourCombat-t.jour<=21){combattant=f.id;break;}}
+    if(l&&l.combatPrevu&&l.combatPrevu.jourCombat-t.jour<=21
+       &&c.coinDe!==f.id){combattant=f.id;break;}}
   return {
     bareme:salaireCoach(c.niveau||40,c.metier==="competition"),
     equip:SALLE.equip||{}, eleves:aLui.length,
@@ -4592,14 +4793,77 @@ function poserDemandesStaff(){
 /** L'echeance d'une promesse faite a un coach. /!\ LE JEU N'OUBLIE PAS SA
  *  PAROLE : une promesse non tenue coute plus cher que le non d'origine —
  *  c'est ce qui empeche "plus tard" d'etre la reponse gratuite a tout. */
+/**
+ * A-T-ON FAIT CE QU'ON AVAIT DIT ?
+ * /!\ ON VERIFIE LA CHOSE PROMISE, PAS UN EFFET DE BORD. Premiere
+ * version : « tenue = la demande n'est plus probable ». C'est presque
+ * juste, et le presque coute cher — une demande cesse d'etre probable
+ * pour des raisons qui n'ont RIEN a voir avec le joueur. Le renfort
+ * n'est plus reclame parce que trois eleves sont partis ; le materiel
+ * parce que la demande visait un autre axe. Le jeu aurait alors dit
+ * « tu l'as fait » a quelqu'un a qui on n'a rien donne — l'exacte
+ * symetrie du defaut qu'on repare, et tout aussi menteuse.
+ * Chaque promesse dit donc ce qu'elle attend, et on le regarde.
+ */
+function promesseTenue(c,p){
+  const ctx=contexteCoach(c);
+  switch(p.quoi){
+    /* Il voulait le tarif : il l'a, ou presque. */
+    case "augmentation":
+      return (c.salaire||0) >= MMA.coach.salaire(c.niveau,c.metier==="competition")*0.95;
+    /* Il voulait un seul groupe : il n'en tient plus qu'un. */
+    case "un_seul_groupe":
+      return MMA.coach.groupesDe(c).length<=1;
+    /* Il voulait du renfort : quelqu'un d'autre tient son axe. */
+    case "du_renfort":
+      return ctx.staffSurSonAxe>=2;
+    /* Il voulait du materiel : l'etoile de SON domaine a monte. */
+    case "du_materiel":{
+      const dom=MMA.coach.equipDe(MMA.coach.axePrincipal(c));
+      return !!dom && (SALLE.equip[dom]||1) >= 2;
+    }
+    /* Il voulait qu'on regarde plus grand : on a demenage. */
+    case "trop_petit":
+      return ((local()||{}).places||0) > (p.places||0);
+    default:
+      /* /!\ UNE PROMESSE SANS BRANCHE NE PEUT PAS ETRE TENUE, ET ON LE
+         DIT — plutot que de la declarer tenue par defaut, ce qui
+         rendrait « plus tard » gratuit sur toute demande future. */
+      console.error(`promesseTenue : promesse sans critère "${p.quoi}"`);
+      return false;
+  }
+}
+
 function verifierPromessesStaff(){
   for(const c of staffDe()){
     const p=c.promesse; if(!p||t.jour<p.echeance)continue;
     c.promesse=null;
-    if(p.tenue){ bougerEntenteCoach(c,6,"parole tenue");
-      raconter(t.jour,[`🤝 ${c.nom} — tu avais dit que tu le ferais. Tu l'as fait.`],false); }
-    else{ bougerEntenteCoach(c,-11,"parole non tenue");
-      raconter(t.jour,[`💬 <b>${c.nom}</b> — « Tu m'avais dit d'attendre. J'ai attendu. »`],true); }
+    /* /!\ RIEN AU MONDE N'ECRIVAIT p.tenue = true (audit du 02/09). Le
+       champ etait pose a false par demandes_staff.js et jamais relu que
+       ici : la branche « parole tenue » etait du CODE MORT, et « Plus
+       tard » etait donc MECANIQUEMENT toujours une trahison. Le joueur
+       pouvait monter le salaire au barème dans les huit semaines : a
+       l'echeance il prenait quand meme le -11 et le « Tu m'avais dit
+       d'attendre. J'ai attendu. » Autrement dit, le troisieme bouton de
+       chaque demande etait un piege, et le jeu mentait exactement la ou
+       son commentaire jurait qu'il n'oublie pas sa parole.
+       LA REPARATION NE DEMANDE AUCUNE DONNEE NEUVE : une promesse est
+       tenue quand la demande d'origine N'EST PLUS PROBABLE. Le salaire
+       est au barème, le groupe est unique, le matériel est monté : il
+       n'a plus de raison de la reposer, donc on a fait ce qu'on avait
+       dit. On relit la meme fonction qui l'avait fait naitre. */
+    let tenue=false;
+    try{ tenue=promesseTenue(c,p); }
+    catch(e){ console.error("verifierPromessesStaff :",e); }
+    if(tenue){
+      c.paroleTenue=(c.paroleTenue||0)+1;
+      bougerEntenteCoach(c,6,"parole tenue");
+      raconter(t.jour,[`🤝 ${c.nom} — tu avais dit que tu le ferais. Tu l'as fait.`],false);
+    }else{
+      c.paroleTrahie=(c.paroleTrahie||0)+1;
+      bougerEntenteCoach(c,-11,"parole non tenue");
+      raconter(t.jour,[`💬 <b>${c.nom}</b> — « Tu m'avais dit d'attendre. J'ai attendu. »`],true);
+    }
   }
 }
 
@@ -4620,8 +4884,15 @@ function interpellations(){
       const fi=FICHES[f.id]||{};
       /* Le genie : son estimation du potentiel, bruitee par SON niveau. */
       if(!c.signale["genie:"+f.id]&&(fi.age||99)<=23&&(c.vu||0)>=0){
+        /* /!\ SON ESTIMATION, ET ELLE NE SE RETIRE PAS AU SORT (audit du
+           02/09). alea() etait tire cinquante-deux fois par an sur le
+           meme gamin : a ce rythme le bruit s'annule, tout coach finit
+           par tomber sur un tirage haut, et TOUS finissent par crier au
+           genie. Un coach moyen doit pouvoir se tromper — et se tromper
+           TOUJOURS DE LA MEME FACON, sinon ce n'est pas une erreur de
+           jugement, c'est une loterie. Le jeton le rend stable a vie. */
         const bruit=(100-c.niveau)*0.25;
-        const estime=(l.potentiel||50)+(alea()*2-1)*bruit;
+        const estime=(l.potentiel||50)+((MMA.coach.jeton(c.nom,f.id)%200)/100-1)*bruit;
         if(estime>=84){
           c.signale["genie:"+f.id]=true;
           const axeLib={striking:"du striking",lutte:"de la lutte",sol:"du sol",physique:"du physique"}[axesC[0]]||"";
@@ -4630,7 +4901,14 @@ function interpellations(){
           return;
         }
       }
-      /* Le crame de son groupe. */
+      /* Le crame de son groupe.
+         /!\ L'ALERTE NE SONNAIT QU'UNE FOIS PAR GARS, A VIE (audit du
+         02/09) : c.signale n'etait JAMAIS reinitialise. Un homme qu'on
+         crame, qu'on repose, puis qu'on recrame six mois plus tard ne
+         declenchait plus rien — et c'est precisement la deuxieme fois
+         qu'il faut entendre. Le drapeau se leve quand il recupere. */
+      if(f.fraicheur!==undefined&&f.fraicheur>=65&&c.signale["crame:"+f.id])
+        delete c.signale["crame:"+f.id];
       if(!c.signale["crame:"+f.id]&&f.fraicheur!==undefined&&f.fraicheur<40){
         c.signale["crame:"+f.id]=true;
         raconter(t.jour,[`💬 <b>${c.nom}</b> — « ${lienGars(f.id)} est vidé, je le vois à chaque séance. `
@@ -4699,7 +4977,16 @@ function repondreDemandeStaff(i,rep){
     bougerEntenteCoach(c,r.entente,r.motif||null);
     if(r.reaction)lignes.push(`◆ ${r.reaction}`);
   }
-  if(rep==="non")(c.refusees=c.refusees||[]).push(cle);
+  /* /!\ UN REFUS EST DATE (audit du 02/09). c.refusees n'etait jamais
+     purge : dix « non » et le coach etait muet POUR LE RESTE DE LA
+     PARTIE, dans toutes les sauvegardes suivantes. Et comme un seul
+     candidat est examine par coach — possibles()[0], le plus pressant —
+     refuser UNE fois la demande la plus grave suffisait a le faire taire
+     longtemps. Six mois, et il ose redemander. */
+  if(rep==="non"){
+    (c.refusees=c.refusees||[]).push(cle);
+    (c.refusJour=c.refusJour||{})[cle]=t.jour;
+  }
   if(r.promesse){c.promesse=r.promesse;
     lignes.push(`◆ Tu as donné ta parole. Elle a une date.`);}
   raconter(t.jour,lignes,rep!=="non");
@@ -4738,25 +5025,47 @@ function appliquerEffetStaff(c,effet,cle){
       c.axes=[axes[0]]; c.axe=axes[0];
       return {ok:true,mot:`◆ Il ne fait plus que ${MMA.demandes_staff.MOT_AXE[axes[0]]}.`};
     }
-    case "ouvrir_marche":
-      /* /!\ ON NE LUI FABRIQUE PAS UN COLLEGUE : on ouvre le marche. Le
-         renfort se paie et se choisit — sinon la demande serait un bouton
-         "argent gratuit". Ce qu'il obtient, c'est qu'on aille regarder. */
-      ouvrirMarcheCoachs(c.metier,MMA.demandes_staff.axesDe(c)[0]);
-      return {ok:true,mot:`◆ Tu ouvres le marché des coachs.`};
+    case "ouvrir_marche":{
+      /* /!\ CET EFFET NE FAISAIT RIEN (audit du 02/09). Il ouvrait un
+         panneau que le fermerFiche() de repondreDemandeStaff refermait
+         DEUX LIGNES PLUS LOIN : le joueur ne voyait litteralement rien,
+         et gagnait +5 d'entente pour ca. Et les deux seuls effets vides
+         du module — celui-ci et ouvrir_local — etaient precisement les
+         deux que le banc 29 avait oublies dans son tableau de mesures.
+         Ce qu'un oui doit produire ici, c'est un ENGAGEMENT DATE : tu
+         t'es engage a lui trouver quelqu'un, le jeu le sait, et il te le
+         rappellera. C'est une donnee, pas un panneau. */
+      c.promesse={quoi:"du_renfort",n:8,echeance:t.jour+56,tenue:false};
+      SALLE.chercheCoach={axe:MMA.demandes_staff.axesDe(c)[0],depuis:t.jour,pour:c.nom};
+      return {ok:true,mot:`◆ Tu t'engages à lui trouver quelqu'un. Il t'a entendu — et il retiendra la date.`};
+    }
     case "materiel":{
       const dom=MMA.demandes_staff.AXE_EQUIP[MMA.demandes_staff.axesDe(c)[0]];
       if(!dom)return {ok:false};
       const n=(SALLE.equip[dom]||1);
       if(n>=3)return {ok:false};
-      const cout=[0,1400,3200][n]||1400;
+      /* /!\ LE PRIX ETAIT ECRIT DEUX FOIS (audit du 02/09) : la demande
+         facturait le littéral [0,1400,3200] pendant que l'ecran Gestion
+         facturait PALIERS — jusqu'a 2 400 € d'ecart sur la meme etoile, et
+         GRATUIT au premier palier. Deuxieme source, et elle donnait de
+         l'argent. Un seul barème : celui de la boutique. */
+      const cout=((PALIERS[dom]||[])[n]||{}).prix||1400;
       if(argent<cout)return {ok:false};
       argent-=cout; SALLE.equip[dom]=n+1;
       return {ok:true,mot:`◆ Matériel ${dom} : ${n} → ${n+1} étoile${n+1>1?"s":""} (−${cout.toLocaleString("fr-FR")} €).`};
     }
-    case "ouvrir_local":
+    case "ouvrir_local":{
+      /* /!\ MEME DEFAUT : il changeait d'ONGLET, et c'est tout. La
+         demande restait donc probable pour toujours (la salle est
+         toujours pleine), et rapportait +4 d'entente toutes les cinq
+         semaines, gratuitement, en boucle. Un oui, ici, c'est un
+         engagement date a demenager. */
+      c.promesse={quoi:"trop_petit",n:12,echeance:t.jour+84,tenue:false,
+                  places:(local()||{}).places||0};
+      SALLE.chercheLocal=t.jour;
       allerOnglet("gestion");
-      return {ok:true,mot:`◆ Tu vas regarder les locaux.`};
+      return {ok:true,mot:`◆ Tu t'engages à trouver plus grand. Il note la date, lui aussi.`};
+    }
     case "poulain":{
       const ctx=contexteCoach(c);
       if(!ctx.poulain)return {ok:false};
@@ -4774,7 +5083,13 @@ function appliquerEffetStaff(c,effet,cle){
          depuis le 09/08. */
       const l=MESGARS[ctx.crame];
       if(!l)return {ok:false};
-      if(l.menage)return {ok:false};
+      /* /!\ DIRE OUI A UN HOMME DEJA MENAGE COUTAIT -4 AU LIEU DE
+         RAPPORTER +7 (audit du 02/09) : un ecart de onze points CONTRE le
+         joueur, pour avoir eu raison avant qu'on le lui demande. Un effet
+         deja obtenu n'est pas un effet rate — c'est la demande qui
+         n'aurait pas du sortir. Elle ne sort plus (garde dans
+         contexteCoach), et si elle sort quand meme, elle passe. */
+      if(l.menage)return {ok:true,mot:`◆ ${lienGars(ctx.crame)} lève déjà le pied. Il le voit, et il le dit.`};
       l.menage=true;
       return {ok:true,mot:`◆ ${lienGars(ctx.crame)} est ménagé — il récupère au lieu de forcer.`};
     }
@@ -4784,8 +5099,16 @@ function appliquerEffetStaff(c,effet,cle){
       const cout=Math.round((c.salaire||40)*1.5);
       if(argent<cout)return {ok:false};
       argent-=cout;
+      /* /!\ IL ETAIT PAYE UNE FOIS ET ACQUIS A VIE (audit du 02/09) :
+         c.coinDe n'etait efface NULLE PART, donc ce combattant gagnait un
+         cri de plus a CHAQUE combat pour le reste de la partie, et la
+         fiche du coach affichait « il sera dans le coin de X » pour
+         toujours, meme apres la retraite de X. Le coin se paie POUR UN
+         COMBAT : on note lequel, et il se libere quand il a eu lieu. */
       c.coinDe=ctx.combattant;
-      return {ok:true,mot:`◆ Il sera dans le coin de ${lienGars(ctx.combattant)} (−${cout.toLocaleString("fr-FR")} €).`};
+      c.coinPour=(MESGARS[ctx.combattant]&&MESGARS[ctx.combattant].combatPrevu)
+        ? MESGARS[ctx.combattant].combatPrevu.jourCombat : t.jour+21;
+      return {ok:true,mot:`◆ Il sera dans le coin de ${lienGars(ctx.combattant)} ce soir-là (−${cout.toLocaleString("fr-FR")} €).`};
     }
     default:
       /* /!\ SI ON ARRIVE ICI, UNE DEMANDE PORTE UN EFFET FANTOME. On le
@@ -4800,45 +5123,58 @@ function appliquerEffetStaff(c,effet,cle){
 function cafeCoach(i){
   const c=staffDe()[i]; if(!c||c.moi)return;
   const v=ententeCoach(c);
-  const raisons=(c.griefs||[]).slice(0,2).map(g=>g.motif);
-  const juste=salaireCoach(c.niveau,c.metier==="competition");
+  const juste=MMA.coach.salaire(c.niveau,c.metier==="competition");
   const detail=[];
-  if(c.salaire<juste*0.6)detail.push("« Le marché a bougé. Pas ma fiche de paie. »");
-  if((c.semainesTous||0)>8)detail.push("« Pro, amateurs, loisirs — je cours partout, je ne construis rien. »");
-  if((c.semainesMaison||0)>104)detail.push(`« ${Math.floor(c.semainesMaison/52)} ans que je suis là. Ça compte, une maison. »`);
+  if(c.salaire<juste*0.8)detail.push("« Le marché a bougé. Pas ma fiche de paie. »");
+  if(MMA.coach.cases(c)>=3)detail.push("« Je cours partout, je ne construis rien. »");
+  if(MMA.coach.cases(c)===0)detail.push("« Tu me paies. Pour quoi, au juste ? »");
+  if((c.semainesMaison||0)>104)detail.push(`« Ça fait un moment que je suis là. Ça compte, une maison. »`);
   const deja=c.dernierCafe!==undefined&&t.jour-c.dernierCafe<7;
-  if(!deja){c.dernierCafe=t.jour;bougerEntenteCoach(c,3);}
+  /* /!\ LE CAFE N'IMPRIME PLUS D'ENTENTE (audit du 02/09). Il donnait
+     +3 PAR SEMAINE, gratuitement — quatre fois la derive maximale des
+     faits : tout le systeme d'entente du staff etait annule par un clic
+     hebdomadaire, et la bonne strategie etait de sous-payer tout le monde
+     et de faire le tour des tasses le lundi. Desormais il ne fait que
+     RAPPROCHER DU SOCLE : si sa situation le justifie, un cafe repare un
+     peu plus vite ; si elle ne le justifie pas, il ne repare rien. Un
+     cafe ne remplace pas un salaire, et le jeu le dit maintenant. */
+  let mot="";
+  if(!deja){
+    c.dernierCafe=t.jour;
+    const cible=MMA.coach.socle(c,faitsCoach(c));
+    if(cible>c.entente+0.5){
+      c.entente=MMA.coach.glisse(MMA.coach.glisse(c.entente,cible),cible);
+      mot="<br><br><i>Ça remet un peu d'huile. Rien de plus, mais rien de moins.</i>";
+    }else{
+      mot="<br><br><i>Il boit son café. Ce n'est pas un café qui va régler ça.</i>";
+    }
+  }
   bloque={id:"cafe",titre:`Un café avec ${c.nom}`,
-    texte:`${motEntenteCoach(v)}${detail.length?"<br><br>"+detail.join("<br>"):""}`
+    texte:`${motEntenteCoach(v)}${detail.length?"<br><br>"+detail.join("<br>"):""}${mot}`
       +`${deja?"<br><br><i>Deux cafés dans la semaine — il apprécie, mais ça ne change plus rien.</i>":""}`,
     action:"Retour au staff",faire:()=>{bloque=null;ouvrirStaff();}};
   rendre();
 }
 
-function niveauStaff(groupe, fam){
-  const st = staffDe();
-  if (!st.length) return 25;                 // personne : on se debrouille
-  const axe = { striking: "striking", mma: "lutte", jjb: "sol",
-                physique: "physique" }[fam] || "striking";
-  let best = 0, general = 0;
-  for (const c of st) {
-    if (c.groupe !== "tous" && c.groupe !== groupe) continue;
-    /* /!\ TROP DE MONDE A GERER (Mael, 10/08 : "si un coach s'occupe pro
-       + amateur, performance reduite car trop de gens a gerer"). Un homme
-       qui couvre les deux groupes ne peut pas etre partout : il perd 22 %.
-       Et s'il couvre plusieurs AXES, il s'eparpille davantage. */
-    const axes = (c.axes && c.axes.length) ? c.axes : [c.axe];
-    /* Un coach aigri fait des seances aigres (22/08) : x0,85 a 25
-       d'entente, x1,03 a 85+. Leger — mais reel. */
-    const fEnt = c.moi ? 1 : 0.85 + 0.18 * Math.min(1, Math.max(0, (ententeCoach(c) - 25) / 60));
-    let eff = c.niveau * fEnt;
-    if (c.groupe === "tous") eff *= 0.78;
-    if (axes.length > 1) eff *= 1 - Math.min(0.30, (axes.length - 1) * 0.14);
-    general = Math.max(general, eff * 0.55);        // hors de sa specialite
-    if (axes.includes(axe)) best = Math.max(best, eff);
-  }
-  return Math.max(20, Math.round(best || general || 25));
-}
+/* /!\ niveauStaff A ETE SUPPRIMEE (audit du 02/09). Elle etait la loi de
+   l'encadrement, et elle avait quatre defauts qu'aucun banc ne voyait —
+   parce qu'aucun banc ne la testait :
+     1. UN PLANCHER A 20. Math.max(20, …) : une salle SANS AUCUN COACH
+        rendait deja 0,73 sur une echelle qui monte a 1,45, soit la
+        moitie du chemin vers le meilleur staff du jeu. Ne pas embaucher
+        etait presque gratuit.
+     2. LA DISPERSION NE COUTAIT RIEN. x0,78 pour « tous » et -14 % par
+        axe en plus : un homme seul sur les cinq axes ET les deux groupes
+        valait encore 72 % de cinq specialistes, pour un cinquieme du
+        salaire. La dispersion etait donc la stratégie GAGNANTE — l'exact
+        inverse de ce que la grille raconte.
+     3. LE METIER ETAIT IGNORE. Rien n'empechait un formateur a 25 de
+        preparer un combat de titre, ni un preparateur d'elite de perdre
+        son temps au cours du mardi.
+     4. L'ENTENTE VALAIT ±4,7 %, et quarante des cent points de la jauge
+        ne changeaient rien du tout.
+   La loi vit dans coach.js — couverture() et encadrement() — et elle est
+   tenue par le banc 38. */
 const salaireStaff = () => staffDe().reduce((a, c) => a + (c.salaire || 0), 0);
 
 /* --- LE MARCHE DES COACHS : une liste, et de vrais CV ---------------- */
@@ -4908,8 +5244,13 @@ const CV_FORMATEUR = {
 function fabriquerMarche(){
   const liste = [];
   /* On repart de la graine de la partie : chaque partie a ses coachs. */
-  const base = (GRAINE_MONDE || 11) >>> 0;
-  let x = base;
+  /* /!\ LE RENOUVELLEMENT NE RENOUVELAIT RIEN (audit du 02/09). La base
+     etait GRAINE_MONDE, sans compteur : tous les 120 jours, le marche
+     re-servait EXACTEMENT les memes trente-deux hommes — y compris ceux
+     qu'on avait deja embauches, et ceux qu'on avait vus vieillir. La
+     vague entre dans la graine : le marche regional tourne vraiment. */
+  const base = (((GRAINE_MONDE || 11) >>> 0) ^ ((SALLE.vagueMarche || 0) * 2654435761)) >>> 0;
+  let x = base >>> 0;
   const R = () => ((x = (x * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
   for (let i = 0; i < 32; i++) {
     const axe = AXES_COACH[Math.trunc(R() * AXES_COACH.length)][0];
@@ -4988,6 +5329,7 @@ function marcheCoachs(){
     c.salaire=salaireCoach(c.niveau,c.metier==="competition");
   if(t.jour-(SALLE.marcheCoachs.jour||0)>120){
     const gardes=SALLE.marcheCoachs.liste.filter(c=>c.ancienDeLaMaison);
+    SALLE.vagueMarche=(SALLE.vagueMarche||0)+1;
     SALLE.marcheCoachs={jour:t.jour,liste:[...gardes,...fabriquerMarche()]};
   }
   return SALLE.marcheCoachs.liste;
@@ -4996,30 +5338,42 @@ function marcheCoachs(){
 /* --- L'ONGLET STAFF : la grille axes x groupes ----------------------- */
 function rendreStaffOnglet(){
   migrerStaff();
-  assurerMoi();
+  /* /!\ assurerMoi() N'EST PLUS APPELE ICI (audit du 02/09). Il tire
+     QUATRE alea() — un axe, un niveau, un potentiel, une vitesse — et il
+     n'etait appele QUE par ce rendu : ouvrir l'onglet Staff decalait
+     donc tout le hasard de la partie, et le coach que le joueur EST
+     dependait du moment ou il avait clique. Un RENDU ne doit jamais
+     faire avancer la graine. Il est appele a l'ouverture de la partie. */
   const z=$("st-grille"); if(!z)return;
   const st=staffDe();
+  const couv=couvertureDuStaff();
   const cellules=[];
   for(const [a,lib,quoi] of AXES_COACH){
     const l=[];
     for(const [g,gl] of [["amateur","Amateurs"],["pro","Pros"]]){
-      const qui=st.filter(c=>{
-        const axes=(c.axes&&c.axes.length)?c.axes:[c.axe];
-        return axes.includes(a)&&(c.groupe===g||c.groupe==="tous");});
-      const niv=niveauStaff(g,{striking:"striking",lutte:"mma",sol:"jjb",
-        physique:"physique",mental:"striking"}[a]);
-      /* /!\ ON MONTRE CE QU'ON SAIT, JAMAIS LE CHIFFRE : la couleur dit
-         si c'est couvert, les noms disent par qui. */
-      const ton=qui.length?(qui.some(c=>c.groupe==="tous")?"var(--or)":"var(--vert)"):"var(--accent)";
+      const k=couv.cases[a+"|"+g]||{etat:"trou",qui:[],double:false};
+      const E=MMA.coach.ETATS[k.etat]||MMA.coach.ETATS.trou;
+      /* /!\ ON MONTRE CE QU'ON SAIT, JAMAIS LE CHIFFRE. La case dit son
+         ETAT en un mot — personne · au rabais · juste · tenu · solide —
+         et c'est la seule chose que le joueur ait besoin de lire pour
+         arbitrer. Avant, elle affichait des noms et une couleur, et la
+         seule valeur qu'elle calculait etait celle du STRIKING, jetee
+         sans servir : la ligne « Preparation mentale » etait un piege
+         actif — cliquer dessus coutait du rendement et ne rendait rien. */
+      const ton=k.etat==="trou"?"var(--accent)"
+        :k.etat==="maigre"?"var(--or)"
+        :k.etat==="solide"?"var(--vert)":"var(--txt)";
       /* /!\ CHAQUE CASE EST UNE PORTE (Mael, 10/08 : "ce serait plus
          instinctif de pouvoir cliquer sur la grille et choisir un coach
-         direct"). On clique sur "Sol / Pros" et on choisit qui s'en
-         occupe, sans passer par la liste. */
+         direct"). */
       l.push(`<div style="flex:1;padding:6px 8px;border-left:1px solid var(--bord);cursor:pointer"
         onclick="ouvrirCase('${a}','${g}')">
         <div style="font-size:10.5px;color:var(--doux);text-transform:uppercase">${gl}</div>
-        <div style="color:${ton};font-size:12.5px">${qui.length?qui.map(c=>c.nom.split(" ").pop()).join(", "):"personne"}</div>
-        ${qui.some(c=>c.groupe==="tous")?`<div style="font-size:10.5px;color:var(--doux)">partagé</div>`:""}
+        <div style="color:${ton};font-size:12.5px;font-weight:700">${E.mot}</div>
+        <div style="font-size:11px;color:var(--doux)">${k.qui.length
+          ?k.qui.map(n=>n.split(" ").pop()).join(", ")
+          :(k.secours?"quelqu'un passe":"—")}</div>
+        ${k.double?`<div style="font-size:10.5px;color:var(--or)">deux dessus</div>`:""}
       </div>`);
     }
     cellules.push(`<div class="g-ligne" style="align-items:stretch">
@@ -5027,13 +5381,20 @@ function rendreStaffOnglet(){
         <div class="sous" style="font-size:11px">${quoi}</div></div>
       ${l.join("")}</div>`);
   }
-  z.innerHTML=cellules.join("");
+  /* /!\ CE QUE LA CARTE DIT D'UN COUP D'OEIL, ET QUI N'EXISTAIT NULLE
+     PART : les trous, les doublons, et l'homme qu'on paie pour rien. */
+  const dits=[];
+  if(couv.trous.length)dits.push(`${couv.trous.length} case${couv.trous.length>1?"s":""} sans personne — ils s'y débrouillent seuls.`);
+  if(couv.doubles.length)dits.push(`${couv.doubles.length} case${couv.doubles.length>1?"s":""} à deux : le second ne fait qu'ajouter ses yeux, et il coûte un salaire entier.`);
+  if(couv.morts.length)dits.push(`⚠ ${couv.morts.join(", ")} n'encadre rien du tout, et tu le paies.`);
+  z.innerHTML=cellules.join("")
+    +(dits.length?`<div class="f-sous" style="margin-top:10px;line-height:1.55">${dits.join("<br>")}</div>`:"");
 
   const zl=$("st-liste");
   if(zl)zl.innerHTML=st.length?st.map((c,i)=>{
     const av=avisCoach(c);
-    const axes=(c.axes&&c.axes.length)?c.axes:[c.axe];
-    const charge=(c.groupe==="tous"?1:0)+(axes.length-1);
+    const axes=MMA.coach.axesDe(c);
+    const charge=MMA.coach.cases(c);
     return `<div class="carte-combat">
       <div class="cc-quand">${c.metier==="competition"?"compétition":"formateur"} ·
         ${GROUPES_COACH.find(g=>g[0]===c.groupe)[1]} · ${c.moi?"c'est toi":`${c.salaire} €/sem`}</div>
@@ -5049,15 +5410,20 @@ function rendreStaffOnglet(){
         <div style="font-size:11px;color:var(--doux);margin-top:2px">
           ${c.vu||0} semaine${(c.vu||0)>1?"s":""} avec lui${
             av.sur<4?" · ton avis se précisera":" · tu le connais par cœur"}</div></div>
-      ${charge>0?`<div class="cc-sous" style="color:var(--accent)">
-        Il est sur trop de fronts — il rend moins partout.</div>`:""}
+      ${c.moi?"":`<div class="cc-sous" style="margin-top:4px">${motEntenteCoach(ententeCoach(c))}</div>`}
+      ${charge>=3?`<div class="cc-sous" style="color:var(--accent)">
+        Il tient ${charge} cases — il rend moins partout.</div>`
+        :charge===0&&!c.moi?`<div class="cc-sous" style="color:var(--accent)">
+        Il n'encadre rien. Tu le paies quand même.</div>`:""}
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
         ${AXES_COACH.map(([a,l])=>`<button class="puce ${axes.includes(a)?"actif":""}"
           onclick="basculerAxeCoach(${i},'${a}')">${l}</button>`).join("")}</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
         ${GROUPES_COACH.map(([g,l])=>`<button class="puce ${c.groupe===g?"actif":""}"
           onclick="poserGroupeCoach(${i},'${g}')">${l}</button>`).join("")}
-        ${c.moi?"":`<button class="puce" onclick="cafeCoach(${i})">Prendre un café</button>
+        ${c.moi?"":`<button class="puce" style="border-color:var(--or);color:var(--or)"
+          onclick="ouvrirBureauCoach(staffDe()[${i}])">Le voir au bureau</button>
+        <button class="puce" onclick="cafeCoach(${i})">Prendre un café</button>
         <button class="puce" onclick="renvoyerCoach(${i})">Le remercier</button>`}</div>
     </div>`;}).join("")
     :`<div class="repos">Personne n'encadre la salle.</div>`;
@@ -5074,7 +5440,7 @@ function ouvrirCase(axe,groupe){
   const lib=(AXES_COACH.find(x=>x[0]===axe)||["","?"])[1];
   const gl=GROUPES_COACH.find(g=>g[0]===groupe)[1];
   const dessus=c=>{const ax=(c.axes&&c.axes.length)?c.axes:[c.axe];
-    return ax.includes(axe)&&(c.groupe===groupe||c.groupe==="tous");};
+    return MMA.coach.couvre(c,axe,groupe);};
   $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${lib} · ${gl}</div>
     <button class="f-fermer" onclick="fermerFiche()">Fermer</button></div>
     <div class="f-sous" style="margin:10px 0">Qui s'en occupe ?</div>
@@ -5089,75 +5455,79 @@ function ouvrirCase(axe,groupe){
         <button class="cc-voir" style="margin-top:8px"
           onclick="poserSurCase(${i},'${axe}','${groupe}')">
           ${dessus(c)?"Le retirer d'ici":"Le mettre ici"}</button>
-        ${dessus(c)&&c.groupe!=="tous"?`<button class="cc-voir" style="margin-top:6px"
-          onclick="etendreCoach(${i},'${axe}','${groupe}')">
-          Étendre aux deux groupes (moins bon partout)</button>`:""}</div>`;}).join("")
+</div>`;}).join("")
       :`<div class="repos">Tu n'as personne. Il faut recruter.</div>`}
     <button class="cc-voir" style="width:100%;margin-top:12px"
       onclick="ouvrirMarcheCoachs('tous','${axe}')">🔎 Chercher un ${lib.toLowerCase()}</button>`;
   $("voile").classList.add("ouvert");
 }
+/* /!\ « tous » N'EXISTE PLUS COMME GROUPE — et c'est ce qui repare la
+   grille. L'ancienne logique avait un TROU (Mael, 16/08 : « quand je mets
+   un coach groupe pro ou amateur ca le met aussi dans l'autre groupe, je
+   peux pas separer ») : un coach en "tous" pose sur une case ne matchait
+   AUCUNE branche, son groupe restait "tous" pour toujours, insecable.
+   Desormais un coach porte la LISTE de ses groupes : mettre ici ajoute,
+   retirer d'ici enleve, et tenir les deux est simplement deux cases —
+   avec ce que la dispersion coute, dit a l'ecran. */
+function groupesCoach(c){
+  if(!c.groupes||!c.groupes.length)c.groupes=MMA.coach.groupesDe(c);
+  return c.groupes;
+}
+function axesCoach(c){
+  if(!c.axes||!c.axes.length)c.axes=MMA.coach.axesDe(c);
+  return c.axes;
+}
 function poserSurCase(i,axe,groupe){
   const c=staffDe()[i]; if(!c)return;
-  c.axes=(c.axes&&c.axes.length)?c.axes:[c.axe];
-  const ax=c.axes.indexOf(axe);
-  const dessus=ax>=0&&(c.groupe===groupe||c.groupe==="tous");
-  const autre=groupe==="pro"?"amateur":"pro";
-  const autreLib=GROUPES_COACH.find(g=>g[0]===autre)[1];
-  /* /!\ LA GRILLE SEPARE (Mael, 16/08 : "quand je mets un coach groupe
-     pro ou amateur ca le met aussi dans l'autre groupe, je peux pas
-     separer"). L'ancienne logique avait un TROU : un coach en "tous"
-     pose sur une case ne matchait AUCUNE branche — son groupe restait
-     "tous" pour toujours, insecable par la grille. Desormais :
-     "Le mettre ici" = il est ICI, et s'il couvrait l'autre groupe il le
-     LACHE (on le dit). "Le retirer d'ici" quand il est en "tous" = il
-     reste EN FACE. Le "tous" volontaire reste accessible par les puces
-     de la liste — la grille, elle, fait ce qu'elle montre. */
+  const ax=axesCoach(c), gr=groupesCoach(c);
+  const dessus=ax.indexOf(axe)>=0&&gr.indexOf(groupe)>=0;
   if(dessus){
-    if(c.groupe==="tous"){
-      c.groupe=autre;
-      toast(`${c.nom} lâche ${GROUPES_COACH.find(g=>g[0]===groupe)[1]} — il garde ${autreLib}.`);
-    }else if(c.axes.length>1)c.axes.splice(ax,1);
-    else toast("Il lui faut au moins un domaine.");
+    /* On le retire de CETTE case. S'il ne tenait que ca, on refuse : un
+       coach sans case est un salaire pour rien, et le jeu doit le dire
+       avant, pas apres. */
+    if(ax.length===1&&gr.length===1)
+      return toast(`${c.nom} ne tiendrait plus rien. Retire-le du staff si c'est ce que tu veux.`);
+    if(gr.length>1)gr.splice(gr.indexOf(groupe),1);
+    else ax.splice(ax.indexOf(axe),1);
+    toast(`${c.nom} lâche ${MMA.coach.libDe(axe).toLowerCase()} chez ${groupe==="pro"?"les pros":"les amateurs"}.`);
   }else{
-    if(ax<0)c.axes.push(axe);
-    if(c.groupe!==groupe)
-      toast(c.groupe==="tous"
-        ?`${c.nom} se concentre sur ${GROUPES_COACH.find(g=>g[0]===groupe)[1]}.`
-        :`${c.nom} passe chez ${GROUPES_COACH.find(g=>g[0]===groupe)[1]} — ${autreLib} perd son cours.`);
-    c.groupe=groupe;
+    if(ax.indexOf(axe)<0)ax.push(axe);
+    if(gr.indexOf(groupe)<0)gr.push(groupe);
+    const n=ax.length*gr.length;
+    toast(n<=1?`${c.nom} ne fait plus que ça — et il le fera mieux.`
+      :n<=2?`${c.nom} tient deux cases. C'est tenable.`
+      :`${c.nom} tient ${n} cases — il rendra moins partout.`);
   }
-  c.axe=c.axes[0];
+  c.axe=ax[0]; c.groupe=gr.length>1?"tous":gr[0];   /* le repli des vieilles sauvegardes */
+  couvertureBouge();
   ouvrirCase(axe,groupe); rendre();
 }
 
-/* /!\ LE CHEMIN VERS "TOUS" DEPUIS LA GRILLE (Mael, 16/08 : "maintenant
-   je peux plus mettre pro ET amateur le meme coach"). La correction de
-   la grille avait ferme ce chemin — les puces de la liste l'offraient,
-   mais Mael vit dans la grille (c'est lui qui l'a demandee). L'extension
-   est un choix EXPLICITE, avec son cout annonce. */
-function etendreCoach(i,axe,groupe){
-  const c=staffDe()[i]; if(!c)return;
-  c.groupe="tous";
-  toast(`${c.nom} prend toute la salle — il sera moins bon partout.`);
-  ouvrirCase(axe,groupe); rendre();
-}
+/* /!\ etendreCoach A ETE SUPPRIMEE : elle posait c.groupe="tous", le
+   fourre-tout que le modele ne connait plus. Etendre un coach aux deux
+   groupes, c'est simplement le poser sur la case d'en face — et voir le
+   prix monter dans la carte. */
 
 function basculerAxeCoach(i,a){
   const c=staffDe()[i]; if(!c)return;
-  c.axes=(c.axes&&c.axes.length)?c.axes:[c.axe];
-  const j=c.axes.indexOf(a);
-  if(j>=0){ if(c.axes.length===1)return toast("Il lui faut au moins un domaine.");
-    c.axes.splice(j,1); }
-  else c.axes.push(a);
-  c.axe=c.axes[0];
-  rendre();
+  const ax=axesCoach(c);
+  const j=ax.indexOf(a);
+  if(j>=0){ if(ax.length===1)return toast("Il lui faut au moins un domaine.");
+    ax.splice(j,1); }
+  else ax.push(a);
+  c.axe=ax[0]; couvertureBouge(); rendre();
 }
 function poserGroupeCoach(i,g){
   const c=staffDe()[i]; if(!c)return;
-  c.groupe=g;
-  if(g==="tous")toast(`${c.nom} prend tout le monde — il sera moins bon partout.`);
-  rendre();
+  const gr=groupesCoach(c);
+  const j=gr.indexOf(g);
+  if(j>=0){ if(gr.length===1)return toast("Il faut bien qu'il encadre quelqu'un.");
+    gr.splice(j,1); }
+  else gr.push(g);
+  c.groupe=gr.length>1?"tous":gr[0];
+  const n=axesCoach(c).length*gr.length;
+  if(n>=4)toast(`${c.nom} tient ${n} cases — à ce compte-là il ne construit plus rien nulle part.`);
+  couvertureBouge(); rendre();
 }
 
 /* --- L'ECRAN DU STAFF : voir, affecter, recruter --------------------- */
@@ -5240,10 +5610,34 @@ function embaucherCoach(i){
   const l=marcheCoachs(), c=l[i]; if(!c)return;
   if(argent<c.prime)return toast("La caisse ne suit pas.");
   argent-=c.prime;
-  /* /!\ IL ARRIVE DANS LE GROUPE DE SON METIER : un formateur chez les
-     amateurs, un coach de competition chez les pros. Modifiable ensuite. */
-  staffDe().push({nom:c.nom,axe:c.axe,niveau:c.niveau,salaire:c.salaire,
-    metier:c.metier,groupe:c.metier==="competition"?"pro":"amateur",cv:c.cv});
+  /* /!\ ON RECOPIE L'HOMME TEL QUEL. C'ETAIT LE DEFAUT LE PLUS COUTEUX
+     DU MARCHE (audit du 02/09) : cette ligne listait sept champs et
+     JETAIT les trois que fabriquerMarche travaille le plus — potentiel,
+     vitesse, age — plus la prime et le marqueur d'ancien de la maison.
+     observerStaff les re-fabriquait alors depuis un hash du NOM, avec
+     trois consequences mesurees :
+       · tout coach recrute avait exactement 42 ans (competition) ou 30
+         (formateur), donc la retraite « prevue entre 55 et 60 ans »
+         demandee par Mael demandait treize ans de jeu pour arriver ;
+       · le plafond devenait une fonction pure du nom — deux homonymes du
+         marche (quinze prenoms, quinze noms, trente-deux tirages : les
+         collisions sont quasi certaines) avaient le meme avenir, et « le
+         meilleur pari du jeu », c'est-a-dire le formateur du mardi qui
+         peut monter a 80, n'existait pas ;
+       · la vitesse re-derivee pouvait etre NEGATIVE : dix coachs sur
+         trente-deux regressaient a vie.
+     Le pari cache du marche vit maintenant jusqu'a la retraite. */
+  const arrive=Object.assign({},c,{
+    axes:[c.axe],
+    groupes:[c.metier==="competition"?"pro":"amateur"],
+    groupe:c.metier==="competition"?"pro":"amateur",
+    vu:0, semaines:0, semainesMaison:0,
+    /* Un ancien de la maison n'arrive pas comme un inconnu : ce qu'on a
+       construit avec lui comme combattant, il l'apporte. */
+    entente:c.ancienDeLaMaison?68:55});
+  delete arrive.prime;
+  staffDe().push(arrive);
+  couvertureBouge();
   l.splice(i,1);
   raconter(t.jour,[`◆ ${c.nom} rejoint le staff — ${(AXES_COACH.find(x=>x[0]===c.axe)||[,"?"])[1].toLowerCase()}, `
     +`${c.salaire} € par semaine.`],true);
@@ -5429,7 +5823,15 @@ function evtCoach(){
   if(!cibles.length)return false;
   cibles.sort((a,b)=>b.niveau-a.niveau);
   const c=cibles[0], idx=st.indexOf(c);
-  const hausse=Math.round(c.salaire*(0.25+c.niveau/300));
+  /* /!\ LA HAUSSE EST INDEXEE SUR LE BAREME, PAS SUR CE QU'ON PAIE DEJA
+     (audit du 02/09 : « la seule negociation du jeu se fait hors bareme »).
+     En pourcentage du salaire courant, sous-payer un coach rendait son
+     debauchage MOINS CHER a refuser — on etait donc recompense de l'avoir
+     mal paye. Ce que la salle d'en face propose, c'est le tarif du marche
+     plus ce qu'il faut pour le decider ; ce qu'on doit combler, c'est
+     l'ECART A CE TARIF. */
+  const juste=MMA.coach.salaire(c.niveau,c.metier==="competition");
+  const hausse=Math.max(10,Math.round(juste*(1.05+c.niveau/600)-(c.salaire||0)));
   /* /!\ L'ENTENTE DECIDE (22/08) : aime, il te MONTRE l'offre en
      rigolant — rien a payer. Aigri, il part sans negocier. Entre les
      deux : la negociation d'avant. */
@@ -5461,29 +5863,14 @@ function evtCoach(){
     ]};
   return true;
 }
-function evtCoachAncien(){
-  const staff=Object.keys(FICHES).filter(c=>FICHES[c].gr==="coach");
-  if(!staff.length)return false;
-  const cle=staff[Math.trunc(alea()*staff.length)];
-  const hausse=Math.round(60+alea()*90);
-  bloque={id:"coach",titre:`${FICHES[cle].nom} a reçu une offre`,
-    texte:`Une autre salle lui propose mieux. Il te le dit en face, ce qui `
-      +`est déjà une forme de respect. Il demande ${hausse} € de plus par semaine.`,
-    choix:[
-      {lab:`L'augmenter (${hausse} €/sem)`,faire:()=>{
-        SALLE.coachAm=Math.min(99,SALLE.coachAm+3);
-        SALLE.chargeStaff=(SALLE.chargeStaff||0)+hausse;
-        raconter(t.jour,[`◆ ${FICHES[cle].nom} reste. +${hausse} € par semaine.`],true);
-        bloque=null;rendre();}},
-      {lab:"Le laisser partir",faire:()=>{
-        SALLE.coachAm=Math.max(20,SALLE.coachAm-12);
-        if(SALLE.roleStaff)delete SALLE.roleStaff[cle];
-        FICHES[cle].statut="A quitté la salle.";
-        raconter(t.jour,[`💔 ${FICHES[cle].nom} s'en va. L'encadrement en pâtit.`],true);
-        bloque=null;rendre();}},
-    ]};
-  return true;
-}
+/* /!\ evtCoachAncien A ETE SUPPRIMEE (audit du 02/09). Elle n'etait
+   citee NULLE PART — la liste de vieDeLaSalle (evtDebauchage, evtImpaye,
+   evtSponsor, evtMateriel, evtCoach, evtGalaMaison) ne la contenait pas —
+   et elle etait pourtant la SEULE ligne du jeu qui nettoyait
+   SALLE.roleStaff au depart d'un coach. Une deuxieme source morte qui
+   entretenait une troisieme source morte : elle ecrivait encore
+   SALLE.coachAm, la variable que le systeme de coachs nommes a remplacee
+   le 10/08. evtCoach, elle, est vivante et travaille sur le vrai staff.
 
 /* --- 6. ORGANISER UN GALA ------------------------------------------- */
 function evtGalaMaison(){
@@ -6133,8 +6520,8 @@ function rendreGestion(){
       /* /!\ ON DIT CE QUI MANQUE (Mael, 10/08 : "c'est où que je les
          recrute ?"). Le chemin Gestion -> Gérer -> Chercher etait trop
          long, et rien ne signalait qu'un groupe n'avait personne. */
-      const aAm=st.some(c=>c.groupe==="amateur"||c.groupe==="tous");
-      const aPro=st.some(c=>c.groupe==="pro"||c.groupe==="tous");
+      const aAm=st.some(c=>MMA.coach.groupesDe(c).indexOf("amateur")>=0);
+      const aPro=st.some(c=>MMA.coach.groupesDe(c).indexOf("pro")>=0);
       const manque=[!aAm?"les amateurs":null,!aPro?"le groupe pro":null].filter(Boolean);
       return `<div class="g-ligne"><div class="l">Staff<div class="sous">
         ${st.length?st.map(c=>c.nom+" ("+(AXES_COACH.find(x=>x[0]===c.axe)||[,"?"])[1].toLowerCase()+")").join(" · ")
@@ -6615,8 +7002,8 @@ function actionsPour(id){
       : B("Analyser (staff, 3 j)",`analyser('${id}')`,true),
     B(suivis.has(id)?"Suivi ✓":"Suivre",`basculerSuivi('${id}')`),
     B(CIBLE===id?"Ciblé ✓":"Cibler comme adversaire",`ciblerAdversaire('${id}')`)];
-  if(f.gr==="coach")return [B("Changer son rôle",`ouvrirRoleStaff('${id}')`),
-    B("Discuter",`ouvrirCoach('${id}')`,true)];
+  if(f.gr==="coach")return [B("Le voir au bureau",`ouvrirBureauCoach('${id}')`,true),
+    B("Sa fiche",`ouvrirCoach('${id}')`)];
   return [];
 }
 /* ==== CE QUI ETAIT "A CABLER" ET NE L'ETAIT PAS (10/08) ================
@@ -6957,24 +7344,308 @@ function poserPriorite(id,k){
   ouvrirPriorites(id);
 }
 
-function ouvrirRoleStaff(id){
-  const spe=SALLE.roleStaff||(SALLE.roleStaff={"Da Costa":"jjb","Meyer":"striking"});
-  const act=spe[id];
-  const B=(k,lib)=>`<button class="cc-voir" style="width:100%;margin-top:8px"
-    onclick="poserRoleStaff('${id}','${k}')">${lib}${act===k?" ✓":""}</button>`;
-  $("fiche").innerHTML=`<div class="f-tete"><div class="f-nom">${nomScene(id)}</div>
-    <button class="f-fermer" onclick="ouvrirFiche('${id}')">Retour</button></div>
-    <div class="f-sous" style="margin:10px 0">Ce qu'il encadre. Les séances de sa
-      spécialité rendent plus ; les autres un peu moins — un coach ne peut pas
-      tout couvrir.</div>
-    ${B("striking","Frappe")}${B("mma","Lutte & MMA")}${B("jjb","Sol & JJB")}${B("physique","Physique")}`;
-  $("voile").classList.add("ouvert");
+/* /!\ ouvrirRoleStaff ET poserRoleStaff ONT ETE SUPPRIMEES (audit du
+   02/09). Elles ecrivaient SALLE.roleStaff — la table indexee par NOM
+   PROPRE que facteursSeance multipliait a chaque seance sans jamais
+   regarder le staff reel. L'ecran promettait « les seances de sa
+   specialite rendent plus » : le code, lui, comptait des valeurs
+   ANONYMES dans un dictionnaire, donc deux coachs poses sur le sol
+   donnaient +24 % au sol pour tout le monde, y compris apres leur
+   depart. Et aucun coach recrute au marche n'y entrait jamais.
+   La specialite se pose desormais sur la GRILLE (ouvrirCase) et se lit
+   dans coach.js. Une seule source, et elle porte un nom d'homme.
+
+/* ==================================================================== */
+/* LE BUREAU DU COACH (cas 162) — la surface qui manquait                */
+/* ==================================================================== */
+/* /!\ CE QU'IL Y AVAIT : « Prendre un café » (+3 d'entente, gratuit,
+   toutes les semaines) et trois motifs d'interpellation. Compte fait par
+   l'audit : ~40 repliques de coach dans TOUTE une partie, et ZERO ligne
+   pour le joueur — le coach n'etait jamais ADRESSE, il ne faisait que
+   reclamer. A cote, le matchmaker qu'on voit une fois par an en porte
+   559. C'est l'ecart que Mael a nomme : « beaucoup plus de discussion et
+   de choses a faire ».
+   La mecanique vit dans coach_dialogue.js (banc 39), le contenu dans
+   coach_scenes.js — ecrit et relu a part, comme celui du diner. Ici :
+   l'ecran, et l'application des effets. Rien d'autre. */
+let BUREAU=null;
+
+/** Le coach, par son nom (c'est ce que portent les liens du journal). */
+function coachParNom(nom){
+  const st=staffDe();
+  return st.find(c=>c.nom===nom)||st.find(c=>c.nom.split(" ").pop()===nom)||null;
 }
-function poserRoleStaff(id,k){
-  SALLE.roleStaff=SALLE.roleStaff||{};
-  SALLE.roleStaff[id]=k;
-  toast(`${nomScene(id)} encadre désormais ${({striking:"la frappe",mma:"la lutte",jjb:"le sol",physique:"le physique"})[k]}.`);
-  ouvrirRoleStaff(id);
+
+/**
+ * LA SITUATION QU'IL LIT. /!\ CHAQUE CHAMP EST UN DECLENCHEUR DE LA LISTE
+ * FERMEE : un champ en trop ne sert a rien, un champ manquant fait taire
+ * des scenes entieres sans que personne le sache.
+ */
+function ctxCoach(c){
+  const couv=couvertureDuStaff();
+  const axe=MMA.coach.axePrincipal(c);
+  const gr=MMA.coach.groupesDe(c);
+  const miens=EFFECTIF.filter(f=>MESGARS[f.id]&&!MESGARS[f.id].retraite);
+  /* Un trou juste a cote : une case de SON groupe que personne ne tient. */
+  const trouACote=couv.trous.some(k=>gr.indexOf(k.split("|")[1])>=0);
+  /* Il partage une de ses cases avec quelqu'un d'autre. */
+  const partage=couv.doubles.some(k=>{const [a,g]=k.split("|");
+    return MMA.coach.couvre(c,a,g);});
+  const crame=miens.find(f=>f.fraicheur!==undefined&&f.fraicheur<40&&!MESGARS[f.id].menage);
+  const espoir=miens.find(f=>{const l=MESGARS[f.id],fi=FICHES[f.id]||{};
+    return l&&(fi.age||99)<=23&&(l.potentiel||50)>=78;});
+  return {
+    caractere:MMA.coach_dialogue.caractereDe(c),
+    entente:ententeCoach(c), salaire:c.salaire||0,
+    bareme:MMA.coach.salaire(c.niveau,c.metier==="competition"),
+    metier:c.metier, age:c.age||40, semainesMaison:c.semainesMaison||0,
+    cases:MMA.coach.cases(c), phase:MMA.coach.carriere(c).phase,
+    staff:staffDe().filter(x=>!x.moi).length,
+    trouACote, partage,
+    sallePleine:EFFECTIF.length>((local()||{}).places||99)*0.9,
+    poulain:c.poulain||null, crame:crame?crame.id:null, espoir:espoir?espoir.id:null,
+    dernier:SALLE.dernierResultat||null, departRecent:!!SALLE.departRecent,
+    promesseEnCours:!!c.promesse, recadrages:c.recadrages||0,
+    paroleTrahie:c.paroleTrahie||0, ouiDaffilee:c.ouiDaffilee||0,
+  };
+}
+
+/** Ouvrir le bureau. `moment` absent = TU vas le voir (les sujets). */
+function ouvrirBureauCoach(nom,moment){
+  const c=typeof nom==="object"?nom:coachParNom(nom);
+  if(!c)return toast("Il n'est plus là.");
+  if(c.moi)return toast("Tu ne vas pas prendre rendez-vous avec toi-même.");
+  if(typeof MMA==="undefined"||!MMA.coach_dialogue||!MMA.coach_scenes)
+    return toast("Le module de dialogue n'est pas chargé.");
+  c.vues=c.vues||{};
+  const E=MMA.coach_dialogue.ouvrir(MMA.coach_scenes.SCENES,ctxCoach(c),c.vues,t.jour,
+    MMA.coach.jeton(c.nom,t.jour));
+  BUREAU={c,E,moment:moment||null,reponse:null,dits:[]};
+  if(moment)MMA.coach_dialogue.poser(E,moment,null);
+  rendreBureauCoach();
+  $("coach-page").classList.add("ouvert");
+}
+
+function fermerBureauCoach(){
+  const B=BUREAU;
+  $("coach-page").classList.remove("ouvert");
+  BUREAU=null;
+  if(B&&B.c&&!B.c.moi){
+    /* /!\ CE QU'ON S'EST DIT RESTE. diner.js ecrit S.dits et le jette —
+       sans importance pour un rendez-vous annuel, mortel pour une
+       relation hebdomadaire : des declencheurs le relisent
+       (je_lui_ai_promis, je_l_ai_recadre, je_ne_tiens_jamais_parole). */
+    B.c.dits=(B.c.dits||[]).concat(B.E.dits).slice(-24);
+    B.c.dernierBureau=t.jour;
+  }
+  rendre();
+}
+
+/** Le joueur ouvre un sujet. */
+function sujetBureauCoach(cle){
+  if(!BUREAU)return;
+  BUREAU.reponse=null;
+  MMA.coach_dialogue.poser(BUREAU.E,"bureau",cle);
+  rendreBureauCoach();
+}
+
+function repondreBureauCoach(k){
+  if(!BUREAU)return;
+  const r=MMA.coach_dialogue.repondre(BUREAU.E,k);
+  if(!r)return;
+  const c=BUREAU.c;
+  bougerEntenteCoach(c,r.d,null);
+  /* /!\ L'EFFET EST APPLIQUE ICI, ET S'IL NE PEUT PAS L'ETRE ON LE DIT.
+     La lecon ecrite six fois : un effet que personne n'applique n'existe
+     pas — et un « oui » qui ne fait rien est pire qu'un non. */
+  let mot=null;
+  if(r.effet){
+    const a=appliquerEffetDialogue(c,r.effet);
+    mot=a.mot||null;
+    if(!a.ok){ bougerEntenteCoach(c,-3,"une parole en l'air");
+      mot=a.mot||"◆ Il a entendu. Rien n'a bougé. C'est pire que rien."; }
+  }
+  BUREAU.reponse={r:r.r,mot,suite:r.suite};
+  couvertureBouge();
+  rendreBureauCoach();
+}
+
+function suiteBureauCoach(){
+  if(!BUREAU)return;
+  BUREAU.reponse=null;
+  rendreBureauCoach();
+}
+
+function rendreBureauCoach(){
+  const B=BUREAU, z=$("cp-dedans"); if(!B||!z)return;
+  const c=B.c, D=MMA.coach_dialogue;
+  const car=D.caractereDe(c);
+  const carr=MMA.coach.carriere(c);
+  const tete=`<div class="cp-tete">
+      <div class="ou">${B.moment==="porte"?"Il rend les clés"
+        :B.moment==="debrief"?"Le lendemain"
+        :B.moment==="accrochage"?"Ça ne passe pas"
+        :B.moment==="bord_du_tapis"?"Au bord du tapis":"Le bureau"}</div>
+      <div class="nom">${c.nom}</div>
+      <div class="sous">${MMA.coach.libDe(MMA.coach.axePrincipal(c))} · ${ditGroupes(c)} · ${carr.mot}</div>
+    </div>`;
+
+  /* 1. IL VIENT DE REPONDRE. */
+  if(B.reponse){
+    z.innerHTML=tete
+      +`<div class="cp-reponse">${B.reponse.r}</div>`
+      +(B.reponse.mot?`<div class="cp-effet">${B.reponse.mot}</div>`:"")
+      +`<button class="cp-suite" onclick="${B.reponse.suite?"rendreBureauCoach":"suiteBureauCoach"}()">Continuer</button>`;
+    if(B.reponse.suite){ B.reponse=null; }
+    return;
+  }
+  /* 2. UNE SCENE EST OUVERTE. */
+  const sc=B.E.encours;
+  if(sc){
+    z.innerHTML=tete
+      +`<div class="cp-il">${sc.texte}</div>`
+      +`<div class="cp-choix">${(sc.choix||[]).map((x,k)=>
+        `<button onclick="repondreBureauCoach(${k})">${x.lab}</button>`).join("")}</div>`;
+    return;
+  }
+  /* 3. LE MENU DES SUJETS — ce que TU peux ouvrir. C'est la moitie qui
+        n'existait pas : jusqu'ici le coach n'etait jamais adresse. */
+  if(B.moment&&B.moment!=="bureau"){
+    z.innerHTML=tete+`<div class="cp-fin">${D.ambiance(B.E.cumul).mot}</div>`
+      +`<button class="cp-suite" onclick="fermerBureauCoach()">Retourner au travail</button>`;
+    return;
+  }
+  const faits=B.E.sujetsFaits;
+  z.innerHTML=tete
+    +`<div class="cp-il" style="font-size:14px;color:#9fb0c2">${D.motCaractere(car)}</div>`
+    +`<div class="cp-choix cp-sujets">${D.SUJETS.map(x=>
+      `<button onclick="sujetBureauCoach('${x.cle}')" ${faits.indexOf(x.cle)>=0?'style="opacity:.45"':""}>
+         <b>${x.lab}</b><br><span style="font-size:12.5px;color:#8b9aab">${x.txt}</span></button>`).join("")}</div>`
+    +(B.E.dits.length?`<div class="cp-fin">${D.ambiance(B.E.cumul).mot}</div>`:"")
+    +`<button class="cp-suite" onclick="fermerBureauCoach()">Le laisser retourner au tapis</button>`;
+}
+
+/**
+ * /!\ CHAQUE CLE DE MMA.coach_dialogue.EFFETS EST TRAITEE ICI, ET CHACUNE
+ * BOUGE QUELQUE CHOSE DE MESURABLE. C'est le meme crible que le banc 29
+ * applique aux demandes du staff, et le banc 39 le rejoue sur cette
+ * table : une cle qui tombe dans le vide fait ECHOUER le banc.
+ */
+function appliquerEffetDialogue(c,effet){
+  switch(effet){
+    case "promettre_argent":{
+      if(c.promesse)return {ok:false,mot:"◆ Tu lui as déjà promis quelque chose. Il attend toujours."};
+      c.promesse={quoi:"augmentation",n:8,echeance:t.jour+56,tenue:false};
+      return {ok:true,mot:"◆ Tu as donné ta parole. Elle a une date."};
+    }
+    case "monter_au_bareme":{
+      const juste=MMA.coach.salaire(c.niveau,c.metier==="competition");
+      if(juste<=(c.salaire||0))return {ok:false,mot:"◆ Il est déjà au tarif. Il le sait."};
+      if(argent<juste*4)return {ok:false,mot:"◆ La caisse ne suit pas. Il l'a lu sur ton visage."};
+      c.salaire=juste;
+      return {ok:true,mot:`◆ Son salaire passe à ${juste.toLocaleString("fr-FR")} € par semaine.`};
+    }
+    case "lui_lacher_une_case":{
+      const ax=axesCoach(c), gr=groupesCoach(c);
+      if(ax.length*gr.length<=1)return {ok:false,mot:"◆ Il ne tient déjà qu'une chose."};
+      if(gr.length>1)gr.pop(); else ax.pop();
+      c.axe=ax[0]; c.groupe=gr.length>1?"tous":gr[0];
+      return {ok:true,mot:`◆ Il lâche une case. Quelqu'un d'autre devra la tenir.`};
+    }
+    case "lui_donner_une_case":{
+      const couv=couvertureDuStaff();
+      const trou=couv.trous[0];
+      if(!trou)return {ok:false,mot:"◆ Il n'y a plus de trou à boucher."};
+      const [a,g]=trou.split("|");
+      const ax=axesCoach(c), gr=groupesCoach(c);
+      if(ax.indexOf(a)<0)ax.push(a);
+      if(gr.indexOf(g)<0)gr.push(g);
+      c.axe=ax[0]; c.groupe=gr.length>1?"tous":gr[0];
+      return {ok:true,mot:`◆ Il prend ${MMA.coach.libDe(a).toLowerCase()} chez ${g==="pro"?"les pros":"les amateurs"} — en plus du reste.`};
+    }
+    case "lui_confier_un_gars":{
+      const x=ctxCoach(c);
+      const qui=x.espoir||x.poulain;
+      if(!qui)return {ok:false,mot:"◆ Il n'a personne en tête aujourd'hui."};
+      if(staffDe().some(a=>a!==c&&a.poulain===qui))
+        return {ok:false,mot:"◆ Quelqu'un d'autre l'a déjà sous son aile. Il ne va pas le disputer."};
+      if(c.poulain===qui)return {ok:false,mot:"◆ Il l'a déjà."};
+      c.poulain=qui;
+      return {ok:true,mot:`◆ ${lienGars(qui)} passe sous son aile.`};
+    }
+    case "lui_rendre_un_gars":{
+      if(!c.poulain)return {ok:false,mot:"◆ Il n'a personne sous son aile."};
+      const q=c.poulain; c.poulain=null;
+      return {ok:true,mot:`◆ ${lienGars(q)} retourne dans le groupe.`};
+    }
+    case "le_mettre_au_coin":{
+      const qui=Object.keys(MESGARS).find(k=>MESGARS[k].combatPrevu
+        &&MESGARS[k].combatPrevu.jourCombat-t.jour<=28);
+      if(!qui)return {ok:false,mot:"◆ Personne ne monte dans les semaines qui viennent."};
+      if(c.coinDe===qui)return {ok:false,mot:"◆ Il y est déjà."};
+      const cout=Math.round((c.salaire||40)*1.5);
+      if(argent<cout)return {ok:false,mot:"◆ Le déplacement et la licence, la caisse ne les a pas."};
+      argent-=cout; c.coinDe=qui; c.coinPour=MESGARS[qui].combatPrevu.jourCombat;
+      return {ok:true,mot:`◆ Il sera dans le coin de ${lienGars(qui)} (−${cout.toLocaleString("fr-FR")} €).`};
+    }
+    case "menager_un_gars":{
+      const x=ctxCoach(c);
+      if(!x.crame)return {ok:false,mot:"◆ Personne n'est à bout, en ce moment."};
+      const l=MESGARS[x.crame]; if(!l)return {ok:false};
+      l.menage=true;
+      return {ok:true,mot:`◆ ${lienGars(x.crame)} lève le pied — il récupère au lieu de forcer.`};
+    }
+    case "arbitrer_pour_lui":{
+      c.arbitrages=(c.arbitrages||0)+1;
+      /* Donner raison a l'un, c'est le dire a l'autre. */
+      let autre=0;
+      for(const a of staffDe())if(a!==c&&!a.moi){bougerEntenteCoach(a,-3,"on a tranché contre lui");autre++;}
+      return {ok:true,mot:autre?`◆ Tu lui donnes raison. ${autre===1?"L'autre":"Les autres"} l'apprendra${autre===1?"":"nt"} avant ce soir.`
+        :"◆ Tu lui donnes raison. Il n'y avait personne pour dire le contraire."};
+    }
+    case "arbitrer_contre_lui":{
+      c.recadrages=(c.recadrages||0)+1;
+      let autre=0;
+      for(const a of staffDe())if(a!==c&&!a.moi){bougerEntenteCoach(a,3,"on a tranché pour lui");autre++;}
+      return {ok:true,mot:autre?`◆ Tu tranches contre lui. Il encaisse sans rien dire.`
+        :"◆ Tu tranches contre lui. Il n'y avait personne à qui donner raison."};
+    }
+    case "l_envoyer_se_former":{
+      const cout=Math.round((c.salaire||40)*6);
+      if(argent<cout)return {ok:false,mot:"◆ Un stage, ça se paie. Pas ce mois-ci."};
+      if(c.stageJusqua&&c.stageJusqua>t.jour)return {ok:false,mot:"◆ Il en revient à peine."};
+      argent-=cout;
+      /* /!\ UN STAGE FAIT MONTER SON PLAFOND, PAS SON NIVEAU. On n'achete
+         pas de la competence : on achete la possibilite d'en gagner. */
+      c.potentiel=Math.min(96,(c.potentiel||c.niveau)+4);
+      c.stageJusqua=t.jour+21;
+      return {ok:true,mot:`◆ Il part se former trois semaines (−${cout.toLocaleString("fr-FR")} €). Il en reviendra avec de la marge.`};
+    }
+    case "accepter_son_depart":{
+      const st=staffDe(), k=st.indexOf(c);
+      if(k<0)return {ok:false};
+      st.splice(k,1);
+      SALLE.departRecent=t.jour;
+      for(const a of st)if(!a.moi)a.collegueRemercie=(a.collegueRemercie||0)+1;
+      couvertureBouge();
+      return {ok:true,mot:`◆ ${c.nom} s'en va. La case qu'il tenait est vide ce soir.`};
+    }
+    case "le_retenir":{
+      const juste=MMA.coach.salaire(c.niveau,c.metier==="competition");
+      const prix=Math.round(juste*1.15);
+      if(argent<prix*8)return {ok:false,mot:"◆ Pour le retenir il faudrait payer. La caisse dit non."};
+      c.salaire=prix; c.surLaPorte=null;
+      return {ok:true,mot:`◆ Il reste — à ${prix.toLocaleString("fr-FR")} € par semaine. C'est le prix.`};
+    }
+    case "rien":
+      return {ok:true,mot:null};
+    default:
+      /* /!\ SI ON ARRIVE ICI, UNE REPLIQUE PORTE UN EFFET FANTOME. On le
+         DIT au lieu de ne rien faire en silence — la pire classe de bug,
+         et celle que ce chantier entier existe pour tuer. */
+      console.error(`appliquerEffetDialogue : effet inconnu "${effet}"`);
+      return {ok:false};
+  }
 }
 
 /* /!\ PARLER A UN COACH OUVRE UNE VRAIE INTERFACE (Mael, 10/08 : "plus
@@ -6996,7 +7667,7 @@ function ouvrirCoach(id){
     <div class="f-statut">${c.cv}</div>
     ${(function(){const a=avisCoach(c);
       const axes=(c.axes&&c.axes.length)?c.axes:[c.axe];
-      const charge=(c.groupe==="tous"?1:0)+(axes.length-1);
+      const charge=MMA.coach.cases(c);
       return `<div class="f-statut" style="margin-top:8px;border-color:${a.sur>=3?"var(--vert)":"var(--bord)"}">
         ${a.sur===0?"Tu ne le connais pas encore — il faut le voir travailler."
           :`Après ${c.vu||0} semaines avec lui : ${a.mot}.`}
@@ -7028,23 +7699,50 @@ function ouvrirCoach(id){
       if(bles.length)l.push(`« ${bles.length} ${bles.length>1?"gars sont":"gars est"} à l'infirmerie. »`);
       if(argent<0)l.push(`« Et il faut qu'on parle d'argent. »`);
       return l.map(x=>`<div class="f-statut" style="margin-top:6px">${x}</div>`).join("");})()}
+    <h3>Où vous en êtes</h3>
+    ${(function(){
+      /* /!\ L'ENTENTE N'ETAIT VISIBLE NULLE PART (audit du 02/09) : ni
+         sur cette fiche, ni dans la liste du staff, ni en Gestion. Le
+         joueur pouvait donc perdre un homme sans avoir jamais eu la
+         moindre facon de le voir venir — alors que le jeu tenait ses
+         griefs, un par un, depuis le premier jour. On les montre : ce
+         sont des FAITS, pas une jauge, et c'est tout l'interet. */
+      const v=ententeCoach(c);
+      const g=(c.griefs||[]).slice(0,3);
+      const carr=MMA.coach.carriere(c);
+      return `<div class="f-statut">${motEntenteCoach(v)}
+        <div style="color:var(--doux);font-size:12.5px;margin-top:5px">${carr.mot}</div>
+        ${g.length?`<div style="margin-top:8px;font-size:12.5px;color:var(--doux)">
+          Ce qu'il n'a pas oublié : ${g.map(x=>x.motif).join(" · ")}.</div>`:""}
+        ${c.paroleTrahie?`<div style="margin-top:5px;font-size:12.5px;color:var(--accent)">
+          Tu lui as fait ${c.paroleTrahie>1?"plusieurs promesses":"une promesse"} que tu n'as pas tenue${c.paroleTrahie>1?"s":""}.</div>`:""}
+      </div>`;})()}
     ${c.demandeEnCours?`<button class="cc-voir" style="width:100%;margin-top:12px;border-color:var(--or);color:var(--or)"
       onclick="ouvrirDemandeStaff(${i})">Il a quelque chose à te demander</button>`:""}
     ${c.promesse?`<div class="f-sous" style="margin-top:10px;color:var(--or)">
       🤝 Tu lui as promis quelque chose — échéance dans ${Math.max(0,c.promesse.echeance-t.jour)} jours.</div>`:""}
     ${c.poulain?`<div class="f-sous" style="margin-top:8px">Il a pris ${lienGars(c.poulain)} sous son aile.</div>`:""}
     ${c.coinDe?`<div class="f-sous" style="margin-top:6px">Il sera dans le coin de ${lienGars(c.coinDe)}.</div>`:""}
-    <button class="cc-voir" style="width:100%;margin-top:12px"
+    <button class="cc-voir" style="width:100%;margin-top:12px;border-color:var(--or);color:var(--or)"
+      onclick="fermerFiche();ouvrirBureauCoach(staffDe()[${i}])">💬 Le voir au bureau</button>
+    <button class="cc-voir" style="width:100%;margin-top:8px"
       onclick="allerOnglet('staff');fermerFiche()">Voir tout le staff</button>
     <button class="cc-voir" style="width:100%;margin-top:8px;border-color:var(--accent)"
       onclick="renvoyerCoach(${i})">Le remercier (${c.salaire*4} € de solde)</button>`;
   $("voile").classList.add("ouvert");
 }
 function affecterCoachPuis(i,g,nom){ affecterCoach(i,g); ouvrirCoach(nom); }
+/* /!\ axeCoach ECRIVAIT c.axe SEUL, ET C'ETAIT UN BOUTON MORT (audit du
+   02/09). Trois sources se disputaient « sur quoi il insiste » : c.axe
+   (ecrit ici), c.axes (ecrit par la grille) et SALLE.roleStaff (ecrit par
+   un bouton herite). Le moteur lit c.axes des qu'il existe : la puce
+   « Sur quoi il insiste » de la fiche du coach ne changeait donc plus
+   RIEN des que le joueur avait touche la grille une seule fois — et
+   l'ecran continuait a la montrer active. Elle passe par la meme porte
+   que tout le reste. */
 function axeCoach(i,a,nom){
-  const c=staffDe()[i]; if(!c)return;
-  c.axe=a; toast(`${c.nom} travaille désormais ${(AXES_COACH.find(x=>x[0]===a)||[,"?"])[1].toLowerCase()}.`);
-  ouvrirCoach(nom); rendre();
+  basculerAxeCoach(i,a);
+  ouvrirCoach(nom);
 }
 
 function discuterCoach(id){
@@ -7776,7 +8474,7 @@ function ouvrirFiche(id){
        if(!c)return "";
        const a=avisCoach(c);
        const axes=(c.axes&&c.axes.length)?c.axes:[c.axe];
-       const charge=(c.groupe==="tous"?1:0)+(axes.length-1);
+       const charge=MMA.coach.cases(c);
        return `<div style="margin-top:10px;padding:9px 11px;border-radius:9px;
          background:var(--carte2);border-left:3px solid ${a.sur>=3?"var(--vert)":a.sur===0?"var(--bord)":"var(--or)"}">
          <div style="font-size:10.5px;color:var(--doux);text-transform:uppercase;letter-spacing:.5px">
@@ -11237,6 +11935,13 @@ function rendrePas(){
 function lancerLeJeu(m){
   demarrerMonde();
   synchroniserMonde();
+  /* /!\ LE COACH QUE TU ES SE TIRE ICI, PAS AU PREMIER RENDU (audit du
+     02/09). assurerMoi() consomme quatre alea() ; il n'etait appele que
+     par rendreStaffOnglet(), donc OUVRIR UN ONGLET faisait avancer la
+     graine de la partie, et l'homme que le joueur EST dependait du
+     moment ou il avait clique dessus — deux parties de meme graine
+     divergeaient sur un clic. Un rendu ne tire jamais. */
+  migrerStaff(); assurerMoi();
   rendre();
   /* /!\ UNE NOUVELLE PARTIE ECRASE LA SAUVEGARDE TOUT DE SUITE (Mael,
      10/08 : "j'avais recommence et ca a repris l'ancienne") : avant, la

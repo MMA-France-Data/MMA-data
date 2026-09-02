@@ -13062,3 +13062,150 @@ impeccable en français et faux d'un bout à l'autre. Et c'est le JOUEUR
 qui l'a vu le premier — le banc 36 vérifiait la forme (pas de chiffres,
 pas de doublons), il ne pouvait pas voir qu'un matchmaker n'arrête pas
 un combat.
+
+---
+
+## CAS 162 — LE SYSTEME DE COACHS, REFAIT (Mael, 02/09 : « refais moi le
+   systeme avec les coachs, que TOUT ait un impact, et beaucoup plus de
+   discussion et de choses a faire »)
+
+### LA METHODE : 30 agents pour l'audit, 20 pour l'ecriture
+Douze dimensions auditees en parallele (le modele de donnees, l'axe mental,
+le metier, roleStaff, la progression, le combat, l'entente, les effets,
+l'economie, la sauvegarde, le dialogue, les bancs), CHACUNE re-verifiee par
+un agent adverse charge de REFUTER ses propres constats. 130 constats rendus,
+117 confirmes : 38 « morts », 31 « incoherents », 24 bugs, 20 « manquants ».
+Puis quatre conceptions independantes du nouveau systeme, notees par deux
+juges a lentille unique (« tout a un impact » / « est-ce jouable et est-ce
+vraiment plus de discussion »). LES DEUX JUGES ONT COURONNE DES PLANS
+DIFFERENTS, et c'est l'information la plus utile de la seance : l'un la
+CARTE DE COUVERTURE (l'impact), l'autre LE COLLEGUE (le dialogue). Ce sont
+les deux moities de la demande. La synthese prend l'architecture du second
+(on ne retro-installe pas une hierarchie d'ecrans sous 400 repliques deja
+ecrites) et la contrainte executable du premier.
+
+### LA CAUSE RACINE, ET ELLE EST UNE SEULE
+AUCUN BANC NE TESTAIT niveauStaff, NI AXES_COACH, NI facteursSeance. Le seul
+filet — le banc 29 — ne regarde que les demandes du staff, et SA LISTE DE
+MESURES ETAIT ECRITE A LA MAIN : les deux seules cles qu'elle oubliait
+(ouvrir_marche, ouvrir_local) etaient PRECISEMENT les deux qui ne faisaient
+rien. Un banc dont la couverture est manuscrite mesure ce qu'on a pense a
+mesurer, donc jamais ce qu'on a oublie.
+
+### LES CINQ DEFAUTS QUI COUTAIENT LE PLUS
+
+1. **SALLE.roleStaff — la deuxieme source qui ne regardait pas le staff.**
+   `const spe=SALLE.roleStaff||{"Da Costa":"jjb","Meyer":"striking"};`
+   Une table indexee par NOM PROPRE, cablee en dur, que facteursSeance
+   multipliait A CHAQUE SEANCE. Sur une partie neuve elle est undefined,
+   donc le litteral s'appliquait A VIE : +12 % sur le striking et le sol,
+   -5 % sur la lutte et le physique, QUEL QUE SOIT LE STAFF EMPLOYE. Un
+   coach de lutte a 95 paye 1 500 €/semaine restait penalise ; on pouvait
+   remercier Da Costa, le bonus sol restait. Aucun coach recrute au marche
+   n'y entrait jamais (son seul ecrivain, le bouton « Changer son rôle »,
+   ne s'ouvre que sur les deux coachs herites de FICHES). Et la specialite
+   etait comptee DEUX FOIS, puisque niveauStaff appliquait deja son x0,55.
+
+2. **L'AXE MENTAL ETAIT MORT, ET IL ABIMAIT LES GENS.** Un cinquieme du
+   marche, huit CV ecrits pour lui, aucune famille de seance. Un
+   psychologue du sport a 999 €/semaine rendait ce que rend un formateur
+   striking a 47 €. PIRE : la table axe→famille du poulain, recopiee a la
+   main, ne contenait pas « mental » — donc dire oui a la demande « je veux
+   le prendre sous mon aile » d'un coach mental infligeait -18 % A VIE au
+   combattant, dans toutes les seances, pendant que l'ecran annoncait
+   « il progressera plus vite ». La bonne reponse abimait l'homme.
+
+3. **LA DISPERSION ETAIT LA STRATEGIE GAGNANTE.** x0,78 pour « tous » et
+   -14 % par axe en plus : un homme seul sur les CINQ axes et les DEUX
+   groupes valait encore 72 % de cinq specialistes, pour un cinquieme du
+   salaire. La grille racontait un arbitrage qui n'existait pas.
+
+4. **« PLUS TARD » ETAIT UN PIEGE MATHEMATIQUE.** Rien au monde n'ecrivait
+   `promesse.tenue = true` : la branche « parole tenue » etait du code
+   mort. Le joueur pouvait faire exactement ce qu'il avait promis, dans les
+   delais — il prenait quand meme le -11 et le « Tu m'avais dit d'attendre.
+   J'ai attendu. » Le jeu mentait a l'endroit precis ou son commentaire
+   jurait qu'il n'oublie pas sa parole.
+
+5. **L'EMBAUCHE JETAIT LE PARI DU MARCHE.** `staffDe().push({...})` listait
+   sept champs et jetait potentiel, vitesse et age. observerStaff les
+   re-fabriquait depuis un hash du NOM : tout coach recrute avait 42 ou 30
+   ans (la retraite « prevue entre 55 et 60 ans » demandait treize ans de
+   jeu), le plafond etait une fonction pure du nom, et la vitesse tiree sur
+   un entier SIGNE pouvait etre negative — dix coachs sur trente-deux
+   REGRESSAIENT a vie, la valeur figee dans la sauvegarde.
+
+### CE QUI EST MORT
+SALLE.roleStaff · ouvrirRoleStaff · poserRoleStaff · le bouton « Changer son
+rôle » · niveauStaff · evtCoachAncien (jamais appelee, et pourtant la SEULE
+ligne qui nettoyait roleStaff au depart d'un coach : une deuxieme source
+morte qui entretenait une troisieme) · etendreCoach · le groupe « tous » du
+modele · le cafe qui imprimait +3 d'entente par semaine · LES SIX COPIES
+MANUSCRITES de la correspondance axe↔famille.
+
+### CE QUI EST NE
+- **js/coach.js** — LA LOI. Une table AXES fermee (cle, lib, quoi, fam, dom,
+  equip, mot, canaux), `couverture(staff)` qui rend l'etat des dix cases
+  (5 axes x 2 groupes) en MOTS — personne · au rabais · juste · tenu ·
+  solide — et `encadrement(couv, groupe, fam)`, seul point d'entree de la
+  seance. Plus le bareme, l'avis floute, la carriere en cinq phases, le pas
+  de progression, le socle d'entente et la signature de methode.
+  REGLE FONDATRICE, ET ELLE SE VERIFIE AU GREP : aucune ligne du jeu ne lit
+  c.niveau, c.axe, c.axes ni c.groupe en dehors de ce module.
+- **js/coach_dialogue.js** — LA CONVERSATION. Sur le modele de diner.js,
+  mais pour quelqu'un qu'on voit CHAQUE SEMAINE et pas une fois par an :
+  les moments ne s'enchainent pas, ils se DECLENCHENT ; chaque scene porte
+  sa `vie` (unique · saison · courante + peremption) ; six CARACTERES
+  derives du jeton pour qu'ils ne parlent pas tous de la meme voix ; et la
+  MEMOIRE — ce que le joueur a repondu est garde et relu par des
+  declencheurs (je_lui_ai_promis, je_l_ai_recadre, je_ne_tiens_jamais_parole).
+- **js/coach_scenes.js** — le contenu, ecrit par vingt agents et relu par
+  vingt autres sur le METIER (ce qu'un coach de MMA fait, et ce qu'il ne
+  fait JAMAIS : choisir un adversaire, signer, arreter un combat, juger,
+  peser, soigner), la langue et le contrat.
+- **La fenetre #coach-page** — le bureau. Neuf SUJETS que LE JOUEUR ouvre,
+  ce qui n'existait pas : jusqu'ici le coach n'etait jamais ADRESSE, il ne
+  faisait que reclamer.
+- **BANC 38** (js/verifier_coach.js) et **BANC 39** (js/verifier_coach_scenes.js).
+
+### L'ATTENTION EST UN BUDGET FINI (la regle de jeu qui remplace les rustines)
+Ce qu'un coach donne a une case, il ne l'a plus pour une autre. Racine
+carree du nombre de cases : 1 case = 1,00 · 2 = 0,71 · 4 = 0,50 · 10 = 0,32.
+Deux cases restent un vrai choix ; dix ne se tiennent plus. MESURE :
+specialiste 1,26 contre homme-orchestre 0,71 sur la meme seance.
+
+### LA REDITE — LA MESURE QUE PERSONNE N'AVAIT
+Le diner porte 140 scenes, en consomme 13 par soiree, une soiree par an :
+DIX ANS avant la premiere redite, et personne n'a jamais eu besoin de le
+verifier. Un coach, on le croise chaque semaine. Le STOCK n'est donc pas la
+question, la REPETITION l'est — et aucun banc du depot ne la mesurait. Le
+banc 39 simule trois saisons au rythme reel et compte les scenes vues deux
+fois. C'est la seule assertion qui reponde vraiment a la demande.
+(Le jeu a deja cette faute ailleurs : dialogue.js offre 7 approches et 51
+reponses pour douze hommes vus chaque semaine. A TRAITER.)
+
+### CE QUE LES JUGES ONT DIT QU'AUCUN PLAN NE TRAITE — A TRAITER
+1. AUCUN SEUIL DE PERCEPTIBILITE. Le tirage de seance est
+   (0,15+alea()*0,35), un facteur 3,33 d'une seance a l'autre : un banc
+   peut mesurer un ecart que le joueur ne SENTIRA jamais. Il manque une
+   assertion « cet effet sort du bruit ».
+2. LE MODE SIMULER ANNULE TOUT LE COIN : simulerCombat enchaine les rounds
+   sans jamais crier. Tout l'investissement « coin » ne vaut que pour les
+   combats joues a la main.
+3. LE STAFF N'ENTRE PAS DANS L'ECONOMIE DE LA SALLE : forfaitReco et
+   attractivite() ne le lisent pas, alors que l'ecran Gestion affirme le
+   contraire.
+4. LES ~45 COTISANTS NE SONT TOUCHES PAR AUCUN COACH. Tout le systeme
+   raisonne sur les douze hommes de MESGARS ; ceux qui PAIENT la salle
+   n'ont aucune raison liee au staff de rester ou de partir.
+5. LE PATRON EST UN COACH GRATUIT (c.moi, salaire 0). Des que le coaching a
+   un vrai effet, le jeu optimal devient « je me mets partout moi-meme ».
+   Il faut poser le prix de son temps.
+6. AUCUNE FAILLITE, alors que le chantier rend enfin l'elite desirable.
+7. LE MONDE N'A PAS DE COACHS : les combattants generes ont leurs stats
+   posees a la creation. Comment le monde se recalibre n'est pas dit.
+8. QUE FAIT UN COACH LES SEMAINES OU IL NE SE PASSE RIEN ? Tout est
+   declenche par un evenement ; le regime permanent n'est pas ecrit.
+9. LE DEBRIEF EST TOUJOURS UN TETE-A-TETE. La scene la plus naturelle du
+   lendemain d'une defaite, c'est DEUX coachs qui ne sont pas d'accord
+   devant toi.

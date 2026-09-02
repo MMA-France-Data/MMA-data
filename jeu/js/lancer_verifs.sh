@@ -45,6 +45,13 @@ node verifier_soiree.js
 node verifier_choregraphie.js
 node verifier_matchmaker.js
 node verifier_diner.js
+# BANCS 38 et 39 — la loi du coach, et ce qu'on se dit avec lui (cas 162).
+# Le 38 mesure des ECARTS, jamais des presences : un attribut qui ne change
+# rien entre deux situations est un attribut mort, et il fait echouer le banc.
+# Le 39 mesure LA REDITE — la seule chose qui decide si un homme qu'on croise
+# chaque semaine radote au bout d'un trimestre.
+node verifier_coach.js
+node verifier_coach_scenes.js
 node bundler.js               && node verifier_bundle.js
 node verifier_assets.js
 # BANC 27 — le singe : il charge demo_jeu.html et JOUE. Il vient APRES le

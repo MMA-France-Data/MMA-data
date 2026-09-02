@@ -45,7 +45,10 @@ const RACINES = ["engine.js", "generator.js", "traducteur.js", "mesure.js",
                  // ce qu'on peut demander au matchmaker (cas 157).
                  "matchmaker.js",
                  // la soiree avec lui : la mecanique, et son contenu (cas 158).
-                 "diner.js", "diner_scenes.js"];
+                 "diner.js", "diner_scenes.js",
+                 // LA LOI DU COACH, la conversation avec lui, et son contenu
+                 // (cas 162) : la source unique de tout ce qu'un coach est.
+                 "coach.js", "coach_dialogue.js", "coach_scenes.js"];
 
 const ici = __dirname;
 const RE_REQUIRE = /require\(\s*["']\.\/([\w.-]+)["']\s*\)/g;
@@ -142,6 +145,10 @@ ${morceaux.join("\n")}
     matchmaker: require("./matchmaker.js"),
     diner:      require("./diner.js"),
     diner_scenes: require("./diner_scenes.js"),
+    // la loi du coach, la conversation avec lui, et son contenu (cas 162)
+    coach:      require("./coach.js"),
+    coach_dialogue: require("./coach_dialogue.js"),
+    coach_scenes:   require("./coach_scenes.js"),
     require: require
   };
 })(typeof window !== "undefined" ? window : globalThis);
