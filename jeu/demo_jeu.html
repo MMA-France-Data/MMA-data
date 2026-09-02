@@ -7780,8 +7780,18 @@ function appliquerEffetDialogue(c,effet,cible){
       if(staffDe().some(a=>a!==c&&a.poulain===qui))
         return {ok:false,mot:"◆ Quelqu'un d'autre l'a déjà sous son aile. Il ne va pas le disputer."};
       if(c.poulain===qui)return {ok:false,mot:"◆ Il l'a déjà."};
+      /* /!\ ON NE LACHE PERSONNE EN SILENCE. Un coach n'a qu'un poulain :
+         lui en confier un second RENDAIT l'ancien sans que rien ne le
+         dise, alors que ce geste-la retire au premier tout ce qu'il
+         gagnait. (Mael, 02/09 : « ca fait quoi au juste ? ») */
+      const avant=c.poulain;
       c.poulain=qui;
-      return {ok:true,mot:`◆ ${lienGars(qui)} passe sous son aile.`};
+      /* Et ON DIT CE QUE CA FAIT. L'autre chemin vers ce meme geste — la
+         demande du staff — l'annoncait deja ; celui-ci ne disait rien. */
+      const sur=MMA.coach.libDe(MMA.coach.axePrincipal(c)).toLowerCase();
+      return {ok:true,mot:`◆ ${lienGars(qui)} passe sous son aile : il progressera plus vite `
+        +`sur ${sur}, moins vite sur le reste. Ses victoires compteront pour ${c.nom}.`
+        +(avant?` ${lienGars(avant)} retourne dans le groupe — on n'en suit qu'un.`:"")};
     }
     case "lui_rendre_un_gars":{
       if(!c.poulain)return {ok:false,mot:"◆ Il n'a personne sous son aile."};

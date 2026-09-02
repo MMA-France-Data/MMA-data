@@ -13404,3 +13404,37 @@ qu'une accolade a l'ecran.
   savent pas qui est dans la salle.
 
 CHAINE : 39 bancs, 806 assertions, 0 ECHEC.
+
+## CAS 166 — « ÇA FAIT QUOI AU JUSTE ? » (Mael, 02/09)
+
+Il demande ce que fait « prendre quelqu'un sous son aile ». La question
+etait la vraie reponse : LE JEU NE LE DISAIT PAS.
+
+### CE QUE CA FAIT, ET CA FAISAIT DEJA
+1. LA PROGRESSION (demo_jeu.html, gain de seance). Le mentor multiplie ce
+   que son poulain retire de CHAQUE seance :
+     seance de la famille de son axe → x(1 + niveau/100 x 0,55)
+     toute autre famille             → x0,82
+   Un mentor de niveau 80 sur sa specialite : +44 %. Ailleurs : -18 %.
+   CE N'EST DONC PAS UN CADEAU, C'EST UN ARBITRAGE — on specialise un
+   homme, et on paie sur le reste.
+2. L'ENTENTE. Victoire du poulain : +5 au mentor, +10 sur un titre. Les
+   autres coachs ne touchent rien (sauf +3 sur un titre, groupe pro).
+3. UN SEUL MENTOR PAR COMBATTANT, ET UN SEUL POULAIN PAR COACH.
+
+### LES DEUX DEFAUTS QUE LA QUESTION A SORTIS
+- DEUX CHEMINS MENENT AU MEME GESTE, UN SEUL L'EXPLIQUAIT. La demande du
+  staff disait « il progressera plus vite sur X, moins ailleurs ». Le
+  nouveau bureau disait « X passe sous son aile », point. Le joueur
+  prenait la meme decision avec ou sans l'information selon la porte par
+  laquelle il etait entre.
+  REGLE : deux chemins vers le meme effet doivent en dire autant.
+- ON LACHAIT QUELQU'UN EN SILENCE. `c.poulain` est un scalaire : confier
+  un second homme ECRASAIT le premier — qui perdait d'un coup son +44 %
+  et reprenait le -18 % — sans un mot a l'ecran. Un effet de bord gratuit
+  sur un homme dont on ne parlait meme pas.
+
+Les deux sont dits maintenant, et le banc 27 les tient : le message doit
+contenir ce qu'on gagne ET ce qu'on perd, et nommer le poulain lache.
+
+CHAINE : 39 bancs, 808 assertions, 0 ECHEC.

@@ -1391,6 +1391,16 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
           au lieu de le faire sur un autre en silence. */
     MESGARS[vise.id].combatPrevu=null;
     const refus=appliquerEffetDialogue(c,"le_mettre_au_coin",vise.id);
+    /* 4 bis. CONFIER UN GARS DIT CE QUE CA FAIT, ET NE LACHE PERSONNE EN
+              SILENCE (Mael : « ca fait quoi au juste ? »). Un coach n'a
+              qu'un poulain : le second rendait le premier sans un mot. */
+    c.poulain=null;
+    const un=appliquerEffetDialogue(c,"lui_confier_un_gars",vise.id);
+    const ditLeffet=/plus vite/.test(un.mot||"")&&/moins vite/.test(un.mot||"");
+    const second=EFFECTIF.find(f=>f.id!==vise.id&&MESGARS[f.id]&&!MESGARS[f.id].retraite
+      &&!staffDe().some(a=>a!==c&&a.poulain===f.id));
+    const deux=second?appliquerEffetDialogue(c,"lui_confier_un_gars",second.id):null;
+    const ditLeLache=!second||((deux.mot||"").indexOf(vise.id)>=0);
     /* 5. AUCUNE ACCOLADE NULLE PART. On traverse tous les sujets et on
           verifie que rien de ce qui s'affiche ne porte un marqueur non
           rempli — c'est la faute qui se voit le plus vite a l'ecran. */
@@ -1412,7 +1422,7 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
     fermerBureauCoach();
     return {demandeQui,tousNommes,proDabord,surLaTable,accolade,brut,vus,
       sceneDuSujet:!!scene&&scene.sujet==="un_gars",
-      applique:eff.ok,bonHomme,pasLautre,
+      applique:eff.ok,bonHomme,pasLautre,ditLeffet,ditLeLache,
       refusDit:!refus.ok&&(refus.mot||"").indexOf(vise.id)>=0};
   })()`);
   if (r && (r.pasDeCoach || r.personne)) {
@@ -1430,6 +1440,10 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
         "avant : menager_un_gars prenait le premier cuit venu");
     dit("et s'il ne peut pas s'appliquer à lui, il le dit au lieu de viser un autre",
         !!r && r.refusDit);
+    dit("confier un homme dit ce que ça lui fait gagner, et ce que ça lui coûte",
+        !!r && r.ditLeffet, "avant : « X passe sous son aile », et rien d'autre");
+    dit("et le poulain qu'on lâche pour le prendre n'est jamais lâché en silence",
+        !!r && r.ditLeLache, "un coach n'en suit qu'un");
     dit("aucun marqueur ne reste à l'écran, sur tous les sujets traversés",
         !!r && r.brut === 0 && r.vus >= 14, `${r ? r.vus : 0} écrans lus · ${r ? r.brut : "?"} accolade(s)`);
   }
