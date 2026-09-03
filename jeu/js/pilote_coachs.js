@@ -52,7 +52,19 @@ function carriere(niveau, nom) {
     if(!pros.length)return null;
     pros.sort((a,b)=>((FICHES[a.id]||{}).age||99)-((FICHES[b.id]||{}).age||99));
     const f=pros[0], l=MESGARS[f.id];
-    l.potentiel=90; l.talent=Math.max(l.talent||0,0.9);
+    l.talent=Math.max(l.talent||0,0.9);
+    /* /!\ LE POTENTIEL SE POSE LA OU LA LOI LE LIT : sur le bloc
+       carriere de la FICHE, par domaine. Premiere version : il etait
+       ecrit sur MESGARS[].potentiel — un champ que seul le repere-espoir
+       des coachs consulte, et que la progression ne voit pas. Le pilote
+       mesurait donc un homme ordinaire en croyant mesurer un crack.
+       /!\ ET PAS D'ACCENT GRAVE DANS CE COMMENTAIRE : on est DANS un
+       gabarit delimite par des accents graves, il refermerait la chaine. */
+    const fic=MMA.salle.ficheDe(MONDE,l.id);
+    fic.carriere=fic.carriere||{};
+    fic.carriere.potentiel=Object.assign({},fic.carriere.potentiel,
+      {striking:90, ground:90, wrestling:82, physical:82, mental:82});
+    fic.carriere.niveaux=fic.carriere.niveaux||{};
     return {id:f.id, nom:(FICHES[f.id]||{}).nom||f.id, age:(FICHES[f.id]||{}).age||0};
   })()`);
   if (!sujet) { console.log("aucun pro dans cette graine"); process.exit(1); }
@@ -138,13 +150,17 @@ console.log(`\n=== ${A.sujet.nom}, ${A.sujet.age} ans, potentiel 90 — ${annees
 console.log(`    ${A.staff.axes}`);
 console.log(`    mentor : ${A.staff.mentor} — mêmes décisions, même monde ; SEUL le niveau change : 30 contre 88\n`);
 console.log(`                          frappe     sol   bilan  titres   répu`);
-const ligne = (t, r) => console.log(
-  `  ${t.padEnd(22)}${g(r.frappe)}${g(r.sol)}${g(r.v + "-" + r.d)}${g(r.titres)}${g(r.rep)}`);
+const ligne = (t, r) => console.log(r.parti
+  ? `  ${t.padEnd(22)}  — il a quitté la salle avant la fin (retraite ou départ)`
+  : `  ${t.padEnd(22)}${g(r.frappe)}${g(r.sol)}${g(r.v + "-" + r.d)}${g(r.titres)}${g(r.rep)}`);
 ligne("au départ", A.depart);
 ligne("après " + annees + " ans — coachs 30", A.fin);
 ligne("après " + annees + " ans — coachs 88", B.fin);
 
 const d = (a, b, k) => Math.round((b[k] - a[k]) * 10) / 10;
+if (A.fin.parti || B.fin.parti) console.log(
+  `\n  /!\\ COMPARAISON INCOMPLETE : l'homme a quitté l'une des deux salles.`
+  + ` Les écarts ci-dessous ne veulent rien dire — relancer sur une autre graine.`);
 console.log(`\n  ÉCART DÛ AU STAFF SEUL`);
 console.log(`    frappe (l'axe du mentor) : ${d(A.fin, B.fin, "frappe") >= 0 ? "+" : ""}${d(A.fin, B.fin, "frappe")} points`);
 console.log(`    sol    (l'autre domaine) : ${d(A.fin, B.fin, "sol") >= 0 ? "+" : ""}${d(A.fin, B.fin, "sol")} points`);

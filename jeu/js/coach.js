@@ -314,11 +314,21 @@ function couverture(staff) {
  * embaucher était presque gratuit. Sans personne, on rend 0,55.
  */
 function encadrement(couv, groupe, fam) {
+  return 0.55 + niveauEncadrement(couv, groupe, fam) / 100 * 0.90;
+}
+
+/**
+ * LE NIVEAU DE CE QUI ENCADRE CETTE SÉANCE, de 0 à 100.
+ * /!\ MÊME LECTURE QUE encadrement(), SORTIE BRUTE. Le facteur de séance
+ * (0,55 → 1,45) dit à quelle VITESSE on progresse ; ce niveau-ci sert à
+ * dire JUSQU'OÙ (carriere.plafond). Deux questions différentes, une
+ * seule source — la répéter serait la cinquième copie de trop.
+ */
+function niveauEncadrement(couv, groupe, fam) {
   const cleAxe = axeDeFam(fam);
-  if (!cleAxe) return 0.55;                 // famille inconnue : on ne majore rien
+  if (!cleAxe) return 0;                    // famille inconnue : personne n'encadre
   const c = couv && couv.cases ? couv.cases[cleAxe + "|" + groupe] : null;
-  const niv = c ? c.niveau : 0;
-  return 0.55 + Math.max(0, Math.min(100, niv)) / 100 * 0.90;
+  return Math.max(0, Math.min(100, c ? c.niveau : 0));
 }
 
 /* ==================================================================== */
@@ -499,6 +509,6 @@ module.exports = {
   axesDe, axePrincipal, groupesDe, couvre, cases,
   jeton, attention, fEntente, fMetier, fAge, valeurSur,
   etatDe, couverture, encadrement,
-  salaire, estimation, avis, carriere, pas,
+  salaire, estimation, avis, carriere, pas, niveauEncadrement,
   socle, glisse, motEntente, signature, empreinte,
 };

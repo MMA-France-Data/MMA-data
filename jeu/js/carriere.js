@@ -265,6 +265,87 @@ function caler(bloc, cible) {
   for (const k of cles) bloc[k] = Math.max(15, Math.min(99, Math.round(bloc[k] * f)));
 }
 
+/* ==================================================================== */
+/* JUSQU'OÙ IL PEUT MONTER — la loi du plafond (Mael, 03/09)             */
+/* ==================================================================== */
+/**
+ * /!\ CE QUI ETAIT MESURE, ET QUI A DECIDE DE CETTE LOI.
+ * Comparaison de deux carrieres de six ans, memes decisions, meme monde,
+ * seul le staff changeant (coachs a 30 contre coachs a 88) : 3 POINTS
+ * D'ECART. Mael : « il faut un ecart bien plus grand que ca ».
+ * La cause n'etait pas un reglage trop doux, elle etait structurelle :
+ * appliquerTravail bornait TOUT LE MONDE a 96 en dur, et la marge
+ * decroissante (96-v)/96 rattrape n'importe quel retard pourvu qu'on
+ * attende. Le talent changeait la vitesse, le staff changeait la vitesse,
+ * l'age changeait la vitesse — ET RIEN NE CHANGEAIT LA DESTINATION.
+ * Pendant ce temps `carriere.potentiel` — un potentiel PAR DOMAINE, tire
+ * a la naissance de chaque combattant avec une vraie dispersion — etait
+ * ecrit sur toutes les fiches du vivier ET LU PAR PERSONNE. La donnee
+ * existait ; il manquait la ligne qui la fait compter.
+ *
+ * LA LOI, ET ELLE TIENT EN UNE PHRASE :
+ *   le potentiel est A LUI, l'encadrement decide de combien il l'approche.
+ *
+ * /!\ CE N'EST PAS UNE CONDAMNATION. Le plafond se recalcule a chaque
+ * seance : recruter un meilleur coach le releve, et l'homme repart. Un
+ * plafond definitif transformerait un mauvais debut de partie en partie
+ * perdue sans le dire — exactement ce que le carnet refuse.
+ */
+/* /!\ LA PERTE N'EST PAS UNE DROITE, ET LA PREMIERE VERSION L'ETAIT.
+   A 0,35 par point manquant : un homme deja a 65 plafonnait a 69,8 meme
+   avec le meilleur staff du jeu — mesure, six ans, +4,8 points. Une
+   droite ne peut pas dire les deux choses qu'on veut dire a la fois :
+     « un tres bon staff ne coute presque rien » (il doit friser le
+       potentiel : quelques points de perte, pas plus)
+     « un mauvais staff coute enormement » (quinze a vingt points).
+   L'exposant 1,5 les separe : la perte s'effondre vers le haut de
+   l'echelle et explose vers le bas. */
+const COURBE = 1.5;
+const AMPLITUDE = 32;   // ce que coute une salle SANS aucun encadrement
+const PLANCHER = 55;    // ce qu'on atteint seul, par le sparring et les combats
+
+/**
+ * Jusqu'ou cet homme peut monter dans ce domaine, ici et maintenant.
+ * @param {number} potentiel  son potentiel sur CE domaine (35 a 99)
+ * @param {number} niveau     le niveau de l'encadrement sur cet axe (0 a 100)
+ */
+function plafond(potentiel, niveau) {
+  const p = Math.max(0, Math.min(99, Number(potentiel) || 0));
+  const n = Math.max(0, Math.min(100, Number(niveau) || 0));
+  const perdu = Math.pow((100 - n) / 100, COURBE) * AMPLITUDE;
+  /* Le plancher ne DEPASSE jamais le potentiel : un homme sans moyens
+     n'ira pas plus haut que ce qu'il a. */
+  return Math.round(Math.max(Math.min(p, PLANCHER), p - perdu) * 10) / 10;
+}
+
+/**
+ * Le potentiel d'un homme sur un domaine, MEME SI SA FICHE N'EN PORTE PAS.
+ * /!\ LES COMBATTANTS ECRITS A LA MAIN (fiches.js) N'ONT PAS DE BLOC
+ * `carriere` — et ce sont precisement les deux pros du debut de partie,
+ * donc ceux que le joueur regarde en premier. Sans repli, toute la loi les
+ * epargnerait en silence. Le repli est DERIVE (jeton du nom + domaine),
+ * jamais tire : le meme homme a le meme potentiel d'une partie a l'autre,
+ * et rien n'est a stocker ni a migrer dans les sauvegardes.
+ */
+function potentielDe(fiche, dom, cle) {
+  const c = fiche && fiche.carriere;
+  if (c && c.potentiel && typeof c.potentiel[dom] === "number") return c.potentiel[dom];
+  let h = 2166136261 >>> 0;
+  const s = String(cle || (fiche && fiche.nom) || "?") + "|" + dom;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  /* /!\ LE REPLI PART DE CE QU'IL SAIT DEJA FAIRE, ET C'EST LA PREMIERE
+     VERSION QUI L'OUBLIAIT. Un potentiel tire dans l'absolu (62 a 98)
+     tombait sous le niveau REEL des deux pros du debut — mesure : Kante,
+     deja a 65 de frappe, se retrouvait bute des la premiere seance et
+     gagnait 0,2 POINT EN SIX ANS. Un homme deja bon a forcement le
+     potentiel de ce qu'il fait : le repli est donc son niveau actuel
+     PLUS une marge derivee, jamais un tirage independant de lui. */
+  const bloc = (fiche && fiche[dom]) || {};
+  const vals = Object.keys(bloc).map((k) => bloc[k]).filter((x) => typeof x === "number" && isFinite(x));
+  const moy = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 45;
+  return Math.max(35, Math.min(99, Math.round(moy + 9 + (h % 17))));
+}
+
 /** La marge qui reste — ce que le scout cherche a estimer. */
 function marge(f) {
   const c = f.carriere;
@@ -275,4 +356,5 @@ function marge(f) {
 }
 
 module.exports = { DOMAINES, RYTHME_HEBDO, facteurAge, tirerPotentiel, tirerParcours,
-                   tirerAxes, poser, caler, marge };
+                   tirerAxes, poser, caler, marge,
+                   plafond, potentielDe, COURBE, AMPLITUDE, PLANCHER };

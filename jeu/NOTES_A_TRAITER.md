@@ -13502,3 +13502,75 @@ TROIS LECTURES, ET LA DEUXIEME EST UNE QUESTION DE CONCEPTION.
   196 exceptions → 0.
 
 CHAINE : 39 bancs, 808 assertions, 0 ECHEC.
+
+## CAS 168 — LE POTENTIEL DEVIENT UNE DESTINATION (Mael, 03/09)
+
+« Il faut un ecart bien plus grand que ca. Je sais pas si "plafonner" est
+le bon mot, on debat des solutions ? » — et son choix, apres avoir vu
+quatre pistes : LA LIMITE VIENT DE LUI, DE SON POTENTIEL.
+
+### LE DIAGNOSTIC, ET IL EXPLIQUE TOUT
+    gain = base x talent x facteurAge x marge,  marge = (96 - stat)/96
+LE PLAFOND ETAIT 96, POUR TOUT LE MONDE. Un adherent du cours du mardi et
+un futur champion avaient la meme destination. Le talent changeait la
+VITESSE, le staff changeait la VITESSE, l'age changeait la VITESSE — et
+RIEN NE CHANGEAIT LA DESTINATION. La marge decroissante rattrape alors
+n'importe quel retard pourvu qu'on attende : d'ou les trois points
+d'ecart mesures au cas 167. Ce n'etait pas un reglage trop doux, c'etait
+un systeme a point fixe unique.
+
+### ET LA DONNEE EXISTAIT DEJA
+`carriere.potentiel` — UN POTENTIEL PAR DOMAINE, tire a la naissance de
+chaque homme du vivier, moyenne 80, vraie dispersion — etait ecrit sur
+toutes les fiches ET LU PAR PERSONNE. Comme `a_un_espoir`, comme les
+demandes du staff, comme roleStaff : la classe la plus frequente du
+carnet. On n'a rien invente, on a branche.
+
+### LA LOI (js/carriere.js, banc 20)
+    plafond = potentiel - ((100 - encadrement)/100)^1,5 x 32,  plancher 55
+Le potentiel est A LUI ; l'encadrement decide de combien il l'approche.
+  potentiel 90 : sans coach 58 · encadrement 30 → 71,3 · 60 → 81,9 ·
+                 88 → 88,7 · 100 → 90
+CE N'EST PAS UNE CONDAMNATION : le plafond se recalcule a chaque seance.
+Recruter mieux le releve, et l'homme repart — le banc 27 le prouve.
+
+### TROIS REGLAGES REFUTES PAR LA MESURE, DANS L'ORDRE
+1. PERTE LINEAIRE (0,35 par point manquant). Une droite ne peut pas dire
+   a la fois « un tres bon staff ne coute presque rien » et « un mauvais
+   staff coute vingt points ». Mesure : un homme deja a 65 plafonnait a
+   69,8 MEME avec le meilleur staff du jeu. On avait remplace « le staff
+   ne sert a rien » par « rien ne sert a rien ». → exposant 1,5.
+2. LE REPLI TIRE DANS L'ABSOLU. Les deux pros du debut sont ecrits a la
+   main : pas de bloc `carriere`. Un potentiel tire entre 62 et 98 tombait
+   SOUS leur niveau reel (65-70) : butes des la premiere seance, +0,2
+   point en six ans. → le repli part de ce qu'il sait DEJA faire, plus une
+   marge derivee. Un homme deja bon a le potentiel de ce qu'il fait.
+3. LA MARGE BORNEE PAR LE PLAFOND. En ecrivant (cap-v)/96 au lieu de
+   (96-v)/96, on ralentissait AUSSI celui qu'on voulait recompenser : le
+   meilleur staff tombait de +17,6 a +8,3 points sur six ans. LA VITESSE
+   ET LA DESTINATION SONT DEUX QUESTIONS — le plafond ne repond qu'a la
+   seconde, et il n'agit qu'a l'ECRITURE.
+
+### LE RESULTAT
+                        avant        apres (graine 12)   (graine 41)
+  ecart de frappe       +3,1         +11,7               +8,3
+  progression 30 / 88   14,5 / 17,6  3,0 / 14,7          3,1 / 11,4
+  bilan  30 / 88        32-1 / 26-4  23-9 / 31-1         28-3 / 30-3
+L'ecart est multiplie par trois a quatre, ET l'inversion absurde du bilan
+disparait : le mieux encadre gagne enfin plus.
+
+### UN MUR INVISIBLE N'EST PAS UN MUR, C'EST UN BUG
+La fiche du combattant porte « Ce que ta salle sait lui apprendre », axe
+par axe, sans un chiffre : au bout · presque au bout · encore de la marge
+· beaucoup de marge. Sans elle, un homme qui s'entraine tous les jours
+sans plus rien gagner ressemble a un entrainement casse.
+
+### LA FAUTE COMMISE DEUX FOIS DE SUITE, A GRAVER
+UN ACCENT GRAVE DANS UN COMMENTAIRE, A L'INTERIEUR D'UN GABARIT DELIMITE
+PAR DES ACCENTS GRAVES, REFERME LA CHAINE. Ca ne se voit pas a la
+relecture — seulement au chargement, avec un « missing ) after argument
+list » qui ne designe pas la ligne fautive. Les blocs P.lire(`...`) des
+bancs et des pilotes sont pleins de commentaires : n'y citer aucun nom de
+champ entre accents graves.
+
+CHAINE : 39 bancs, 824 assertions, 0 ECHEC.

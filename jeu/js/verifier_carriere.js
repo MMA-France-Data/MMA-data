@@ -110,6 +110,66 @@ dit("aucun niveau ne dépasse le potentiel de son domaine",
     `${bloc.a} > ${bloc.b} > ${bloc.c} > ${bloc.d}`);
 }
 
+/* ==================================================================== */
+/* 9. JUSQU'OÙ IL PEUT MONTER — la loi du plafond (Mael, 03/09)          */
+/* ==================================================================== */
+/* /!\ CE BANC EXISTE PARCE QUE LA MESURE A REFUTÉ DEUX RÉGLAGES DE SUITE.
+   Avant la loi : trois points d'écart entre le pire et le meilleur staff
+   sur six ans — parce que la progression bornait tout le monde à 96 en
+   dur, et que la marge décroissante rattrape n'importe quel retard.
+   Premier réglage (perte linéaire, 0,35 par point manquant) : un homme
+   déjà à 65 plafonnait à 69,8 MÊME avec le meilleur staff du jeu. On
+   avait remplacé « le staff ne sert à rien » par « rien ne sert à rien ».
+   Les assertions ci-dessous tiennent les DEUX bouts à la fois : c'est
+   exactement ce qu'une seule d'entre elles laisserait passer. */
+{
+  const P = 90;   // un vrai espoir
+
+  /* Le bon staff doit friser le potentiel : sinon le joueur qui a payé
+     le meilleur coach du jeu ne voit pas ce qu'il a acheté. */
+  dit("avec un excellent staff, il approche vraiment son potentiel",
+    C.plafond(P, 88) >= P - 3, `plafond ${C.plafond(P, 88)} pour un potentiel ${P}`);
+  dit("et un staff parfait ne lui coûte rien du tout",
+    C.plafond(P, 100) === P);
+
+  /* Le mauvais staff doit coûter cher — c'est la demande de Mael, et elle
+     se chiffre : « il faut un écart bien plus grand que ça ». */
+  const ecart = C.plafond(P, 88) - C.plafond(P, 30);
+  dit("et un mauvais staff coûte quinze points ou plus",
+    ecart >= 15, `${C.plafond(P, 30)} contre ${C.plafond(P, 88)} — ${Math.round(ecart * 10) / 10} points`);
+
+  /* La forme : monotone, jamais au-dessus du potentiel, jamais sous le
+     plancher de ce qu'on atteint seul. */
+  let monotone = true;
+  for (let n = 0; n < 100; n++) if (C.plafond(P, n) > C.plafond(P, n + 1)) monotone = false;
+  dit("un meilleur coach ne fait jamais baisser le plafond", monotone);
+  dit("et il ne le pousse jamais au-dessus de ce que l'homme a en lui",
+    [0, 25, 50, 75, 100].every((n) => C.plafond(P, n) <= P));
+  dit("même sans personne, il atteint ce qu'on atteint seul",
+    C.plafond(P, 0) >= C.PLANCHER, `${C.plafond(P, 0)} sans aucun coach`);
+  dit("mais le plancher ne dépasse jamais un petit potentiel",
+    C.plafond(40, 0) <= 40, `potentiel 40 → ${C.plafond(40, 0)}`);
+
+  /* /!\ LE REPLI, ET C'EST LUI QUI A CASSÉ LE PREMIER RÉGLAGE. Les deux
+     pros du début de partie sont écrits à la main : pas de bloc
+     `carriere`. Un potentiel tiré dans l'absolu tombait SOUS leur niveau
+     réel, et ils étaient butés dès la première séance. */
+  const dejaBon = { striking: { a: 70, b: 72, c: 68 } };
+  const pot = C.potentielDe(dejaBon, "striking", "Kanté");
+  dit("un homme déjà bon a le potentiel de ce qu'il sait faire",
+    pot >= 70 + 5, `niveau ~70 → potentiel ${pot}`);
+  dit("et ce repli est dérivé, pas tiré — deux lectures donnent le même homme",
+    C.potentielDe(dejaBon, "striking", "Kanté") === pot);
+  dit("deux hommes différents n'ont pas le même",
+    C.potentielDe(dejaBon, "striking", "Okonkwo") !== pot);
+
+  /* Une fiche qui PORTE son potentiel fait foi : le repli ne doit jamais
+     passer devant la donnée. */
+  const vrai = { striking: { a: 70 }, carriere: { potentiel: { striking: 96 } } };
+  dit("et une fiche qui porte son potentiel fait foi",
+    C.potentielDe(vrai, "striking", "X") === 96);
+}
+
 /* ------------------------------------------------------------------ */
 if (echecs) { console.log(`NON CONFORME — ${echecs} échec(s)`); process.exit(1); }
 console.log("CONFORME — le niveau se déduit d'une histoire, et le dernier étage existe.");

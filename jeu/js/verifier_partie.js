@@ -1451,6 +1451,80 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));
 }
 
+/* ==================================================================== */
+/* JUSQU'OÙ TA SALLE SAIT L'EMMENER (Mael, 03/09 : « il faut un écart     */
+/* bien plus grand que ça »)                                             */
+/* ==================================================================== */
+/* /!\ LE BANC 20 TIENT LA LOI ; CELUI-CI TIENT SON BRANCHEMENT ET SON
+   AFFICHAGE — les deux moitiés qu'un module pur ne peut pas voir. Et il
+   vérifie surtout LA CHOSE QUI REND LE PLAFOND ACCEPTABLE : qu'il n'est
+   pas définitif. Un mur qu'on ne peut jamais déplacer transformerait un
+   mauvais début de partie en partie perdue sans le dire. */
+{
+  const P = ouvrirPartie({ mode: "demo", graine: 12 });
+  jouer(P, 60, 12);
+  const r = P.lire(`(function(){
+    const cle=Object.keys(MESGARS).find(k=>MESGARS[k]&&!MESGARS[k].retraite
+      &&(EFFECTIF.find(f=>f.id===k)||{}).gr==="pro");
+    if(!cle)return {pasDeGars:true};
+    const l=MESGARS[cle], fic=MMA.salle.ficheDe(MONDE,l.id);
+    const couv=couvertureDuStaff();
+    const niv=MMA.coach.niveauEncadrement(couv,"pro","striking");
+    const pot=MMA.carriere.potentielDe(fic,"striking",cle);
+    const cap=MMA.carriere.plafond(pot,niv);
+    /* 1. LE PLAFOND EST BRANCHE : on met l'homme AU-DESSUS de ce que la
+          salle sait lui apprendre, on l'entraine, et il ne doit pas
+          bouger d'un pouce. */
+    for(const k of Object.keys(fic.striking))
+      if(typeof fic.striking[k]==="number")fic.striking[k]=Math.min(99,cap+6);
+    /* /!\ ON MESURE LE BLOC ENTIER, PAS UN ATTRIBUT. appliquerTravail
+       choisit deux ou trois cles par seance : en verifier UNE seule,
+       c'est tirer a pile ou face si la seance l'a touchee.
+       /!\ ET AUCUN ACCENT GRAVE DANS CE COMMENTAIRE : on est DANS un
+       gabarit delimite par des accents graves, il refermerait la chaine.
+       Faute commise deux fois de suite le 03/09 — elle ne se voit pas a
+       la relecture, seulement au chargement du fichier. */
+    const somme=()=>Object.keys(fic.striking)
+      .reduce((a,k)=>a+(typeof fic.striking[k]==="number"?fic.striking[k]:0),0);
+    const avant=somme();
+    appliquerTravail(cle,"striking",3);
+    const bloque=Math.abs(somme()-avant)<1e-9;
+    const dit=!!(l.bute&&l.bute.striking);
+    /* 2. L'ECRAN LE DIT. Un mur invisible ressemble a un entrainement
+          casse — c'est la seule raison pour laquelle ce plafond est
+          jouable. */
+    ouvrirFiche(cle);
+    const h=$("fiche").innerHTML;
+    const surLaFiche=h.indexOf("sait lui apprendre")>=0&&h.indexOf("au bout")>=0;
+    /* 3. CE N'EST PAS DEFINITIF : on offre un bien meilleur staff, le
+          plafond remonte, et le meme homme repart. */
+    for(const c of staffDe())if(!c.moi){c.niveau=96;c.potentiel=96;}
+    couvertureBouge();
+    const niv2=MMA.coach.niveauEncadrement(couvertureDuStaff(),"pro","striking");
+    const cap2=MMA.carriere.plafond(pot,niv2);
+    const avant2=somme();
+    appliquerTravail(cle,"striking",3);
+    const repart=somme()>avant2;
+    fermerFiche();
+    return {bloque,dit,surLaFiche,repart,
+      monte:cap2>cap, niv, niv2, cap:Math.round(cap*10)/10, cap2:Math.round(cap2*10)/10};
+  })()`);
+  if (r && r.pasDeGars) {
+    dit("le plafond de la salle se mesure sur un pro", false, "aucun pro — graine à revoir");
+  } else {
+    dit("un homme au bout de ce que la salle enseigne ne progresse plus",
+        !!r && r.bloque, `encadrement ${r ? r.niv : "?"} → plafond ${r ? r.cap : "?"}`);
+    dit("et le jeu retient sur quoi il a buté", !!r && r.dit);
+    dit("sa fiche le dit en clair — un mur invisible serait pire que pas de mur",
+        !!r && r.surLaFiche);
+    dit("un meilleur staff relève le plafond : rien n'est définitif",
+        !!r && r.monte && r.repart,
+        r ? `encadrement ${r.niv} → ${r.niv2}, plafond ${r.cap} → ${r.cap2}` : "");
+  }
+  dit("aucune exception sur le plafond de la salle", P.erreurs.length === 0,
+      [...new Set(P.erreurs)].slice(0, 3).join(" | "));
+}
+
 console.log(echecs === 0
   ? "CONFORME — la partie se joue, et ce qui doit se voir se voit."
   : `${echecs} ECHEC(S)`);
