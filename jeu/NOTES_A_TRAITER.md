@@ -13574,3 +13574,24 @@ bancs et des pilotes sont pleins de commentaires : n'y citer aucun nom de
 champ entre accents graves.
 
 CHAINE : 39 bancs, 824 assertions, 0 ECHEC.
+
+## CAS 169 — LE TABLEAU DES DIALOGUES, ALLER ET RETOUR (Mael, 03/09)
+
+« Tu me sors un tableau avec toutes les repliques, les reponses et les
+consequences, je te les modifie et je te renvoie. »
+C'est la bonne division du travail : le banc verifie qu'une replique
+existe, a un ton et un effet — SEUL LE JOUEUR ENTEND SI ELLE SONNE JUSTE
+(cas 165). Outils dans js/tableau/ :
+    sh lancer.sh sortir                  → dialogues_coachs.xlsx
+    sh lancer.sh rentrer fichier.xlsx    → coach_scenes.js reecrit, banc 39
+- Une ligne par REPONSE, 761. Cases jaunes a lui (texte, reponse,
+  reaction, entente -6..+6 verifiee, ton, consequence en liste
+  deroulante), cases grises portant l'ID scene#n qui remet chaque ligne a
+  sa place. Notice LIS-MOI avec les regles que le banc refusera.
+- Les libelles humains des effets et des declencheurs vivent dans UNE
+  table (exporter_coachs_tables.py) : l'aller la lit, le retour l'inverse.
+- coach_scenes.js est GENERE : le retour le reecrit entierement, en-tete
+  conserve. Preuve du tour : export → import sans modification → contenu
+  strictement identique, banc 39 vert.
+- L'importateur ne juge rien : c'est le banc 39 qui tranche, et il dit
+  quelle ligne et pourquoi.
