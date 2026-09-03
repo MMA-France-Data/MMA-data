@@ -21607,7 +21607,18 @@ function preparerCombat(idA,idB,rounds,graine){
       }
       return MMA.salle.ficheDe(MONDE,id,t.jour);
     }
-    if(MESGARS[id]&&MONDE) return MMA.salle.ficheDe(MONDE,MESGARS[id].id,t.jour);
+    /* /!\ UN HOMME DE LA SALLE PEUT AVOIR DISPARU DU MONDE. Sa retraite
+       le retire de MONDE.pros, et sa fiche moteur part avec — il n'y a
+       donc rien a remplacer, contrairement a un adversaire du monde. On
+       le DIT au lieu de laisser lever « id inconnu », pour que
+       l'appelant annule l'affiche proprement. (Mesure du 02/09 : cette
+       erreur cassait la preparation, et la cascade se terminait sur un
+       combat joue dont personne n'apprenait le resultat.) */
+    if(MESGARS[id]&&MONDE){
+      if(!MONDE.pros.get(MESGARS[id].id))
+        throw new Error(`AFFICHE_IMPOSSIBLE ${id} ne combat plus`);
+      return MMA.salle.ficheDe(MONDE,MESGARS[id].id,t.jour);
+    }
     return MMA.fiches.fighter(id);
   };
   const fa=tirer(idA), fb=tirer(idB);
@@ -22256,10 +22267,18 @@ function simulerCombat(){
     let g=0;
     if(!COMBAT1.moteur.fini&&COMBAT1.etapes.length===0)jouerUnRound(COMBAT1);
     while(!COMBAT1.moteur.fini&&g++<12)jouerUnRound(COMBAT1);
+    /* /!\ ON LIT LE RESULTAT AVANT DE L'ENCAISSER. Mesure du 02/09 :
+       196 exceptions sur six ans de jeu, toutes ici. encaisserResultat
+       peut faire raccrocher le combattant ; la retraite appelle
+       purgerReferences (cas 156), qui met COMBAT1 a null — et la ligne
+       suivante lisait COMBAT1.vainqueur. Le combat etait joue et compte,
+       mais le joueur n'apprenait JAMAIS comment il s'etait termine : le
+       toast final partait dans le catch. On garde donc ce qu'on a besoin
+       de dire, puis on encaisse. */
+    const dit={v:COMBAT1.vainqueur,lib:COMBAT1.libelle||""};
     encaisserResultat();
     if(typeof sauvegarder==="function")sauvegarder(true);
-    const r=COMBAT1;
-    toast(`${motResultat(r.vainqueur)} — ${r.libelle||""}`);
+    toast(`${motResultat(dit.v)} — ${dit.lib}`);
   }catch(e){
     /* Meme si le combat casse, LA PARTIE NE RESTE PAS PRISONNIERE. */
     console.error("simulerCombat :",e);
@@ -23256,7 +23275,17 @@ function jouerJournee(jour,echeances){
         bougerReputation(-1.5,"Une affiche annulée, ça se sait.",jour);
         continue;
       }
-      COMBAT1=preparerCombat(d.a,d.b,d.rounds,d.graine);
+      try{ COMBAT1=preparerCombat(d.a,d.b,d.rounds,d.graine); }
+      catch(e){
+        /* L'affiche tombe : on l'annonce, on n'annule pas la journee.
+           /!\ UN HOMME QUI A RACCROCHE NE MONTE PAS : ce n'est pas un
+           defaut, c'est le jeu. On ne le compte donc pas comme une
+           exception — sinon le prochain qui mesure croira qu'il en reste. */
+        if(!/AFFICHE_IMPOSSIBLE/.test(String(e&&e.message)))console.error("preparerCombat :",e);
+        depeche(jour,"combat",`L'affiche ${FICHES[d.a]?FICHES[d.a].nom:d.a} — `
+          +`${FICHES[d.b]?FICHES[d.b].nom:d.b} est annulée : l'un des deux ne combat plus.`,null);
+        continue;
+      }
       /* /!\ LE JOUR DU COMBAT, ON NE PASSE PAS. Sans ca, on pouvait
          enchainer les journees sans jamais jouer le combat et devoir aller
          le chercher dans l'onglet Combats — signale a l'usage. */
@@ -23295,7 +23324,14 @@ function jouerJournee(jour,echeances){
         cr.evenements.push(`📆 Deux combats le même soir — celui de ${lienGars(d.cle)} est décalé à demain.`);
         continue;
       }
-      COMBAT1=preparerCombat(d.a,d.b,d.rounds,d.graine);
+      try{ COMBAT1=preparerCombat(d.a,d.b,d.rounds,d.graine); }
+      catch(e){
+        if(!/AFFICHE_IMPOSSIBLE/.test(String(e&&e.message)))console.error("preparerCombat :",e);
+        cr.evenements.push(`◆ Le combat de ${lienGars(d.cle)} est annulé — `
+          +`l'un des deux ne combat plus.`);
+        l.combatPrevu=null; l.camp=null;
+        continue;
+      }
       /* /!\ L'OFFRE VOYAGE SUR LE COMBAT (10/08). Avant, combatsDuJour
          vidait combatPrevu AVANT le combat : a l'encaissement,
          remonterDansLeMonde ne trouvait plus l'adversaire — classement,

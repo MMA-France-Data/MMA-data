@@ -13438,3 +13438,67 @@ Les deux sont dits maintenant, et le banc 27 les tient : le message doit
 contenir ce qu'on gagne ET ce qu'on perd, et nommer le poulain lache.
 
 CHAINE : 39 bancs, 808 assertions, 0 ECHEC.
+
+## CAS 167 — CE QUE VAUT UN BON STAFF, MESURE (Mael, 02/09)
+
+« Mets-moi un combattant avec bon potentiel dans deux domaines mini, une
+fois avec des mauvais coachs, une fois avec des bons, et compare les deux
+sur une carriere. »
+
+### L'INSTRUMENT : js/pilote_coachs.js
+Hors chaine, comme pilote_endgame et pilote_eco : il ne verifie pas un
+invariant, il MESURE. Deux parties strictement identiques — meme graine,
+meme monde, meme homme, memes decisions au meme rythme — et UNE SEULE
+chose qui change : le niveau des deux coachs (30 contre 88). Tout ecart
+mesure vient donc de la.
+    node js/pilote_coachs.js [graine] [annees]
+
+### LE PIEGE DU PROTOCOLE, ET IL A COUTE UN PREMIER RESULTAT FAUX
+Premier essai : des coachs ECRITS A LA MAIN dans l'instrument
+(nom/axe/niveau/salaire). Resultat : les stats de frappe passaient a NaN
+au bout d'un an. Cause : il manquait `vitesse`, le champ que le marche
+fabrique et que la progression du coach lit — exactement la faute du
+cas 147 (« imiter un objet du jeu, c'est en oublier la moitie ») et celle
+qu'embaucherCoach avait deja payee. ON NE FABRIQUE PAS D'OBJET DU JEU
+DANS UN INSTRUMENT : on prend celui que la partie a deja, et on ne change
+que ce qu'on veut mesurer.
+
+### LE RESULTAT (Idrissa Kante, 24 ans, potentiel 90, six ans)
+                    coachs 30      coachs 88
+  frappe (mentor)   64,9 → 79,8    64,9 → 82,5     +2,7
+  sol   (l'autre)   68,3 → 84,2    68,3 → 84,9     +0,7
+  bilan             32-2           26-4
+Deuxieme graine (41) : +3,6 sur la frappe, +1,0 au sol. Meme forme.
+
+TROIS LECTURES, ET LA DEUXIEME EST UNE QUESTION DE CONCEPTION.
+1. LE MENTORAT SE VOIT SUR SON AXE, ET SEULEMENT LA. +18 % de progression
+   sur la frappe (17,6 points contre 14,9), presque rien au sol. La regle
+   annoncee — plus vite sur son domaine, moins vite ailleurs — se mesure.
+2. MAIS LE STAFF CHANGE LA VITESSE, PAS LA DESTINATION. Les deux hommes
+   finissent a deux ou trois points l'un de l'autre, parce que
+   `marge=(96-v)/96` ecrase tout ce qui monte : plus on est haut, moins on
+   gagne. Un bon staff fait arriver DEUX ANS PLUS TOT au meme endroit.
+   A DECIDER AVEC MAEL : est-ce voulu ? Un plafond commun rend le staff
+   utile mais pas decisif ; un plafond qui suivrait le niveau du staff
+   rendrait le recrutement de coachs beaucoup plus lourd de consequences.
+3. MIEUX ENTRAINE, IL PERD PLUS. 26-4 contre 32-2 : les stats montent, le
+   monde l'envoie plus haut, et il y prend des defaites. C'est coherent —
+   et ca veut dire que LE BILAN N'EST PAS UNE MESURE DU TRAVAIL.
+
+### DEUX DEFAUTS TROUVES EN MESURANT (196 exceptions sur six ans)
+- LE RESULTAT SE LISAIT APRES L'ENCAISSEMENT. `encaisserResultat()` peut
+  faire raccrocher le combattant ; la retraite appelle purgerReferences
+  (cas 156) qui met COMBAT1 a null — et la ligne suivante lisait
+  COMBAT1.vainqueur. Le combat etait joue et compte, mais LE JOUEUR
+  N'APPRENAIT JAMAIS COMMENT IL S'ETAIT TERMINE : le toast partait dans
+  le catch. On garde ce qu'on a besoin de dire, PUIS on encaisse.
+- UN HOMME DE LA SALLE PEUT AVOIR DISPARU DU MONDE. Sa retraite le retire
+  de MONDE.pros et sa fiche moteur part avec ; s'il restait une affiche
+  du jour pour lui, ficheDe levait « id inconnu » et cassait la soiree.
+  Il n'y a rien a remplacer (contrairement a un adversaire du monde) :
+  l'affiche est ANNULEE et annoncee. Un homme qui a raccroche ne monte
+  pas — ce n'est pas un defaut, c'est le jeu, et on ne le compte donc pas
+  comme une exception.
+  196 exceptions → 0.
+
+CHAINE : 39 bancs, 808 assertions, 0 ECHEC.
