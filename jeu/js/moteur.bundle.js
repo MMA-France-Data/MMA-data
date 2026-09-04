@@ -18382,7 +18382,7 @@ const porte = [];
 /* ==================================================================== */
 bureau.push(
 {cle:"oie_01",sujet:"ou_il_en_est",si:"toujours",vie:"courante",
- texte:"Il pose sa bouteille sur le coin du bureau et s'assoit sans se presser. Personne ne lui a posé cette question depuis longtemps, et ça se voit sur sa figure.",
+ texte:"Il pose sa bouteille sur le coin du bureau et s'assoit sans se presser.",
  choix:[
   {lab:"Attendre qu'il parle",r:"Il met un temps, puis il vide son sac. Le tapis, les horaires, sa femme qui ne le voit plus le soir.",d:3,ton:"calme"},
   {lab:"Lui dire que tu l'as trouvé fatigué, ces temps-ci",r:"Il hoche la tête lentement. Il n'aime pas être vu, mais il aime encore moins être invisible.",d:2,ton:"franc"},
@@ -18394,7 +18394,7 @@ bureau.push(
  choix:[
   {lab:"Ne rien dire et le laisser dans le silence",r:"Le silence tient une bonne minute. Puis il lâche que son père est à l'hôpital depuis le printemps.",d:4,ton:"calme"},
   {lab:"Insister une fois, puis laisser tomber",r:"Il apprécie que tu insistes, et il apprécie encore plus que tu t'arrêtes là.",d:3,ton:"respect"},
-  {lab:"Le prendre au mot et passer à la suite",r:"Il repart avec ce qu'il avait apporté. La prochaine fois, il ne l'apportera pas.",d:-3,ton:"neutre"}]},
+  {lab:"Le prendre au mot et passer à la suite",r:"Il repart, en regardant ses pieds, l'air triste",d:-3,ton:"neutre"}]},
 
 {cle:"oie_03",sujet:"ou_il_en_est",si:"toujours",vie:"courante",
  texte:"Il arrive avec le dos raide, une main sur les reins, et il fait semblant que ce n'est rien depuis assez de semaines pour que ce soit devenu une blague dans le vestiaire.",
@@ -18407,65 +18407,65 @@ bureau.push(
 {cle:"oie_04",sujet:"ou_il_en_est",si:"toujours",vie:"saison",
  texte:"Tu lui demandes comment il va et il te retourne la question avant même de répondre. Ce n'est pas une esquive, c'est sa façon de vérifier si la question est sincère.",
  choix:[
-  {lab:"Répondre honnêtement, toi d'abord",r:"Tu lui racontes ta semaine. Quand tu as fini, il parle de la sienne, et il ne s'arrête plus.",d:4,ton:"franc"},
-  {lab:"Botter en touche et revenir à lui",r:"Il note l'esquive sans rien dire, et il répond exactement aussi peu que toi.",d:-1,ton:"neutre"},
+  {lab:"Répondre honnêtement",r:"Tu lui racontes ta semaine. Quand tu as fini, il parle de la sienne, et il ne s'arrête plus.",d:4,ton:"franc"},
+  {lab:"lui répondre que tout va bien en restant bref",r:"Il note l'esquive sans rien dire, et il répond exactement aussi peu que toi.",d:-1,ton:"neutre"},
   {lab:"Lui dire que ce n'est pas le sujet",r:"Il se ferme d'un coup. Il aura mis un an à rouvrir cette porte-là.",d:-4,ton:"sec"}]},
 
 {cle:"oie_05",sujet:"ou_il_en_est",si:"toujours",vie:"courante",
  texte:"Il t'annonce, presque en s'excusant, qu'il voudrait poser deux semaines cet été. Il a préparé son argument avant d'entrer, on l'entend dans sa voix.",
  choix:[
   {lab:"Dire oui tout de suite, sans conditions",r:"Il n'avait pas prévu que ce soit aussi simple. Il reste assis un moment, un peu bête, puis il te remercie.",d:5,ton:"chaud"},
-  {lab:"Dire oui, mais lui demander de caler les dates avec l'autre",r:"Il trouve ça normal et il part s'arranger le jour même.",d:3,ton:"calme"},
-  {lab:"Lui demander de repousser après la carte d'automne",r:"Il accepte parce que c'est son métier, mais il repart avec quelque chose de moins dans le regard.",d:-3,ton:"ferme"}]},
+  {lab:"Dire oui, mais lui demander de caler les dates avec les autre coach ( mettre condition si il y'a d'autre coach)",r:"Il trouve ça normal et il part s'arranger le jour même.",d:3,ton:"calme"},
+  {lab:"Lui demander de repousser après la carte d'automne",r:"Il accepte parce que c'est son métier, mais il repart avec une tête pleine de frustration",d:-3,ton:"ferme"}]},
 
 {cle:"oie_06",sujet:"ou_il_en_est",si:"toujours",vie:"courante",
  texte:"Il est arrivé avant tout le monde et il partira après. Ce n'est pas nouveau, mais depuis quelques semaines il ne rentre même plus manger chez lui le midi.",
  choix:[
-  {lab:"Lui demander ce qu'il fuit à la maison",r:"Il te regarde longuement, puis il dit qu'il n'y a plus grand monde à fuir, justement.",d:3,ton:"grave"},
+  {lab:"Lui demander ce qu'il fuit à la maison avec humour",r:"Il te regarde longuement, puis il dit qu'il n'y a plus grand monde à fuir, justement.",d:3,ton:"grave"},
   {lab:"Le renvoyer chez lui pour la soirée",r:"Il râle tout le long du couloir et il revient le lendemain reposé, sans le dire.",d:3,ton:"chaud"},
-  {lab:"Lui faire remarquer que ça arrange la salle",r:"Il te donne raison. C'est justement ce qui te reste en travers quand il sort.",d:-4,ton:"froid"}]},
+  {lab:"Le remercier pour son investissement et lui dire de continuer comme ça",r:"Il apprécie la gratitude mais aimerait que tu soit plus humain",d:2,ton:"calme"}]},
 
 {cle:"oie_07",sujet:"ou_il_en_est",si:"toujours",vie:"courante",
  texte:"Il a la voix cassée et il tousse depuis le début de la séance. Il jure que ce n'est rien, qu'il a connu pire dans des gymnases plus froids que celui-là.",
  choix:[
   {lab:"Le mettre au repos jusqu'à lundi",r:"Il proteste, il cède, et il t'envoie un message le dimanche pour dire que tu avais raison.",d:4,ton:"chaud"},
-  {lab:"Lui demander de superviser sans montrer",r:"Il accepte le compromis. Il passe la séance assis sur un ballon, à corriger à la voix.",d:3,ton:"calme"},
-  {lab:"Ne rien changer, la carte approche",r:"Il termine la semaine et il en perd trois. Personne ne dit rien, mais tout le monde a compté.",d:-4,ton:"dur"}]},
+  {lab:"Lui demander de rentrer chez lui, de ne pas prendre le risque de contaminer les autres",r:"Il accepte, et donnes des technique à répéter aux élèves avant de partir",d:3,ton:"calme"},
+  {lab:"Ne rien changer, la carte approche",r:"Il termine la semaine mais il souffre",d:-4,ton:"dur"}]},
 
 {cle:"oie_08",sujet:"ou_il_en_est",si:"toujours",vie:"saison",
  texte:"Tu le trouves assis seul dans le vestiaire vide, longtemps après la fin. Il n'a pas allumé la lumière et il ne s'est pas changé.",
  choix:[
   {lab:"T'asseoir à côté sans rien demander",r:"Vous restez là un moment. Au bout d'un temps, il dit merci, et vous n'en reparlez jamais.",d:5,ton:"grave"},
-  {lab:"Lui demander franchement ce qui se passe",r:"Il hésite, puis il te raconte. C'est plus lourd que ce que tu imaginais.",d:4,ton:"franc"},
+  {lab:"Lui demander franchement ce qui se passe",r:"Il hésite, puis il te raconte. Il a beaucoup de problèmes a la maison",d:4,ton:"franc"},
   {lab:"Refermer la porte et le laisser tranquille",r:"Tu as sans doute bien fait. Il ne saura jamais que tu es passé.",d:0,ton:"neutre"},
-  {lab:"Lui dire d'éteindre en partant",r:"Il éteint. Le lendemain, il est le premier arrivé et il ne te regarde pas.",d:-5,ton:"froid"}]},
+  {lab:"Lui dire que tu ferme la salle et le presser",r:"Il sort sans te dire au revoir. Le lendemain, il t'évite.",d:-5,ton:"froid"}]},
 
 {cle:"oie_09",sujet:"ou_il_en_est",si:"a_son_sommet",vie:"courante",
- texte:"Il est au meilleur de ce qu'il sait faire et il le sait. Ce qui l'inquiète, ce n'est pas de baisser, c'est de rester ici pendant que ça passe.",
+ texte:"Il est au meilleur de ce qu'il sait faire et il le sait.Il te parles de comment les autres salle s'organise",
  choix:[
-  {lab:"Lui dire que sa place est ici, et pourquoi",r:"Il écoute jusqu'au bout, ce qu'il ne fait pas souvent. Il ne répond pas, mais il reste.",d:4,ton:"franc"},
-  {lab:"Lui demander ce qu'il lui faudrait pour rester",r:"Il énumère trois choses. Deux sont gratuites, et tu ne les avais jamais faites.",d:4,ton:"calme"},
-  {lab:"Lui dire de voir ailleurs si l'herbe est plus verte",r:"Il prend ça pour ce que c'est : une porte que tu viens de lui montrer.",d:-5,ton:"sec"}]},
+  {lab:"Lui dire que sa place est ici, et que notre système a ses avantages",r:"Il écoute jusqu'au bout, ce qu'il ne fait pas souvent. Il ne répond pas, mais il acquiesce",d:4,ton:"franc"},
+  {lab:"Lui demander ce que l'ont pourrait améliorer",r:"Il énumère plusieurs point en espérant que son avis sera prit en compte",d:4,ton:"calme"},
+  {lab:"Lui dire de voir ailleurs si l'herbe est plus verte",r:"Il te répond qu'il pensait a améliorer la salle mais maintenant il penses vraiment a voir ailleurs",d:-5,ton:"sec"}]},
 
 {cle:"oie_10",sujet:"ou_il_en_est",si:"neuf",vie:"unique",
- texte:"Il n'est là que depuis quelques semaines et il cherche encore où sont les choses. Il te demande, gêné, si sa façon de faire convient.",
+ texte:"Il n'est là que depuis quelques semaines . Il te demande, gêné, si sa façon de faire convient.",
  choix:[
-  {lab:"Lui dire ce que tu attends, précisément",r:"Il note tout. C'est la conversation dont il parlera encore dans deux ans.",d:4,ton:"clair"},
+  {lab:"Lui dire ce que tu attends, précisément",r:"Il note tout. Et suit ta procédure a la prochaine sceance",d:4,ton:"clair"},
   {lab:"Lui dire de faire à sa manière et de voir",r:"Il apprécie la confiance et il flotte un peu. Les deux à la fois.",d:2,ton:"calme"},
-  {lab:"Lui répondre que s'il y avait un problème, il le saurait",r:"Il repart avec sa question intacte, et il ne la reposera pas.",d:-3,ton:"sec"}]},
+  {lab:"Lui répondre qu'il doit se dépêcher de prendre ses marques",r:"Il repart la queue entre les jambes",d:-3,ton:"sec"}]},
 
 {cle:"oie_11",sujet:"ou_il_en_est",si:"toujours",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
  texte:"Il te coupe avant la fin de ta question et il répond qu'il va bien, que la vraie question c'est de savoir si la salle va bien, elle.",
  choix:[
   {lab:"Répondre à sa question à lui",r:"Tu lui donnes l'état des lieux, sans enjoliver. Il en redemande, il en avait besoin.",d:3,ton:"franc"},
-  {lab:"Refuser le détour et revenir sur lui",r:"Il grommelle, puis il finit par admettre qu'il n'a pas pris un jour depuis l'automne.",d:3,ton:"ferme"},
-  {lab:"Le laisser changer de sujet",r:"Vous parlez de la salle une demi-heure. Vous n'avez rien réglé de ce qui l'occupe.",d:-1,ton:"neutre"},
-  {lab:"Lui dire que la salle irait mieux s'il se taisait",r:"Le mot est parti trop vite. Il ne le relèvera pas, et il ne l'oubliera pas.",d:-6,ton:"dur"}]},
+  {lab:"Refuser le détour et revenir sur lui",r:"Il râle il trouves que tu met le problèmes sur lui",d:-3,ton:"ferme"},
+  {lab:"Le laisser changer de sujet",r:"Vous parlez de la salle une demi-heure. Vous n'avez rien réglé de ce qui l'occupe.",d:1,ton:"neutre"},
+  {lab:"Lui dire que la salle irait mieux s'il se taisait",r:"Le mot est parti trop vite. il ne l'oubliera pas.",d:-6,ton:"dur"}]},
 
 {cle:"oie_12",sujet:"ou_il_en_est",si:"toujours",vie:"courante",voix:["taiseux","chaleureux","technicien"],
  texte:"Il hausse les épaules et sort une phrase de trois mots. Avec lui, il faut compter en gestes : il est resté assis, c'est déjà énorme.",
  choix:[
-  {lab:"Poser une question fermée, à laquelle il peut répondre par oui",r:"Il répond oui. Puis il en dit un peu plus, parce que la porte était assez étroite pour passer.",d:4,ton:"malin"},
+  {lab:"Poser une question fermée, à laquelle il peut répondre par oui",r:"Il répond oui. Puis il en dit un peu plus,",d:4,ton:"malin"},
   {lab:"Lui laisser le silence et attendre",r:"Il tient le silence mieux que toi, mais il finit par le remplir avec ce qui l'encombre.",d:3,ton:"calme"},
   {lab:"Lui demander de développer",r:"Il développe de deux mots. Vous êtes exactement au même endroit qu'avant.",d:0,ton:"neutre"},
   {lab:"Lui reprocher de ne jamais rien dire",r:"Il te répond que ce qu'il a à dire, il le dit sur le tapis. Puis il se lève.",d:-4,ton:"sec"}]},
@@ -18483,17 +18483,17 @@ bureau.push(
   {lab:"Lui demander de tout t'expliquer, maintenant",r:"Il y passe une heure. C'est la meilleure heure qu'il ait passée dans ce bureau.",d:5,ton:"chaud"},
   {lab:"Lui demander de t'en faire un résumé pour lundi",r:"Il te le rend le samedi, deux fois plus long que ce que tu avais demandé.",d:3,ton:"calme"},
   {lab:"Lui dire que tu lui fais confiance là-dessus",r:"C'est gentil et c'est vide. Il range le cahier et n'en ressort rien.",d:-1,ton:"neutre"},
-  {lab:"Lui dire de garder ça pour le tapis",r:"Il referme le cahier lentement. Tu viens de fermer la seule porte qu'il ouvrait.",d:-5,ton:"sec"}]},
+  {lab:"Lui dire que la théorie ne t'interresse pas que tu veux du résultat",r:"Il referme le cahier lentement. Tu viens de fermer la seule porte qu'il ouvrait.",d:-5,ton:"sec"}]},
 
 {cle:"oie_15",sujet:"ou_il_en_est",si:"toujours",vie:"courante",voix:["bourru","ambitieux","technicien"],
  texte:"Il te demande sans détour si tu es content de lui. Pas de compliment, pas de chiffre : une réponse, et il retourne travailler.",
  choix:[
-  {lab:"Lui dire oui, et dire exactement pourquoi",r:"Il encaisse sans un mot, puis il te dit que ça faisait un moment qu'il attendait.",d:4,ton:"franc"},
-  {lab:"Lui dire oui, avec une réserve honnête",r:"Il préfère nettement ça à un oui plein. Il repart avec quelque chose à corriger.",d:3,ton:"clair"},
+  {lab:"Lui dire oui, et dire exactement pourquoi",r:"il te dit que ça faisait un moment qu'il attendait.",d:4,ton:"franc"},
+  {lab:"Lui dire oui, avec des axes d'amelioration",r:"Il préfère nettement ça à un oui plein. Il repart avec quelque chose à corriger.",d:3,ton:"clair"},
   {lab:"Lui répondre que ça dépend des semaines",r:"Il hoche la tête. Il n'a pas eu sa réponse et il en tirera ses propres conclusions.",d:-3,ton:"flou"}]},
 
 {cle:"oie_16",sujet:"ou_il_en_est",si:"toujours",vie:"courante",voix:["pedagogue","taiseux","chaleureux"],
- texte:"Il te raconte qu'un ancien de la salle l'a appelé pour lui dire merci, des années après. Il essaie de te le dire comme une anecdote et il n'y arrive pas.",
+ texte:"Il te raconte qu'un ancien élève l'a appelé pour lui dire merci, des années après. Il essaie de te le dire comme une anecdote et il n'y arrive pas.",
  choix:[
   {lab:"Lui dire que c'est ça, le métier",r:"Il te répond que oui, et qu'on l'oublie tous les jours dans le bruit des sacs.",d:4,ton:"chaud"},
   {lab:"Lui demander qui c'était",r:"Il te raconte le gamin, la période, la bêtise qui a tout arrêté. Une demi-heure de bureau bien dépensée.",d:4,ton:"calme"},
@@ -18523,20 +18523,20 @@ bureau.push(
   {lab:"Lui rappeler que tu es son patron",r:"Il se redresse sur sa chaise. Vous ne retrouverez pas ce ton avant longtemps.",d:-5,ton:"froid"}]},
 
 {cle:"oie_20",sujet:"ou_il_en_est",si:"sous_paye",vie:"courante",voix:["pedagogue","ambitieux","technicien"],
- texte:"Il n'aborde pas l'argent, mais il te raconte qu'il a repris des cours particuliers le samedi. Il dit que c'est pour le plaisir, et vous savez tous les deux que non.",
+ texte:"Il n'aborde pas l'argent, mais il te raconte qu'il se forme pour perfectionner son coaching a coté. Il dit que c'est pour le plaisir, et vous savez tous les deux que non.",
  choix:[
   {lab:"Lui dire que tu vas remettre son salaire au niveau du marché",r:"Il ne s'y attendait pas ici, pas ce jour-là. Il te serre la main trop longtemps.",d:5,ton:"franc",effet:"monter_au_bareme"},
   {lab:"Lui promettre une augmentation à la prochaine rentrée",r:"Il accepte la promesse et il en note la date quelque part. Il faudra la tenir.",d:3,ton:"engage",effet:"promettre_argent"},
-  {lab:"Lui dire que le samedi, c'est son affaire",r:"Il te répond que oui, effectivement. Il ne reparlera plus de ses samedis.",d:-3,ton:"sec"},
-  {lab:"Lui reprocher de se disperser ailleurs",r:"Là, il te regarde vraiment. Il aurait pu dire beaucoup de choses, et il n'en dit aucune.",d:-6,ton:"dur"}]},
+  {lab:"Lui dire que ce qu'il fait en dehors de la salle, c'est son affaire",r:"Il te répond que oui, effectivement. Il ne reparlera plus de cela",d:-3,ton:"sec"},
+  {lab:"Lui dire qu'il a bien besoin de s’améliorer",r:"Il aurait pu dire beaucoup de choses, et il n'en dit aucune.",d:-6,ton:"dur"}]},
 
 {cle:"cqv_01",sujet:"ce_qu_il_voit",si:"toujours",vie:"courante",
  texte:"Tu lui demandes ce qu'il voit depuis le bord du tapis. Il prend le temps de choisir ses mots, parce qu'il sait que ce qu'il va dire va coûter à quelqu'un.",
  choix:[
   {lab:"Lui garantir que ça ne sortira pas d'ici",r:"Il te dit tout, y compris ce qu'il n'aurait pas dû. C'est exactement ce que tu voulais.",d:4,ton:"complice"},
   {lab:"Lui demander de commencer par le pire",r:"Il commence par le pire, et le pire est plus proche que tu ne le pensais.",d:3,ton:"franc"},
-  {lab:"Lui demander seulement ce qui va bien",r:"Il te donne la moitié agréable et garde l'autre. Tu l'apprendras plus tard, plus cher.",d:-2,ton:"flou"},
-  {lab:"Lui dire que tu vois très bien, merci",r:"Il referme le sujet en deux secondes. Il ne le rouvrira pas de sitôt.",d:-4,ton:"sec"}]},
+  {lab:"Lui demander seulement ce qui va bien",r:"Il te donne la moitié agréable et garde l'autre. Tu l'apprendras plus tard,",d:-2,ton:"flou"},
+  {lab:"Lui dire que ce que tu vois toi ne te plaît pas du tout",r:"Il referme le sujet en deux secondes. Il ne le rouvrira pas de sitôt.",d:-4,ton:"sec"}]},
 
 {cle:"cqv_02",sujet:"ce_qu_il_voit",si:"toujours",vie:"courante",
  texte:"Il te dit que le groupe travaille bien mais que l'ambiance est fausse. Personne ne s'engueule, personne ne se parle non plus, et ça finit toujours par se payer en cage.",
@@ -18589,14 +18589,14 @@ bureau.push(
  choix:[
   {lab:"Lui laisser durcir les séances comme il l'entend",r:"Il durcit. La semaine est atroce, l'ambiance grince, et le niveau remonte d'un cran.",d:4,ton:"ferme"},
   {lab:"Lui demander de faire venir des partenaires extérieurs",r:"Il passe deux coups de téléphone et le vestiaire redescend sur terre en une séance.",d:4,ton:"malin"},
-  {lab:"Lui dire que la confiance, ça ne se casse pas exprès",r:"Il te répond que la confiance qui n'a jamais été cassée n'a jamais été vérifiée non plus.",d:-1,ton:"franc"},
+  {lab:"Lui dire que la confiance, c'est bon d'en avoir dans le mma",r:"Il te répond que certain n'ont jamais combattu et devrait redescendre sur terre",d:-1,ton:"franc"},
   {lab:"Lui dire de laisser le groupe tranquille",r:"Il laisse. Deux mois plus tard, la carte se passe mal, et vous savez tous les deux pourquoi.",d:-4,ton:"sec"}]},
 
 {cle:"cqv_09",sujet:"ce_qu_il_voit",si:"competition",vie:"courante",
  texte:"Il te dit qu'il ne fait plus la différence entre préparer un homme pour gagner et le préparer pour ne pas perdre, et que le second est en train de gagner du terrain chez tes gars.",
  choix:[
   {lab:"Lui demander ce qu'il changerait dès lundi",r:"Il a déjà tout dans la tête. Il te déroule la semaine en un quart d'heure.",d:4,ton:"clair"},
-  {lab:"Lui donner la main sur la préparation d'un combattant",r:"Il prend la charge et il la porte sérieusement, jusqu'à la nuit du combat.",d:4,ton:"engage",effet:"lui_confier_un_gars"},
+  {lab:"Lui donner la main sur la préparation d'un combattant",r:"Il prend la charge et il la porte sérieusement",d:4,ton:"engage",effet:"lui_confier_un_gars"},
   {lab:"Lui dire que ne pas perdre, ça paie les factures",r:"Il te concède le point sans y croire une seconde.",d:-3,ton:"froid"}]},
 
 {cle:"cqv_10",sujet:"ce_qu_il_voit",si:"froid",vie:"courante",
@@ -18607,7 +18607,7 @@ bureau.push(
   {lab:"Lui dire d'arrêter les sous-entendus",r:"Il arrête les sous-entendus et il arrête aussi le reste.",d:-4,ton:"sec"}]},
 
 {cle:"cqv_11",sujet:"ce_qu_il_voit",si:"toujours",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
- texte:"Il te sort une liste, dans l'ordre, des hommes du groupe et de ce qui cloche chez chacun. Il n'a rien noté : c'est là depuis des semaines.",
+ texte:"Il te sort une liste, dans l'ordre, des hommes du groupe et de ce qui cloche chez chacun.",
  choix:[
   {lab:"Tout écouter et lui demander par quoi commencer",r:"Il commence par {autre}, et il dit pourquoi. C'est le bon, et tu l'aurais mis en dernier.",d:4,ton:"clair"},
   {lab:"Lui demander de te faire ça tous les mois",r:"Il accepte et il n'en ratera pas un seul. C'est devenu votre rendez-vous.",d:4,ton:"engage"},
@@ -18708,7 +18708,7 @@ bureau.push(
   {lab:"Lui annoncer que c'est déjà acté",r:"Il ne dit rien pendant un temps très long, puis il demande si c'est tout.",d:-5,ton:"froid",effet:"lui_rendre_un_gars"}]},
 
 {cle:"ung_05",sujet:"un_gars",si:"toujours",vie:"courante",
- texte:"Tu lui parles de {gars}, qui progresse trop vite et qui commence à se croire arrivé. Il te dit qu'il attendait que quelqu'un d'autre le voie.",
+ texte:"Tu lui parles de {gars}, qui progresse trop vite et qui commence à prendre la grosse tete. Il te dit qu'il attendait que quelqu'un d'autre le voie.",
  choix:[
   {lab:"Lui demander de le remettre à sa place, en séance",r:"Il lui organise une soirée très longue et très humiliante. Le gamin revient le lendemain.",d:4,ton:"ferme"},
   {lab:"Lui demander de lui donner un rôle auprès des débutants",r:"Le gamin découvre en une semaine tout ce qu'il ne sait pas expliquer. Ça le calme mieux qu'une correction.",d:5,ton:"malin"},
@@ -18719,13 +18719,13 @@ bureau.push(
  choix:[
   {lab:"Lui demander de le recadrer, avec ton appui public",r:"Il le recadre en sachant que tu es derrière. Le vestiaire comprend la hiérarchie en une séance.",d:4,ton:"ferme"},
   {lab:"Lui suggérer d'en faire un relais officiel",r:"Le vétéran devient utile au lieu d'être encombrant. C'est la solution la moins coûteuse.",d:5,ton:"malin"},
-  {lab:"Lui demander de laisser courir, il partira bien",r:"Il laisse courir. Le vétéran reste deux ans de plus et prend encore plus de place.",d:-3,ton:"mou"}]},
+  {lab:"Lui demander de laisser courir, il partira bien",r:"Il laisse courir. Le vétéran prend encore plus de place.",d:-3,ton:"mou"}]},
 
 {cle:"ung_07",sujet:"un_gars",si:"toujours",vie:"courante",
  texte:"Tu lui parles de la pesée ratée de {gars}. Il n'a rien dit pendant la semaine, et maintenant il a besoin de savoir ce que tu vas décider.",
  choix:[
-  {lab:"Lui demander comment on évite que ça recommence",r:"Il a déjà la réponse : la balance dans le couloir, tous les mardis, devant lui.",d:4,ton:"clair"},
-  {lab:"Le mettre dans le coin de {gars} pour reprendre la main",r:"Il accepte la charge et il la prend au sérieux jusqu'au bout de la nuit.",d:3,ton:"engage",effet:"le_mettre_au_coin"},
+  {lab:"Lui demander comment on évite que ça recommence",r:"Régime plus stricte et éviter les ecars cela toute l'annee",d:4,ton:"clair"},
+  {lab:"Le mettre dans le coin de {gars} pour reprendre la main",r:"Il accepte la charge et il la prend au sérieux.",d:3,ton:"engage",effet:"le_mettre_au_coin"},
   {lab:"Lui reprocher de ne pas l'avoir vu venir",r:"Il te répond que si, il l'avait vu, et qu'il te l'avait dit. Il a raison, en plus.",d:-5,ton:"dur"}]},
 
 {cle:"ung_08",sujet:"un_gars",si:"toujours",vie:"saison",
@@ -18736,7 +18736,7 @@ bureau.push(
   {lab:"Lui reprocher de ne pas oser trancher",r:"Il te répond qu'il tranche tous les jours, et que ce sont des gens, pas des cartes.",d:-4,ton:"sec"}]},
 
 {cle:"ung_09",sujet:"un_gars",si:"gars_jeune",vie:"courante",
- texte:"Il t'apprend que {gars} commence à intéresser du monde à l'extérieur. Il te le dit lui-même, alors qu'il aurait pu se taire.",
+ texte:"Il t'apprend que {gars} commence à intéresser d'autre salles . Il te le dit lui-même, alors qu'il aurait pu se taire.",
  choix:[
   {lab:"Le remercier de te l'avoir dit",r:"Il hausse les épaules, mais il est content que tu l'aies relevé.",d:4,ton:"chaud"},
   {lab:"Lui demander de garder {gars} au chaud",r:"Il s'en occupe, et il fait ça bien : le gamin ne saura même pas qu'on l'a courtisé.",d:3,ton:"malin"},
