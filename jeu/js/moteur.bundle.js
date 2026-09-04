@@ -6771,8 +6771,15 @@ function caler(bloc, cible) {
    L'exposant 1,5 les separe : la perte s'effondre vers le haut de
    l'echelle et explose vers le bas. */
 const COURBE = 1.5;
-const AMPLITUDE = 32;   // ce que coute une salle SANS aucun encadrement
-const PLANCHER = 55;    // ce qu'on atteint seul, par le sparring et les combats
+/* /!\ ADOUCI LE 03/09 (Mael : « faut que ca progresse, mais pas trop
+   simple non plus »). A 32 et plancher 55, avec le staff de depart a 45
+   (-13 points), un amateur de dix-neuf ans et talent 1,45 etait GELE a
+   55 sur quatre domaines des le premier jour — un mur au depart, pas de
+   la difficulte. A 28 et plancher 60 : staff 45 → -11,5 ; staff 30 →
+   -16,4 ; staff 88 → -1,2. L'ecart mauvais/bon staff reste de quinze
+   points sur un potentiel de 90 (banc 20). */
+const AMPLITUDE = 28;   // ce que coute une salle SANS aucun encadrement
+const PLANCHER = 60;    // ce qu'on atteint seul, par le sparring et les combats
 
 /**
  * Jusqu'ou cet homme peut monter dans ce domaine, ici et maintenant.
@@ -6813,7 +6820,12 @@ function potentielDe(fiche, dom, cle) {
   const bloc = (fiche && fiche[dom]) || {};
   const vals = Object.keys(bloc).map((k) => bloc[k]).filter((x) => typeof x === "number" && isFinite(x));
   const moy = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 45;
-  return Math.max(35, Math.min(99, Math.round(moy + 9 + (h % 17))));
+  /* /!\ ASSEZ HAUT POUR QUE LA LOI NE LES GELE PAS AVEC LE STAFF DE DEPART
+     (mesure du 03/09, staff a 45 = -13 points) : a moy+9..25, Kante etait
+     encore bute en frappe, lutte, physique ET mental. Un pro ecrit a la
+     main est un pro : sa marge est celle d'un homme qui a encore une
+     carriere devant lui, pas celle d'un adherent. */
+  return Math.max(35, Math.min(99, Math.round(moy + 20 + (h % 15))));
 }
 
 /** La marge qui reste — ce que le scout cherche a estimer. */

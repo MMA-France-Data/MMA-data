@@ -26,11 +26,18 @@ const annees = Number(process.argv[3] || 8);
 const jours = annees * 365;
 
 /* Les deux domaines suivis, et leurs attributs — ceux que TRAVAIL touche. */
+/* /!\ LES CLES SUIVIES SONT CELLES DE LA FICHE, PAS CELLES D'UN VIEUX PLAN.
+   La premiere liste portait guard_retention et back_control, qui n'existent
+   pas : la moyenne du sol se faisait sur six cles et disait n'importe quoi. */
 const SUIVIS = {
-  striking: ["jab", "cross", "crochet", "uppercut", "overhand", "poing_corps",
-             "low_kick", "body_kick", "high_kick", "teep", "esquive_tete", "garde", "footwork"],
-  ground: ["passing", "guard_retention", "mount_top", "back_control", "sweeps",
-           "submission_off_top", "submission_off_bottom", "submission_def"],
+  striking: ["jab", "cross", "crochet", "uppercut", "overhand", "poing_corps", "low_kick", "body_kick",
+             "high_kick", "teep", "esquive_tete", "parade", "blocage", "check", "footwork", "enchainements",
+             "timing", "vitesse_mains", "vitesse_jambes", "cage_cutting", "spinning", "lecture", "volume"],
+  ground: ["passing", "posture_sol", "half_guard_top", "side_control_top", "mount_top", "back_top",
+           "closed_guard_bottom", "open_guard_bottom", "butterfly_bottom", "half_guard_bottom",
+           "side_control_bottom", "mount_bottom", "back_defense", "turtle_defense", "sweeps", "shrimping",
+           "wall_walking", "hand_fighting_sol", "submission_off_top", "submission_off_bottom", "submission_def",
+           "explosiveness", "ground_striking"],
 };
 
 /**

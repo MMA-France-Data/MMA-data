@@ -13595,3 +13595,72 @@ existe, a un ton et un effet — SEUL LE JOUEUR ENTEND SI ELLE SONNE JUSTE
   strictement identique, banc 39 vert.
 - L'importateur ne juge rien : c'est le banc 39 qui tranche, et il dit
   quelle ligne et pourquoi.
+
+## CAS 170 — LA VITESSE DE PROGRESSION, MESUREE PUIS REGLEE (Mael, 03/09)
+
+« On avait dit que les progres etaient un peu lents, fais des tests, on
+debriefe apres, modifie rien. » Puis : « je valide tout sauf coach 45 »,
+et « faut pas que ce soit trop simple non plus ».
+
+### CE QUE LA MESURE A TROUVE (js/pilote_progres.js, partie demo, deux ans)
+- pros : 0,0 point par an. amateurs : +1,3. loisirs : les plus de 35 ans
+  RECULENT. Lent, oui — mais surtout GELE.
+- 90 % des domaines des deux pros du depart etaient AU-DESSUS de leur
+  plafond des le jour 1 : la loi du cas 168, testee avec un staff force
+  a 30/88 et un potentiel force a 90, n'avait jamais ete jouee avec le
+  vrai staff de la demo (38). Le banc prouvait que le blocage MARCHE, pas
+  que le jeu reste JOUABLE. Regression, a moi.
+- OKONKWO NE S'ENTRAINAIT JAMAIS : `if(f.id==="Okonkwo"&&jour>=5)return
+  false; /* repos post-combat */` — une ligne en dur, reste de la demo
+  scriptee. Zero seance par semaine, a vie.
+- LE VIEILLISSEMENT DISAIT UNE CHOSE ET EN FAISAIT UNE AUTRE : le
+  commentaire annoncait « -1,1 par an des 33 ans », le code faisait
+  (age-33)*1,1 CHAQUE ANNEE — -5,5/an a 38 ans, -8,8 a 41.
+- LA LUTTE MONTAIT TROIS FOIS PLUS VITE QUE LA FRAPPE, sans que personne
+  l'ait choisi : une seance touche deux ou trois stats, et la moyenne d'un
+  domaine bouge d'autant plus vite qu'il en a peu.
+- LE PLAN D'ENTRAINEMENT CHERCHAIT DES STATS QUI N'EXISTENT PAS : sept
+  cles de lutte dont quatre absentes de la fiche (cage_control, trip,
+  throw, get_up), « garde » en frappe, guard_retention et back_control
+  au sol. Et le CLINCH — huit stats lues par le moteur — n'etait
+  travaille par AUCUNE seance.
+
+### CE QUI A ETE FAIT, DANS L'ORDRE VALIDE
+1. La ligne Okonkwo effacee.
+2. Le vieillissement fait ce qu'il annonce : -1,1/an physique des 33 ans,
+   -0,5/an technique des 35.
+3. Le gain d'une seance est ramene a une echelle de dix stats — a travail
+   egal, progres egal. PIEGE PAYE : la premiere version divisait par les
+   cles DU PLAN et non par les stats DE LA FICHE ; le plan de lutte n'en
+   trouvant que trois, la lutte s'effondrait (x0,3).
+4. Le plan realigne sur les vraies cles de la fiche, et le clinch entre
+   dans les seances de MMA.
+5. Le staff de depart de la demo : 38 → 45 (Mael).
+6. Le repli de potentiel des pros ecrits a la main releve (moy+20..34) :
+   a moy+9..25, Kante restait bute sur quatre domaines avec le staff a 45.
+7. La loi du plafond adoucie : amplitude 32 → 28, plancher 55 → 60. Avec
+   le staff a 45 un amateur de dix-neuf ans a talent 1,45 etait gele a 55
+   sur quatre domaines des le premier jour — un mur, pas de la
+   difficulte. L'ecart mauvais/bon staff reste de quinze points (banc 20).
+8. COEF_PROGRES, le seul bouton de vitesse, regle A LA MESURE : a 1,0 un
+   jeune allait de 45 a 75 en trois ans et demi avec un bon staff (trop
+   simple). A 0,85 : cinq a six ans. Jamais avec un mauvais.
+
+### LE RESULTAT (graine 12)
+                              avant         apres
+  Okonkwo, seances/semaine    0             6
+  Okonkwo, frappe sur 2 ans   +0,0          +4,2 (plafond 77, il y va)
+  amateur 24 ans, frappe/an   ~+1,5         +5,8 (jusqu'a son plafond)
+  pro 24-30 ans, bon staff    +1,5/an       +2,0/an, qui ralentit avec l'age
+  ecart frappe 30 vs 88, 6 ans +3,1 (cas 167) +6,1
+  loisir de 40 ans, physique  -11 en 2 ans  -2,2
+Ou vit la difficulte maintenant : le plafond (staff 45 = -11,5 points), le
+prix d'un bon coach, la specialisation du mentor, la fenetre d'age.
+
+### DEUX FAUTES D'INSTRUMENT, A NE PAS REFAIRE
+- Une mesure qui sort un zero rond sur six ans est une mesure a verifier
+  avant d'etre crue : le « sol +0,0 » du pilote venait de SA liste de
+  cles, heritee du vieux plan — deux cles sur six n'existaient pas.
+- On ne fabrique pas d'objet du jeu dans un instrument (cas 167, encore).
+
+CHAINE : 39 bancs, 824 assertions, 0 ECHEC.

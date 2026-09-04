@@ -693,13 +693,26 @@ function ajouter(id,gr,talent){EFFECTIF.push({id,talent,gains7:[],total7:0,
    n'ameliore pas le jab. C'est ce qui rend la progression LISIBLE et le
    choix des seances SIGNIFIANT. */
 const TRAVAIL={
+  /* /!\ LE PLAN NE TOUCHE QUE DES STATS QUI EXISTENT (mesure du 03/09).
+     Avant : sept cles de lutte dont QUATRE absentes de la fiche
+     (cage_control, trip, throw, get_up), « garde » en frappe,
+     guard_retention et back_control au sol — la seance les cherchait, ne
+     les trouvait pas, et concentrait tout sur les trois qui restaient.
+     Et le CLINCH — huit stats, lues par le moteur — n'etait travaille par
+     AUCUNE seance. Chaque famille touche maintenant une vraie part de son
+     domaine ; les qualites innees (power, reflexes, chin) restent hors
+     plan : elles ne s'apprennent pas au cours du soir. */
   striking:{striking:["jab","cross","crochet","uppercut","overhand","poing_corps",
-                      "low_kick","body_kick","high_kick","teep","esquive_tete","garde","footwork"]},
-  jjb:{ground:["passing","guard_retention","mount_top","back_control","sweeps",
-               "submission_off_top","submission_off_bottom","submission_def"]},
-  mma:{wrestling:["shot","sprawl","clinch_wrestling","cage_control","trip","throw","get_up"],
-       ground:["ground_striking","passing"],
-       striking:["footwork","spinning"]},
+                      "low_kick","body_kick","high_kick","teep","esquive_tete","parade","blocage",
+                      "check","footwork","enchainements","timing","vitesse_mains","vitesse_jambes","cage_cutting"]},
+  jjb:{ground:["passing","posture_sol","half_guard_top","side_control_top","mount_top","back_top",
+               "closed_guard_bottom","open_guard_bottom","butterfly_bottom","half_guard_bottom",
+               "side_control_bottom","mount_bottom","back_defense","turtle_defense","sweeps","shrimping",
+               "wall_walking","hand_fighting_sol","submission_off_top","submission_off_bottom","submission_def"]},
+  mma:{wrestling:["shot","sprawl","clinch_wrestling","throws","whizzer","grip_fighting","balance"],
+       clinch:["pummeling","hand_fighting","frame","posture","clinch_striking","footwork_clinch","top_control"],
+       ground:["ground_striking","passing","explosiveness","wall_walking","turtle_defense"],
+       striking:["footwork","spinning","cage_cutting","timing"]},
   physique:{physical:["cardio","recovery","body_conditioning","balance_base"]},
   /* /!\ LA FAMILLE QUI MANQUAIT, ET QUI RENDAIT UN AXE ENTIER MORT.
      « Preparation mentale » etait l'un des cinq axes de coach — donc un
@@ -721,6 +734,16 @@ const TRAVAIL={
 /** Le travail d'une seance, verse sur les stats du domaine.
  *  /!\ RENDEMENTS DECROISSANTS PRES DU PLAFOND : plus une stat est
  *  haute, plus elle coute. Sans ca tout le monde finirait a 99. */
+/* Le seul bouton de vitesse de l'entrainement, et l'echelle qui met les
+   domaines a egalite. Voir appliquerTravail. */
+/* /!\ REGLE A LA MESURE, PAS AU DOIGT MOUILLE (03/09). A 1,0, un amateur
+   de 24 ans gagnait +8 points de frappe par an avec un staff MEDIOCRE, et
+   Kante +10,7 en un an avec un bon staff : un jeune allait de 45 a 75 en
+   trois ans et demi. Mael : « faut pas que ce soit trop simple non plus ».
+   La cible validee : cinq a six ans avec un BON staff, jamais avec un
+   mauvais (le plafond s'en charge). 0,85 y mene. */
+const COEF_PROGRES=0.85;
+const STATS_DE_REFERENCE=10;
 function appliquerTravail(cle,fam,gain){
   const l=MESGARS[cle]; if(!l||!MONDE)return 0;
   const plan=TRAVAIL[fam]; if(!plan)return 0;
@@ -754,6 +777,7 @@ function appliquerTravail(cle,fam,gain){
   const eFic=EFFECTIF.find(x=>x.id===cle);
   const groupe=eFic&&eFic.gr==="pro"?"pro":"amateur";
   const nivEnc=MMA.coach.niveauEncadrement(couvertureDuStaff(),groupe,fam);
+  const nStatsDom=Object.keys(f[dom]).filter(k=>typeof f[dom][k]==="number").length||1;
   let verse=0, bute=0;
   for(let i=0;i<n;i++){
     const k=cles[(t.jour*3+i*7+Math.abs(l.id))%cles.length];
@@ -781,7 +805,20 @@ function appliquerTravail(cle,fam,gain){
        joueur qui rattrape, pas l'adversaire qui faiblit. */
     const age=l.age||25;
     const fAge=age<=21?1.35:age<=25?1.15:age<=29?0.9:age<=33?0.55:0.3;
-    const d=gain*2.4*marge*fAge;
+    /* /!\ LA LUTTE MONTAIT TROIS FOIS PLUS VITE QUE LA FRAPPE, ET PERSONNE
+       NE L'AVAIT CHOISI (mesure du 03/09). Une seance touche deux ou trois
+       stats ; la frappe en a treize, la lutte sept, le physique quatre :
+       la MOYENNE du domaine bougeait donc trois fois plus vite la ou il y
+       a moins de stats. On ramene chaque domaine a une echelle de dix
+       stats — a travail egal, progres egal. COEF_PROGRES est le seul
+       bouton de vitesse, et il se regle a la mesure (pilote_progres). */
+    /* /!\ ON DIVISE PAR CE QUE LA FICHE PORTE, PAS PAR CE QUE LE PLAN
+       TOUCHE. Premiere version : cles.length — or le plan de lutte liste
+       sept stats dont QUATRE n'existent pas sur la fiche (cage_control,
+       trip, throw, get_up) : trois stats touchees, x0,3, la lutte
+       s'effondrait. La moyenne d'un domaine se fait sur ses stats reelles,
+       c'est donc elles qui font l'echelle. */
+    const d=gain*2.4*COEF_PROGRES*(nStatsDom/STATS_DE_REFERENCE)*marge*fAge;
     if(d<=0)continue;
     /* /!\ ON N'ARRONDIT JAMAIS A L'ECRITURE (Mael, en jouant : "+0.4 a la
        seance, +0 partout dans ses stats"). Le gain par stat d'une seance
@@ -1076,7 +1113,7 @@ const LOCAUX=[
    physique) en un seul compteur "equipement". Erreur : ce qui compte, c'est
    qu'une salle puisse etre bien equipee en frappe et miserable au sol. Le
    materiel achete monte UN domaine, jamais les places. */
-const SALLE={forfait:600,reputation:12,coachAm:38,local:"assoc",
+const SALLE={forfait:600,reputation:12,coachAm:45,local:"assoc",  /* 38 → 45 (Mael, 03/09) : a 38 les deux pros du depart etaient GELES par le plafond de la salle */
              equip:{striking:2,lutte:1,physique:2,video:1}, cage:false};
 /* /!\ LA PARTIE NEUVE COMMENCE EN BAS DE L'ECHELLE (Mael, 10/08) :
    le garage, tout a 1 etoile, une reputation de quartier, et un forfait
@@ -3349,7 +3386,6 @@ function jouerJournee(jour,echeances){
       if((MESGARS[f.id]||{}).enCampLoin)return false;
       /* Menage : il saute une seance sur deux, le temps de recuperer. */
       if((MESGARS[f.id]||{}).menage&&alea()<0.5)return false;
-      if(f.id==="Okonkwo"&&jour>=5)return false;   /* repos post-combat */
       return groupes.includes(f.gr)&&alea()<(f.gr==="loisir"?0.45:0.85);});
     /* /!\ LE FROID REFUSE LE TAPIS (chantier N) : une paire en froid ne
        fait pas le sparring ensemble — la seance perd un des deux. Le
@@ -4145,8 +4181,13 @@ function vieillirDunAn(cle){
   l.age=(l.age||20)+1;
   const fi=FICHES[cle]; if(fi)fi.age=l.age;
   let f; try{ f=MMA.salle.ficheDe(MONDE,l.id); }catch(e){ return {age:l.age}; }
-  const perteP=Math.max(0,l.age-33)*1.1;
-  const perteT=Math.max(0,l.age-35)*0.5;
+  /* /!\ CE QUE LE COMMENTAIRE ANNONCE, LE CODE LE FAIT (Mael, 03/09).
+     Avant : (age-33)*1,1 APPLIQUE CHAQUE ANNEE — a 38 ans c'etait -5,5
+     par an, a 41 -8,8 : un loisir de quarante ans perdait dix points de
+     physique en deux ans. Mesure au pilote_progres. « -1,1 par an des 33
+     ans » veut dire -1,1 par an. */
+  const perteP=l.age>33?1.1:0;
+  const perteT=l.age>35?0.5:0;
   const baisse=(bloc,p)=>{ if(!bloc||!p)return 0; let n=0;
     for(const k in bloc)if(typeof bloc[k]==="number"){
       bloc[k]=Math.max(20,Math.round((bloc[k]-p)*10)/10); n++; }
