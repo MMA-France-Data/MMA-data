@@ -248,7 +248,11 @@ const tousChoix = toutes.reduce((a, s) => a.concat(s.choix || []), []);
   dit("chaque scène a un texte et au moins deux réponses", courtes.length === 0,
     courtes.map((s) => s.cle).slice(0, 4).join(" "));
 
-  const malFaites = tousChoix.filter((c) => !c.lab || !c.r || c.r.length < 30
+  /* /!\ UNE REACTION PEUT ETRE COURTE (Mael, 03/09 : « oui, réactions
+     courtes »). Le seuil de trente caracteres refusait « Il est vexé. »,
+     qui est une reaction qui se tient. Dix suffit : on refuse le vide et
+     le mot seul, pas la phrase seche. */
+  const malFaites = tousChoix.filter((c) => !c.lab || !c.r || c.r.length < 10
     || typeof c.d !== "number" || !c.ton);
   dit("chaque réponse a un libellé, une réaction écrite, un effet et un ton",
     malFaites.length === 0, `${malFaites.length} incomplètes`);

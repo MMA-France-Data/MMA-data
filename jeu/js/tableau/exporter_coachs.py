@@ -77,7 +77,7 @@ notes = [
     ("• Aucun chiffre dans les textes (écris « trois », pas « 3 »). Un coach ne parle pas en pourcentages.", False),
     ("• Une réponse qui donne de l'argent doit le DIRE dans TA RÉPONSE (salaire, augmentation, tarif…).", False),
     ("• {gars} = le nom du combattant posé sur la table. {autre} = quelqu'un d'autre de la salle. Garde-les tels quels, le jeu les remplit.", False),
-    ("• Une réaction fait au moins 30 caractères, la phrase du coach au moins 40.", False),
+    ("• Une réaction peut être courte (« Il est vexé. » passe) ; la phrase du coach fait au moins 40 caractères.", False),
     ("", False),
     ("POUR AJOUTER une réponse : insère une ligne, mets l'ID de la scène suivi de #5 (ou #6). Pour SUPPRIMER : efface TA RÉPONSE, je la retire.", False),
     ("Renvoie-moi le fichier tel quel : je le rentre dans le jeu et je te dis ce qui a été refusé et pourquoi.", False),

@@ -41,7 +41,6 @@ bureau.push(
  choix:[
   {lab:"Attendre qu'il parle",r:"Il met un temps, puis il vide son sac. Le tapis, les horaires, sa femme qui ne le voit plus le soir.",d:3,ton:"calme"},
   {lab:"Lui dire que tu l'as trouvé fatigué, ces temps-ci",r:"Il hoche la tête lentement. Il n'aime pas être vu, mais il aime encore moins être invisible.",d:2,ton:"franc"},
-  {lab:"Lui demander s'il dort",r:"Il rit sans joie et te répond qu'il dort quand la salle dort, donc jamais vraiment.",d:2,ton:"chaud"},
   {lab:"Abréger, tu as du travail",r:"Il se lève avant la fin de ta phrase. La porte se referme un peu trop doucement derrière lui.",d:-4,ton:"sec"}]},
 
 {cle:"oie_02",sujet:"ou_il_en_est",si:"toujours",vie:"courante",
@@ -55,7 +54,6 @@ bureau.push(
  texte:"Il arrive avec le dos raide, une main sur les reins, et il fait semblant que ce n'est rien depuis assez de semaines pour que ce soit devenu une blague dans le vestiaire.",
  choix:[
   {lab:"Lui payer un vrai rendez-vous chez un kiné",r:"Il proteste pour la forme, puis il note le nom sur sa main. Il n'y serait jamais allé de lui-même.",d:4,ton:"chaud"},
-  {lab:"Lui dire d'arrêter de faire le tour de force",r:"Il grogne que le jour où il ne fera plus le tour de force, il ne servira plus à grand-chose ici.",d:1,ton:"franc"},
   {lab:"Lui proposer d'alléger sa semaine",r:"Il refuse, puis il demande si l'offre tient encore la semaine d'après. Elle tient.",d:3,ton:"calme"},
   {lab:"Lui rappeler qu'il est payé pour être debout",r:"Il te regarde comme on regarde quelqu'un qui vient de dire une chose qu'on n'oubliera pas.",d:-5,ton:"dur"}]},
 
@@ -64,7 +62,7 @@ bureau.push(
  choix:[
   {lab:"Répondre honnêtement",r:"Tu lui racontes ta semaine. Quand tu as fini, il parle de la sienne, et il ne s'arrête plus.",d:4,ton:"franc"},
   {lab:"lui répondre que tout va bien en restant bref",r:"Il note l'esquive sans rien dire, et il répond exactement aussi peu que toi.",d:-1,ton:"neutre"},
-  {lab:"Lui dire que ce n'est pas le sujet",r:"Il se ferme d'un coup. Il aura mis un an à rouvrir cette porte-là.",d:-4,ton:"sec"}]},
+  {lab:"Lui dire que ce n'est pas le sujet",r:"Il se ferme d'un coup.",d:-4,ton:"sec"}]},
 
 {cle:"oie_05",sujet:"ou_il_en_est",si:"toujours",vie:"courante",
  texte:"Il t'annonce, presque en s'excusant, qu'il voudrait poser deux semaines cet été. Il a préparé son argument avant d'entrer, on l'entend dans sa voix.",
@@ -106,7 +104,7 @@ bureau.push(
  texte:"Il n'est là que depuis quelques semaines . Il te demande, gêné, si sa façon de faire convient.",
  choix:[
   {lab:"Lui dire ce que tu attends, précisément",r:"Il note tout. Et suit ta procédure a la prochaine sceance",d:4,ton:"clair"},
-  {lab:"Lui dire de faire à sa manière et de voir",r:"Il apprécie la confiance et il flotte un peu. Les deux à la fois.",d:2,ton:"calme"},
+  {lab:"Lui dire de faire à sa manière et de voir",r:"Il apprécie la confiance .",d:2,ton:"calme"},
   {lab:"Lui répondre qu'il doit se dépêcher de prendre ses marques",r:"Il repart la queue entre les jambes",d:-3,ton:"sec"}]},
 
 {cle:"oie_11",sujet:"ou_il_en_est",si:"toujours",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
@@ -213,7 +211,7 @@ bureau.push(
  choix:[
   {lab:"Le lui confier",r:"Il n'en demandait pas tant. Il repart en cherchant déjà comment organiser ses semaines.",d:5,ton:"chaud",effet:"lui_confier_un_gars"},
   {lab:"Lui demander de le suivre encore un mois avant de décider",r:"Il trouve ça sage et il revient un mois plus tard, encore plus convaincu.",d:3,ton:"calme"},
-  {lab:"Lui dire que tu ne peux pas payer un homme pour un espoir",r:"Il comprend l'argument et il n'en pense pas moins.",d:-2,ton:"neutre"},
+  {lab:"Lui dire que tu n'a rien vu chez lui",r:"Il est vexé.",d:-2,ton:"neutre"},
   {lab:"Lui dire qu'il dit ça de tous les gamins",r:"C'est faux, et il le sait, et tu le sais. Ce sont ces phrases-là qui usent.",d:-5,ton:"sec"}]},
 
 {cle:"cqv_05",sujet:"ce_qu_il_voit",si:"toujours",vie:"saison",
@@ -366,8 +364,7 @@ bureau.push(
  texte:"Tu lui parles de {gars}, qui progresse trop vite et qui commence à prendre la grosse tete. Il te dit qu'il attendait que quelqu'un d'autre le voie.",
  choix:[
   {lab:"Lui demander de le remettre à sa place, en séance",r:"Il lui organise une soirée très longue et très humiliante. Le gamin revient le lendemain.",d:4,ton:"ferme"},
-  {lab:"Lui demander de lui donner un rôle auprès des débutants",r:"Le gamin découvre en une semaine tout ce qu'il ne sait pas expliquer. Ça le calme mieux qu'une correction.",d:5,ton:"malin"},
-  {lab:"Lui dire de le laisser se cogner tout seul",r:"Il laisse. Le gamin se cogne, et il emporte deux autres avec lui.",d:-3,ton:"neutre"}]},
+  {lab:"Lui demander de lui donner un rôle auprès des débutants",r:"Le gamin découvre en une semaine tout ce qu'il ne sait pas expliquer. Ça le calme mieux qu'une correction.",d:5,ton:"malin"}]},
 
 {cle:"ung_06",sujet:"un_gars",si:"toujours",vie:"courante",
  texte:"Tu lui parles de {gars}, qui prend de la place, donne des consignes à sa place, et à qui personne n'ose rien dire.",
@@ -396,14 +393,6 @@ bureau.push(
   {lab:"Le remercier de te l'avoir dit",r:"Il hausse les épaules, mais il est content que tu l'aies relevé.",d:4,ton:"chaud"},
   {lab:"Lui demander de garder {gars} au chaud",r:"Il s'en occupe, et il fait ça bien : le gamin ne saura même pas qu'on l'a courtisé.",d:3,ton:"malin"},
   {lab:"Lui demander pourquoi il ne t'a pas prévenu plus tôt",r:"Il te répond qu'il vient de l'apprendre. C'était vrai, et tu l'apprends trop tard.",d:-4,ton:"soupcon"}]},
-
-{cle:"ung_10",sujet:"un_gars",si:"gars_qui_doute",vie:"courante",
- texte:"Tu lui parles de {gars}, qui n'y arrive plus. Il a passé la nuit à y penser et il a déjà décidé ce qu'il fallait changer.",
- choix:[
-  {lab:"Lui laisser la main complète sur la suite",r:"Il repart avec un poids et un plan. Les deux lui vont bien.",d:4,ton:"engage",effet:"lui_confier_un_gars"},
-  {lab:"Lui demander de ne rien changer pendant un mois",r:"Il trouve ça dur à tenir et il reconnaît, plus tard, que c'était la bonne décision.",d:2,ton:"calme"},
-  {lab:"Lui demander si la défaite vient de lui",r:"Il te répond que oui, en partie, et il te dit laquelle. Peu d'hommes font ça.",d:3,ton:"grave"},
-  {lab:"Lui dire que le gars n'était pas prêt, et que c'est son travail",r:"Il ne bronche pas. Il vient d'apprendre ce que tu feras la prochaine fois que ça arrivera.",d:-6,ton:"dur"}]},
 
 {cle:"ung_11",sujet:"un_gars",si:"toujours",vie:"courante",voix:["bourru","pedagogue","ambitieux"],
  texte:"Tu lui parles de {gars}, et il te répond par une question sur toi : est-ce que tu comptes vraiment aller au bout avec lui, ou est-ce qu'il perd son temps.",
@@ -1780,6 +1769,18 @@ porte.push(
   {lab:"Lui montrer, concrètement, à quel point c'est faux",r:"Tu lui montres. Il n'avait rien vu de tout ça, et il en est retourné.",d:5,ton:"clair"},
   {lab:"Lui redonner une responsabilité visible",r:"Il retrouve une place et un rôle. La question ne se repose plus.",d:5,ton:"ferme",effet:"lui_donner_une_case"},
   {lab:"Lui dire que s'il le sent, c'est peut-être vrai",r:"Il hoche la tête. Il posera sa lettre avant la fin de la saison.",d:-6,ton:"froid"}]}
+);
+
+/* ung_10 a ete retire par Mael (03/09). C'etait la seule scene du
+   declencheur gars_qui_doute — le crible du banc 39 l'a dit aussitot. Une
+   scene de remplacement, a relire dans le tableau comme les autres. */
+bureau.push(
+{cle:"ung_33",sujet:"un_gars",si:"gars_qui_doute",vie:"courante",
+ texte:"Tu poses le nom de {gars}, qui enchaîne les mauvais soirs. Il te dit qu'il ne sait plus si le problème est dans les jambes ou dans la tête, et que ça change tout.",
+ choix:[
+  {lab:"Lui demander ce qu'il ferait s'il devait parier",r:"Il parie sur la tête. Il a une idée pour ça, et elle ne coûte rien.",d:4,ton:"clair"},
+  {lab:"Le sortir de la compétition le temps qu'il faut",r:"Il approuve. {gars} râle une semaine, puis il respire.",d:3,ton:"calme",effet:"menager_un_gars"},
+  {lab:"Lui dire qu'un combat de plus lui remettra la tête à l'endroit",r:"Il ne répond pas. Il prépare le combat, et il n'y croit pas.",d:-4,ton:"dur"}]}
 );
 
 /* ==================================================================== */

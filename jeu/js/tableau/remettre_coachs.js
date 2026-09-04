@@ -37,6 +37,15 @@ for (const m of D.MOMENTS) for (const s of (S[m] || [])) {
   }
   s.choix = choix;
 }
+/* /!\ UNE SCENE DONT TOUTES LES REPONSES SONT EFFACEES DISPARAIT. Mael a
+   vide les quatre reponses de ung_10 : c'est la scene qu'il retire, pas
+   ses boutons — une scene sans reponse serait un ecran mort, et le banc
+   la refuserait. */
+for (const m of D.MOMENTS) {
+  const avant = (S[m] || []).length;
+  S[m] = (S[m] || []).filter((s) => s.choix.length > 0);
+  if (S[m].length < avant) console.log(`${avant - S[m].length} scene(s) retiree(s) de ${m} — toutes leurs reponses etaient effacees`);
+}
 
 /* ---- reecriture : en-tete conserve, corps regenere ---- */
 const src = fs.readFileSync(CHEMIN, "utf8");
