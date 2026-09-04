@@ -1419,8 +1419,12 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
         suiteBureauCoach();
       }
     }
+    /* Combien de sujets ont des scenes : tant que le corpus est partiel
+       (Mael relit), on ne traverse que ceux-la. */
+    const servis=MMA.coach_dialogue.SUJETS.filter(x=>
+      (MMA.coach_scenes.SCENES.bureau||[]).some(sc=>sc.sujet===x.cle)).length;
     fermerBureauCoach();
-    return {demandeQui,tousNommes,proDabord,surLaTable,accolade,brut,vus,
+    return {demandeQui,tousNommes,proDabord,surLaTable,accolade,brut,vus,servis,
       sceneDuSujet:!!scene&&scene.sujet==="un_gars",
       applique:eff.ok,bonHomme,pasLautre,ditLeffet,ditLeLache,
       refusDit:!refus.ok&&(refus.mot||"").indexOf(vise.id)>=0};
@@ -1445,7 +1449,8 @@ for (const [graine, jours] of [[11, 150], [41, 150], [7, 260]]) {
     dit("et le poulain qu'on lâche pour le prendre n'est jamais lâché en silence",
         !!r && r.ditLeLache, "un coach n'en suit qu'un");
     dit("aucun marqueur ne reste à l'écran, sur tous les sujets traversés",
-        !!r && r.brut === 0 && r.vus >= 14, `${r ? r.vus : 0} écrans lus · ${r ? r.brut : "?"} accolade(s)`);
+        !!r && r.brut === 0 && r.vus >= 2 * (r.servis - 1),
+        `${r ? r.vus : 0} écrans lus sur ${r ? r.servis : "?"} sujet(s) servis · ${r ? r.brut : "?"} accolade(s)`);
   }
   dit("aucune exception dans le bureau du coach", P.erreurs.length === 0,
       [...new Set(P.erreurs)].slice(0, 3).join(" | "));

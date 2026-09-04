@@ -13664,3 +13664,27 @@ prix d'un bon coach, la specialisation du mentor, la fenetre d'age.
 - On ne fabrique pas d'objet du jeu dans un instrument (cas 167, encore).
 
 CHAINE : 39 bancs, 824 assertions, 0 ECHEC.
+
+## CAS 171 — LE JEU NE PORTE QUE CE QUE MAEL A RELU (03/09)
+
+« Tu enlèves les autres, je les ai de côté sur mon PC, je t'enverrai
+petit à petit — trois-quatre scènes par sujet. Touche rien. »
+J'avais lu de travers deux fois (« retire les lignes déjà faites du
+tableau », puis « garde tout et marque »). Le sens : LE JEU NE CONTIENT
+QUE CE QU'IL A RELU. 241 → 49 scènes, 162 répliques. Rien n'est perdu :
+tout est dans git et dans son tableau.
+
+- tableau/etat_corpus.json {partiel:true} et CORPUS_PARTIEL exporté par
+  coach_scenes.js. Le BANC 39 met ses assertions de COUVERTURE en attente
+  (« att. », affichées, non comptées) et garde dures celles de FORME : une
+  ligne relue doit être juste dès qu'elle entre. Repasser partiel:false
+  rend tout à l'ECHEC.
+- UN SEUL SÉRIALISEUR (tableau/ecrire_scenes.js) pour le retour du tableau
+  et la coupe au relu — pas deux exemplaires.
+- L'ÉCRAN : un sujet sans scène n'est pas un bouton (masqué) ; un moment
+  sans scène n'ouvre pas de page vide (il le dit).
+- Le banc 27 traverse les sujets SERVIS, pas les neuf.
+- TROUVÉ EN PASSANT, À TRAITER : les moments `debrief` et `accrochage`
+  n'étaient DÉCLENCHÉS NULLE PART dans le jeu — seuls bord_du_tapis et
+  porte le sont. 24 scènes écrites pour rien depuis le cas 162.
+  Une chose branchée nulle part ne fait rien.

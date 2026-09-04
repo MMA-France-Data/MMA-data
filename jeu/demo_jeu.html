@@ -7649,7 +7649,10 @@ function ouvrirBureauCoach(nom,moment){
   const E=MMA.coach_dialogue.ouvrir(MMA.coach_scenes.SCENES,ctxCoach(c),c.vues,t.jour,
     MMA.coach.jeton(c.nom,t.jour));
   BUREAU={c,E,moment:moment||null,reponse:null,dits:[]};
-  if(moment)MMA.coach_dialogue.poser(E,moment,null);
+  /* /!\ CORPUS PARTIEL (Mael relit, 03/09) : un moment sans scene relue
+     n'ouvre pas une page vide. On le dit, et on n'ouvre pas. */
+  if(moment&&!MMA.coach_dialogue.poser(E,moment,null)){
+    BUREAU=null; return toast("Il n'a rien de plus à dire aujourd'hui."); }
   rendreBureauCoach();
   $("coach-page").classList.add("ouvert");
 }
@@ -7836,7 +7839,11 @@ function rendreBureauCoach(){
   const faits=B.E.sujetsFaits;
   z.innerHTML=tete
     +`<div class="cp-il" style="font-size:14px;color:#9fb0c2">${D.motCaractere(car)}</div>`
-    +`<div class="cp-choix cp-sujets">${D.SUJETS.map(x=>
+    +`<div class="cp-choix cp-sujets">${D.SUJETS.filter(x=>
+        /* /!\ UN SUJET SANS SCENE N'EST PAS UN BOUTON : tant que Mael n'a pas
+           envoye ses scenes, il n'apparait pas — un bouton qui ne fait rien
+           est la faute la plus chere du carnet. */
+        (MMA.coach_scenes.SCENES.bureau||[]).some(s=>s.sujet===x.cle)).map(x=>
       `<button onclick="sujetBureauCoach('${x.cle}')" ${faits.indexOf(x.cle)>=0?'style="opacity:.45"':""}>
          <b>${x.lab}</b><br><span style="font-size:12.5px;color:#8b9aab">${x.txt}</span></button>`).join("")}</div>`
     +(B.E.dits.length?`<div class="cp-fin">${D.ambiance(B.E.cumul).mot}</div>`:"")
